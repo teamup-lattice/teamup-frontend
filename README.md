@@ -1,16 +1,36 @@
-# React + Vite
+# TeamUp Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**TeamUp** is a project-collaboration platform that helps digital skill learners and early-career professionals turn what they've learned into real project experience. Users find collaborators, form committed teams, build a project together, and finish with a project page showing what each person actually contributed.
 
-Currently, two official plugins are available:
+Built for the TechCrush Buildathon 3.0 by Team Lattice (Group 8).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## The problem
 
-## React Compiler
+Many people learn digital skills but struggle to find collaborators, real projects and the structure to finish. Teams often go inactive and projects get abandoned.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Core journey
 
-## Expanding the ESLint configuration
+1. Sign up and create a profile (skills, goals, availability)
+2. Discover projects or collaborators
+3. Join a team after accepting role, hours and deadlines
+4. Work in a shared workspace (tasks, milestones, progress)
+5. Complete the project and generate a shareable project page with each member's contribution
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech stack
+
+- React (Vite)
+- React Router
+- ESLint
+
+## Getting started
+
+```bash
+git clone https://github.com/Tumiii2/teamup-frontend.git
+cd teamup-frontend
+npm install
+npm run dev
+```
+
+## Team
+
+Frontend: Eniola, Daniel
