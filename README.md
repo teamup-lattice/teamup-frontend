@@ -31,6 +31,27 @@ npm install
 npm run dev
 ```
 
+## Staging
+
+https://teamup-lattice.netlify.app (auto-deploys from `main`)
+
+## Folder structure
+
+- `src/pages/` has one file per screen
+- `src/components/` has reusable UI pieces
+- `src/layouts/` has shared page layouts
+- `src/services/` has API calls to the backend
+- `src/data/` has mock data until the backend is ready
+
+## Routes
+
+- `/signup`, `/login`, `/profile`
+- `/projects` is project discovery
+- `/projects/new` creates a project
+- `/projects/:id` is a single project
+- `/projects/:id/workspace` is the team workspace
+- `/projects/:id/page` is the completed project page
+
 ## Team
 
 Frontend: Eniola, Daniel
