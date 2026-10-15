@@ -25,7 +25,7 @@ Many people learn digital skills but struggle to find collaborators, real projec
 ## Getting started
 
 ```bash
-git clone https://github.com/Tumiii2/teamup-frontend.git
+git clone https://github.com/teamup-lattice/teamup-frontend.git
 cd teamup-frontend
 npm install
 npm run dev
