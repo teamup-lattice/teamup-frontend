@@ -54,4 +54,4 @@ https://teamup-lattice.netlify.app (auto-deploys from `main`)
 
 ## Team
 
-Frontend: Eniola, Daniel
+Frontend: Eniola, Daniel, Adetomiwa
