@@ -33,7 +33,7 @@ npm run dev
 
 ## Staging
 
-https://teamup-lattice.netlify.app (auto-deploys from `main`)
+https://teamup-lattice-project.netlify.app (auto-deploys from `main`)
 
 ## Folder structure
 
