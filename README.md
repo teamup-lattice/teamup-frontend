@@ -33,8 +33,6 @@ npm run dev
 
 ## Staging
 
-## Staging
-
 https://teamup-lattice-project.netlify.app
 
 Every merge to `main` deploys to staging automatically, with no manual steps.
