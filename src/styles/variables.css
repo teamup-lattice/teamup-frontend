@@ -1,0 +1,42 @@
+:root {
+  --color-navy: #112345;
+  --color-purple: #6641d9;
+  --color-purple-light: #f0ebfc;
+  --color-green: #246b45;
+  --color-amber: #825416;
+  --color-red: #a33835;
+  --color-red-light: #fcf0ed;
+  --color-canvas: #f7f8f6;
+  --color-card: #ffffff;
+  --color-text-secondary: #344a66;
+  --color-border-control: #809398;
+  --color-border-subtle: #c8d2d5;
+  --color-focus: #1a70ec;
+
+  --font-family: "Inter", sans-serif;
+  --font-size-heading: 28px;
+  --font-size-body: 16px;
+  --font-size-label: 14px;
+  --font-size-helper: 13px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-chip: 4px;
+
+  --button-height: 44px;
+  --input-height: 48px;
+}
+
+@media (max-width: 599px) {
+  :root {
+    --font-size-heading: 24px;
+  }
+}

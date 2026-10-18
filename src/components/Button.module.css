@@ -1,0 +1,39 @@
+.button {
+  min-height: var(--button-height);
+  padding: 0 var(--space-5);
+  border: 2px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--color-purple);
+  color: var(--color-card);
+}
+
+.secondary {
+  background: var(--color-card);
+  color: var(--color-purple);
+  border-color: var(--color-purple);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
