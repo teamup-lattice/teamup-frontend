@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { signUp } from "../../services/authService";
 import styles from "./Signup.module.css";
+import AltLink from "../../components/AltLink";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +26,8 @@ function validate({ name, email, password }) {
     errors.password = "Create a password.";
   } else if (password.length < 8) {
     errors.password = "Use at least 8 characters for your password.";
+  } else if (new TextEncoder().encode(password).length > 72) {
+    errors.password = "Use a shorter password.";
   }
 
   return errors;
@@ -107,9 +110,7 @@ function Signup() {
           <Button fullWidth onClick={() => navigate("/profile")}>
             Set up required profile
           </Button>
-          <Link to="/login" className={styles.altLink}>
-            Sign in instead
-          </Link>
+          <AltLink to="/login">Sign in instead</AltLink>
         </AuthLayout>
       </div>
     );
@@ -205,9 +206,7 @@ function Signup() {
             {status === "error" ? "Try again" : "Create account"}
           </Button>
 
-          <Link to="/login" className={styles.altLink}>
-            Sign in instead
-          </Link>
+          <AltLink to="/login">Sign in instead</AltLink>
 
           {isLoading && (
             <p className={styles.note} role="status">

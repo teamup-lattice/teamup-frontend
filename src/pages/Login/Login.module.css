@@ -1,0 +1,27 @@
+.nextTitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.nextText {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+  color: var(--color-text-secondary);
+}
+
+.mobileBackLabel {
+  display: none;
+}
+
+@media (max-width: 599px) {
+  .desktopBackLabel {
+    display: none;
+  }
+
+  .mobileBackLabel {
+    display: inline;
+  }
+}

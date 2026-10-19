@@ -58,23 +58,6 @@
   color: var(--color-text-secondary);
 }
 
-.altLink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--button-height);
-  margin-top: var(--space-4);
-  font-size: var(--font-size-label);
-  font-weight: 600;
-  color: var(--color-purple);
-  text-decoration: underline;
-}
-
-.altLink:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
 @media (max-width: 599px) {
   .signupPage > div {
     width: 100%;
