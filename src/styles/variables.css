@@ -13,8 +13,10 @@
   --color-border-subtle: #c8d2d5;
   --color-focus: #1a70ec;
   --color-action-disabled: #e5eae9;
+  --color-green-light: #edf5ef;
 
   --font-family: "Inter", sans-serif;
+  --icon-size: 20px;
   --font-size-heading: 28px;
   --font-size-body: 16px;
   --font-size-label: 14px;

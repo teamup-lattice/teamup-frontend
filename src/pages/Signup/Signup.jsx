@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
-import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { signUp } from "../../services/authService";
@@ -70,104 +69,154 @@ function Signup() {
 
   if (status === "success") {
     return (
-      <AuthLayout
-        step="Step 1 of 2 · Account"
-        title="Your account is created"
-        description="Next: complete your required profile."
-        backTo="/"
-        backLabel="Back to welcome"
-      >
-        <Alert variant="success" title="Account created">
-          {values.name} - {values.email}. Your required profile is the next
-          step.
-        </Alert>
-        <Button fullWidth onClick={() => navigate("/profile")}>
-          Set up required profile
-        </Button>
-        <Link to="/login" className={styles.altLink}>
-          Sign in instead
-        </Link>
-      </AuthLayout>
+      <div className={styles.signupPage}>
+        <AuthLayout
+          step="Step 1 of 2 · Account"
+          title="Your account is created"
+          description="Next: complete your required profile."
+          backTo="/"
+          backLabel={
+            <>
+              <span className={styles.desktopBackLabel}>Back to welcome</span>
+              <span className={styles.mobileBackLabel}>Back</span>
+            </>
+          }
+        >
+          <div className={`${styles.banner} ${styles.success}`} role="status">
+            <svg
+              className={styles.icon}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="m8 12 2.5 2.5L16 9" />
+            </svg>
+            <div className={styles.content}>
+              <p className={styles.title}>Account created</p>
+              <p className={styles.message}>
+                {values.name} · {values.email}. Your required profile is the
+                next step.
+              </p>
+            </div>
+          </div>
+          <Button fullWidth onClick={() => navigate("/profile")}>
+            Set up required profile
+          </Button>
+          <Link to="/login" className={styles.altLink}>
+            Sign in instead
+          </Link>
+        </AuthLayout>
+      </div>
     );
   }
 
   return (
-    <AuthLayout
-      step="Step 1 of 2 · Account"
-      title="Create your account"
-      description="Create your account, then complete your profile."
-      backTo="/"
-      backLabel="Back to welcome"
-    >
-      {status === "error" && (
-        <Alert variant="error" title="We could not connect">
-          Account creation not confirmed. Your other entries are retained. Try
-          again.
-        </Alert>
-      )}
-
-      <form onSubmit={handleSubmit} noValidate>
-        <Input
-          id="signup-name"
-          name="name"
-          label="Name"
-          required
-          autoComplete="name"
-          value={values.name}
-          onChange={handleChange}
-          error={errors.name}
-          disabled={isLoading}
-        />
-        <Input
-          id="signup-email"
-          name="email"
-          type="email"
-          label="Email"
-          required
-          autoComplete="email"
-          value={values.email}
-          onChange={handleChange}
-          error={errors.email}
-          disabled={isLoading}
-        />
-        <Input
-          id="signup-password"
-          name="password"
-          type="password"
-          label="Password"
-          required
-          autoComplete="new-password"
-          helperText="Use a password you do not use elsewhere."
-          value={values.password}
-          onChange={handleChange}
-          error={errors.password}
-          disabled={isLoading}
-        />
-
-        <p className={styles.note}>
-          Contact details are visible only to accepted teammates.
-        </p>
-
-        <Button
-          type="submit"
-          fullWidth
-          loading={isLoading}
-          loadingText="Creating account..."
-        >
-          {status === "error" ? "Try again" : "Create account"}
-        </Button>
-
-        <Link to="/login" className={styles.altLink}>
-          Sign in instead
-        </Link>
-
-        {isLoading && (
-          <p className={styles.note} role="status">
-            Creating your account. Your entries are retained.
-          </p>
+    <div className={styles.signupPage}>
+      <AuthLayout
+        step="Step 1 of 2 · Account"
+        title="Create your account"
+        description="Create your account, then complete your profile."
+        backTo="/"
+        backLabel={
+          <>
+            <span className={styles.desktopBackLabel}>Back to welcome</span>
+            <span className={styles.mobileBackLabel}>Back</span>
+          </>
+        }
+      >
+        {status === "error" && (
+          <div className={`${styles.banner} ${styles.error}`} role="alert">
+            <svg
+              className={styles.icon}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5m0 3h.01" />
+            </svg>
+            <div className={styles.content}>
+              <p className={styles.title}>We could not connect</p>
+              <p className={styles.message}>
+                Account creation not confirmed. Your other entries are retained.
+                Try again.
+              </p>
+            </div>
+          </div>
         )}
-      </form>
-    </AuthLayout>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <Input
+            id="signup-name"
+            name="name"
+            label="Name"
+            required
+            autoComplete="name"
+            value={values.name}
+            onChange={handleChange}
+            error={errors.name}
+            disabled={isLoading}
+          />
+          <Input
+            id="signup-email"
+            name="email"
+            type="email"
+            label="Email"
+            required
+            autoComplete="email"
+            value={values.email}
+            onChange={handleChange}
+            error={errors.email}
+            disabled={isLoading}
+          />
+          <Input
+            id="signup-password"
+            name="password"
+            type="password"
+            label="Password"
+            required
+            autoComplete="new-password"
+            helperText="Use a password you do not use elsewhere."
+            value={values.password}
+            onChange={handleChange}
+            error={errors.password}
+            disabled={isLoading}
+          />
+
+          <p className={styles.note}>
+            Contact details are visible only to accepted teammates.
+          </p>
+
+          <Button
+            type="submit"
+            fullWidth
+            loading={isLoading}
+            loadingText="Creating account..."
+          >
+            {status === "error" ? "Try again" : "Create account"}
+          </Button>
+
+          <Link to="/login" className={styles.altLink}>
+            Sign in instead
+          </Link>
+
+          {isLoading && (
+            <p className={styles.note} role="status">
+              Creating your account. Your entries are retained.
+            </p>
+          )}
+        </form>
+      </AuthLayout>
+    </div>
   );
 }
 
