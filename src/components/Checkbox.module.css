@@ -1,0 +1,39 @@
+.wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--button-height);
+  padding: var(--space-2) 0;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: var(--space-5);
+  height: var(--space-5);
+  margin: 0;
+  accent-color: var(--color-purple);
+  cursor: pointer;
+}
+
+.checkbox:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--font-size-body);
+  color: var(--color-navy);
+  cursor: pointer;
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--font-size-helper);
+  color: var(--color-text-secondary);
+}
