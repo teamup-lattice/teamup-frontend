@@ -93,3 +93,8 @@
   font-size: var(--font-size-helper);
   font-weight: 700;
 }
+
+.input:disabled {
+  background: var(--color-canvas);
+  cursor: not-allowed;
+}
