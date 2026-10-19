@@ -8,13 +8,15 @@
   border: 1px solid transparent;
   border-radius: var(--radius-control);
   font-family: var(--font-family);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
   font-weight: 600;
   cursor: pointer;
 }
 
 .primary {
   background: var(--color-purple);
+  border-color: var(--color-purple);
   color: var(--color-card);
 }
 

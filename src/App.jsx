@@ -7,20 +7,32 @@ import CreateProject from "./pages/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import Workspace from "./pages/Workspace";
 import ProjectPage from "./pages/ProjectPage";
+import AuthLayout from "./layouts/AuthLayout";
+import Input from "./components/Input";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/projects" element={<Projects />} />
-      <Route path="/projects/new" element={<CreateProject />} />
-      <Route path="/projects/:id" element={<ProjectDetails />} />
-      <Route path="/projects/:id/workspace" element={<Workspace />} />
-      <Route path="/projects/:id/page" element={<ProjectPage />} />
-    </Routes>
+    <>
+      <AuthLayout
+        step="Step 1 of 2 · Account"
+        title="Create your account"
+        description="Create your account, then complete your profile."
+        backLabel="Back to welcome"
+      >
+        <Input label="Name" required />
+      </AuthLayout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/new" element={<CreateProject />} />
+        <Route path="/projects/:id" element={<ProjectDetails />} />
+        <Route path="/projects/:id/workspace" element={<Workspace />} />
+        <Route path="/projects/:id/page" element={<ProjectPage />} />
+      </Routes>
+    </>
   );
 }
 

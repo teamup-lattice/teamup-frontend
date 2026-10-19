@@ -27,6 +27,9 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --space-tight: 6px;
+  --line-height-text: 1.5;
+  --line-height-heading: 1.3;
 
   --radius-control: 6px;
   --radius-card: 10px;
