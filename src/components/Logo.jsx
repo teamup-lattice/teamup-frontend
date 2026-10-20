@@ -1,8 +1,8 @@
-import styles from './Logo.module.css';
+import logo from "../assets/teamup-logo.png";
+import styles from "./Logo.module.css";
 
-// TODO: replace the text with the exported logo SVG from the Design System page.
 function Logo() {
-  return <span className={styles.logo}>TeamUp</span>;
+  return <img className={styles.logo} src={logo} alt="TeamUp" />;
 }
 
 export default Logo;
