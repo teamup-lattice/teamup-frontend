@@ -63,7 +63,7 @@ function Signup() {
 
     setStatus("loading");
     try {
-      await signUp(values);
+      await signUp({ ...values, name: values.name.trim() });
       setStatus("success");
     } catch {
       setStatus("error");
