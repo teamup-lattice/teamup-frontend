@@ -26,7 +26,14 @@ function Button({
       aria-busy={loading}
       {...rest}
     >
-      {loading ? loadingText : children}
+      {loading ? (
+        <>
+          <span className={styles.spinner} aria-hidden="true" />
+          {loadingText}
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 }

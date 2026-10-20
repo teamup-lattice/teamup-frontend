@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "../assets/teamup-logo.png";
 import styles from "./AuthLayout.module.css";
 
 function AuthLayout({
@@ -13,7 +14,7 @@ function AuthLayout({
     <div className={styles.page}>
       <header className={styles.header}>
         <Link to="/" className={styles.logo}>
-          TeamUp
+          <img src={logo} alt="TeamUp" className={styles.logoImage} />
         </Link>
         <Link to={backTo} className={styles.back}>
           {backLabel}
