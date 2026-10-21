@@ -35,9 +35,9 @@
 .illustration {
   display: block;
   align-self: center;
-  width: 320px;
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  aspect-ratio: 561 / 253;
+  object-fit: cover;
 }
 
 .hero {
