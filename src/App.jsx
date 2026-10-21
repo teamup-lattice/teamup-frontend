@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
+import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject";
@@ -11,7 +12,7 @@ import ProjectPage from "./pages/ProjectPage";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Welcome />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/profile" element={<Profile />} />
