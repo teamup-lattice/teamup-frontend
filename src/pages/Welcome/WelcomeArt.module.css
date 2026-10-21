@@ -1,11 +1,3 @@
-.illustration {
-  display: block;
-  align-self: center;
-  width: 100%;
-  aspect-ratio: 561 / 253;
-  object-fit: cover;
-}
-
 .ground {
   fill: color-mix(in srgb, var(--color-purple) 30%, transparent);
 }
