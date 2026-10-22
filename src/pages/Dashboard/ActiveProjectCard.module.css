@@ -1,0 +1,162 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: var(--line-height-text);
+}
+
+.projectHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+}
+
+.meta p {
+  margin: 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.teammates {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatars {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.avatar {
+  display: grid;
+  width: var(--space-6);
+  height: var(--space-6);
+  place-items: center;
+  border: 2px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.avatar + .avatar {
+  margin-left: calc(-1 * var(--space-2));
+}
+
+.teammateText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.progressSummary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.progressTrack {
+  display: flex;
+  gap: var(--space-1);
+  min-height: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-chip);
+}
+
+.progressSegment,
+.progressSegmentDone {
+  flex: 1;
+  background: var(--color-action-disabled);
+}
+
+.progressSegmentDone {
+  background: var(--color-purple);
+}
+
+.milestones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.milestoneName {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.milestoneProgress {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+@media (max-width: 1023px) {
+  .projectHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .teammates {
+    align-items: flex-start;
+  }
+}
