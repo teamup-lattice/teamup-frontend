@@ -65,7 +65,14 @@ function Signup() {
     try {
       await signUp({ ...values, name: values.name.trim() });
       setStatus("success");
-    } catch {
+    } catch (error) {
+      if (error.code === "EMAIL_EXISTS") {
+        setErrors({
+          email: "An account with this email already exists. Sign in instead.",
+        });
+        setStatus("idle");
+        return;
+      }
       setStatus("error");
     }
   }
