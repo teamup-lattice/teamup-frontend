@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import dashboardData from "../../data/dashboardData";
 import ActiveProjectCard from "./ActiveProjectCard";
+import PendingInvitationCard from "./PendingInvitationCard";
 import styles from "./Dashboard.module.css";
 
 function Dashboard() {
@@ -39,6 +40,10 @@ function Dashboard() {
         </div>
       </div>
       <ActiveProjectCard activeProject={dashboardData.activeProject} />
+      <h2 className={styles.heading}>Pending invitation</h2>
+      <PendingInvitationCard
+        pendingInvitation={dashboardData.pendingInvitation}
+      />
     </div>
   );
 }
