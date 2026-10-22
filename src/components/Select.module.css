@@ -1,0 +1,17 @@
+.select {
+  appearance: none;
+  padding-right: var(--space-7);
+  cursor: pointer;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-navy);
+  border-bottom: 2px solid var(--color-navy);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}

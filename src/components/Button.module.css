@@ -1,0 +1,62 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--button-height);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--color-purple);
+  border-color: var(--color-purple);
+  color: var(--color-card);
+}
+
+.secondary {
+  background: var(--color-card);
+  color: var(--color-purple);
+  border-color: var(--color-purple);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  background: var(--color-action-disabled);
+  border-color: var(--color-action-disabled);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

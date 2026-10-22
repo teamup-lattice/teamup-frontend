@@ -1,0 +1,87 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 0;
+  border-left: 3px solid var(--banner-color);
+  border-radius: var(--radius-control);
+  background: var(--banner-background);
+  color: var(--color-navy);
+}
+
+.success {
+  --banner-color: var(--color-green);
+  --banner-background: var(--color-green-light);
+}
+
+.error {
+  --banner-color: var(--color-red);
+  --banner-background: var(--color-red-light);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-top: var(--space-1);
+  color: var(--banner-color);
+}
+
+.content {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+  color: var(--banner-color);
+}
+
+.message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.mobileBackLabel {
+  display: none;
+}
+
+.note {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 599px) {
+  .signupPage > div {
+    width: 100%;
+    min-height: 100dvh;
+    background: var(--color-card);
+  }
+
+  .signupPage > div > main {
+    width: 100%;
+    padding: 0;
+  }
+
+  .signupPage > div > main > div {
+    width: 100%;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .desktopBackLabel {
+    display: none;
+  }
+
+  .mobileBackLabel {
+    display: inline;
+  }
+}
