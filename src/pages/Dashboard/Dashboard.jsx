@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import dashboardData from "../../data/dashboardData";
 import ActiveProjectCard from "./ActiveProjectCard";
+import NeedsAttentionCard from "./NeedsAttentionCard";
 import PendingInvitationCard from "./PendingInvitationCard";
+import UpcomingTasks from "./UpcomingTasks";
 import styles from "./Dashboard.module.css";
 
 function Dashboard() {
@@ -39,11 +41,26 @@ function Dashboard() {
           </Button>
         </div>
       </div>
-      <ActiveProjectCard activeProject={dashboardData.activeProject} />
-      <h2 className={styles.heading}>Pending invitation</h2>
-      <PendingInvitationCard
-        pendingInvitation={dashboardData.pendingInvitation}
-      />
+      <div className={styles.columns}>
+        <div className={styles.column}>
+          <ActiveProjectCard activeProject={dashboardData.activeProject} />
+          <section className={styles.section}>
+            <h2 className={styles.heading}>Pending invitation</h2>
+            <PendingInvitationCard
+              pendingInvitation={dashboardData.pendingInvitation}
+            />
+          </section>
+        </div>
+        <div className={styles.column}>
+          <section className={styles.section}>
+            <h2 className={styles.heading}>Needs attention</h2>
+            <NeedsAttentionCard
+              needsAttention={dashboardData.needsAttention}
+            />
+          </section>
+          <UpcomingTasks tasks={dashboardData.upcomingTasks} />
+        </div>
+      </div>
     </div>
   );
 }
