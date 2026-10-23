@@ -1,14 +1,26 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import dashboardData from "../../data/dashboardData";
 import ActiveProjectCard from "./ActiveProjectCard";
+import activeProjectStyles from "./ActiveProjectCard.module.css";
 import NeedsAttentionCard from "./NeedsAttentionCard";
+import needsAttentionStyles from "./NeedsAttentionCard.module.css";
 import PendingInvitationCard from "./PendingInvitationCard";
 import UpcomingTasks from "./UpcomingTasks";
 import styles from "./Dashboard.module.css";
 
+const dashboardStatuses = ["loading", "empty", "error", "ready"];
+
 function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedState = searchParams.get("state");
+  // temporary, remove when API is connected
+  const [status, setStatus] = useState(() =>
+    dashboardStatuses.includes(requestedState) ? requestedState : "ready",
+  );
   const date = new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -25,42 +37,87 @@ function Dashboard() {
       <p className={styles.description}>
         Here&apos;s what needs your attention today.
       </p>
-      <div className={styles.actions}>
-        <div className={styles.action}>
-          <Button fullWidth onClick={() => navigate("/discover")}>
+
+      {status === "loading" && (
+        <div className={styles.columns} aria-busy="true">
+          {Array.from({ length: 3 }, (_, index) => (
+            <article
+              className={activeProjectStyles.card}
+              aria-hidden="true"
+              key={index}
+            >
+              <div className={needsAttentionStyles.blocker} />
+            </article>
+          ))}
+        </div>
+      )}
+
+      {status === "empty" && (
+        <article className={activeProjectStyles.card}>
+          <h2 className={activeProjectStyles.title}>
+            Your first project starts here
+          </h2>
+          <p className={styles.description}>
+            No projects yet. Discover an open project or create your own.
+          </p>
+          <Button onClick={() => navigate("/discover")}>
             Discover Projects
           </Button>
-        </div>
-        <div className={styles.action}>
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={() => navigate("/projects/new")}
-          >
-            Create project
-          </Button>
-        </div>
-      </div>
-      <div className={styles.columns}>
-        <div className={styles.column}>
-          <ActiveProjectCard activeProject={dashboardData.activeProject} />
-          <section className={styles.section}>
-            <h2 className={styles.heading}>Pending invitation</h2>
-            <PendingInvitationCard
-              pendingInvitation={dashboardData.pendingInvitation}
-            />
-          </section>
-        </div>
-        <div className={styles.column}>
-          <section className={styles.section}>
-            <h2 className={styles.heading}>Needs attention</h2>
-            <NeedsAttentionCard
-              needsAttention={dashboardData.needsAttention}
-            />
-          </section>
-          <UpcomingTasks tasks={dashboardData.upcomingTasks} />
-        </div>
-      </div>
+        </article>
+      )}
+
+      {(status === "ready" || status === "error") && (
+        <>
+          {status === "error" && (
+            <div className={styles.columns}>
+              <div className={styles.column}>
+                <Alert variant="error" title="Dashboard could not refresh">
+                  Refresh failed. Showing your last saved projects.
+                </Alert>
+                <Button onClick={() => setStatus("ready")}>
+                  Retry refresh
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className={styles.actions}>
+            <div className={styles.action}>
+              <Button fullWidth onClick={() => navigate("/discover")}>
+                Discover Projects
+              </Button>
+            </div>
+            <div className={styles.action}>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => navigate("/projects/new")}
+              >
+                Create project
+              </Button>
+            </div>
+          </div>
+          <div className={styles.columns}>
+            <div className={styles.column}>
+              <ActiveProjectCard activeProject={dashboardData.activeProject} />
+              <section className={styles.section}>
+                <h2 className={styles.heading}>Pending invitation</h2>
+                <PendingInvitationCard
+                  pendingInvitation={dashboardData.pendingInvitation}
+                />
+              </section>
+            </div>
+            <div className={styles.column}>
+              <section className={styles.section}>
+                <h2 className={styles.heading}>Needs attention</h2>
+                <NeedsAttentionCard
+                  needsAttention={dashboardData.needsAttention}
+                />
+              </section>
+              <UpcomingTasks tasks={dashboardData.upcomingTasks} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
