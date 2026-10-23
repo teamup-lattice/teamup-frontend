@@ -16,6 +16,11 @@ function NeedsAttentionCard({ needsAttention }) {
               }`}
               key={status}
             >
+              {isBlocked && (
+                <span className={styles.blockedIcon} aria-hidden="true">
+                  !
+                </span>
+              )}
               {status}
             </span>
           );

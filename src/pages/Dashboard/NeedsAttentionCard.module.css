@@ -24,8 +24,20 @@
 }
 
 .blocked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   background: var(--color-red-light);
   color: var(--color-red);
+}
+
+.blockedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
 }
 
 .overdue {
@@ -85,12 +97,12 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  gap: var(--space-3);
+  gap: 0;
   width: 100%;
-  margin-top: 0;
+  margin-top: calc(-1 * var(--space-4));
 }
 
 .links a {
-  min-height: auto;
+  min-height: var(--button-height);
   margin-top: 0;
 }
