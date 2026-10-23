@@ -1,29 +1,43 @@
-export async function signUp({ name, email }) {
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+import { api, setToken, clearToken } from "./api";
 
-  if (email.toLowerCase().includes("fail")) {
-    throw new Error("Network error");
+export async function signUp({ name, email, password }) {
+  try {
+    const data = await api.post("/api/auth/signup", {
+      username: name,
+      email,
+      password,
+    });
+
+    setToken(data.token);
+    return { name: data.user.name, email: data.user.email };
+  } catch (error) {
+    if (error.status === 409) error.code = "EMAIL_EXISTS";
+    throw error;
   }
-
-  return { name, email };
 }
 
 export async function signIn({ email, password }) {
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+  try {
+    const data = await api.post("/api/auth/login", { email, password });
+    setToken(data.token);
 
-  if (email.toLowerCase().includes("fail")) {
-    throw new Error("Network error");
-  }
+    const profile = await api.get("/api/profile/users/me");
 
-  if (password === "wrongpassword") {
-    const error = new Error("Invalid credentials");
-    error.code = "INVALID_CREDENTIALS";
+    return {
+      name: data.user.name,
+      email: data.user.email,
+      profileComplete: profile.user.onboardingCompleted,
+    };
+  } catch (error) {
+    if (error.status === 401) error.code = "INVALID_CREDENTIALS";
     throw error;
   }
+}
 
-  return {
-    name: "Ada",
-    email,
-    profileComplete: !email.toLowerCase().includes("new"),
-  };
+export async function signOut() {
+  try {
+    await api.post("/api/auth/logout");
+  } finally {
+    clearToken();
+  }
 }
