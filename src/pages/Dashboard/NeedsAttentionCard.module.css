@@ -29,14 +29,16 @@
 }
 
 .overdue {
-  background: var(--color-card);
+  background: var(--color-amber-light);
+  border-radius: 4px;
   color: var(--color-amber);
 }
 
 .title {
   margin: 0;
   color: var(--color-navy);
-  font-size: var(--font-size-heading);
+  font-size: var(--font-size-title);
+  font-weight: 600;
   line-height: var(--line-height-heading);
 }
 
@@ -46,6 +48,7 @@
   gap: var(--space-2);
   color: var(--color-text-secondary);
   font-size: var(--font-size-label);
+  font-weight: 400;
   line-height: var(--line-height-text);
 }
 
@@ -66,6 +69,7 @@
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-label);
+  font-weight: 400;
   line-height: var(--line-height-text);
 }
 
@@ -78,9 +82,12 @@
 
 .links {
   display: flex;
+  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   width: 100%;
+  margin-top: 0;
 }
 
 .links a {

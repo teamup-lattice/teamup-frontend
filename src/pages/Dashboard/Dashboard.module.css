@@ -15,14 +15,20 @@
 .heading {
   margin: 0;
   color: var(--color-navy);
-  font-size: var(--font-size-heading);
+  font-size: var(--font-size-title);
+  font-weight: 600;
   line-height: var(--line-height-heading);
+}
+
+.dashboard > .heading {
+  font-size: var(--font-size-heading);
 }
 
 .description {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-body);
+  font-weight: 400;
   line-height: var(--line-height-text);
 }
 

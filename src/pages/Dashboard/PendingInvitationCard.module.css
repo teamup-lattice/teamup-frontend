@@ -22,7 +22,8 @@
 .title {
   margin: 0;
   color: var(--color-navy);
-  font-size: var(--font-size-heading);
+  font-size: var(--font-size-title);
+  font-weight: 600;
   line-height: var(--line-height-heading);
 }
 
@@ -37,6 +38,10 @@
 .description,
 .meta {
   font-size: var(--font-size-label);
+}
+
+.meta {
+  font-weight: 400;
 }
 
 .helper {

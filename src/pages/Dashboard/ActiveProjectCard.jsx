@@ -54,25 +54,12 @@ function ActiveProjectCard({ activeProject }) {
             {completedTasks} of {totalTasks} Done
           </span>
         </div>
-        <div
+        <progress
           className={styles.progressTrack}
-          role="progressbar"
           aria-label="Overall tasks"
-          aria-valuemin={0}
-          aria-valuemax={progressMax}
-          aria-valuenow={completedTasks}
-        >
-          {Array.from({ length: totalTasks }, (_, index) => (
-            <span
-              className={
-                index < completedTasks
-                  ? styles.progressSegmentDone
-                  : styles.progressSegment
-              }
-              key={index}
-            />
-          ))}
-        </div>
+          value={completedTasks}
+          max={progressMax}
+        />
       </section>
 
       <ul className={styles.milestones}>

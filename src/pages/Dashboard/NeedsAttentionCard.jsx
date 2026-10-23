@@ -36,7 +36,9 @@ function NeedsAttentionCard({ needsAttention }) {
         Blocker note: {needsAttention.blockerNote}
       </p>
 
-      <Button variant="secondary">Open task details</Button>
+      <Button variant="secondary" fullWidth>
+        Open task details
+      </Button>
 
       <div className={styles.links}>
         <AltLink to="/projects">Request new date</AltLink>

@@ -4,6 +4,7 @@
   --color-purple-light: #f0ebfc;
   --color-green: #246b45;
   --color-amber: #825416;
+  --color-amber-light: #fbf2e3;
   --color-red: #a33835;
   --color-red-light: #fcf0ed;
   --color-canvas: #f7f8f6;
@@ -18,6 +19,7 @@
   --font-family: "Inter", sans-serif;
   --icon-size: 20px;
   --font-size-heading: 28px;
+  --font-size-title: 20px;
   --font-size-body: 16px;
   --font-size-label: 14px;
   --font-size-helper: 13px;
