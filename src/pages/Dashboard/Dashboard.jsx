@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
+import listFilterIcon from "../../assets/list-filter.svg";
 import dashboardData from "../../data/dashboardData";
+import { getMyProfile, getMyProjects } from "../../services/dashboardService";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
 import NeedsAttentionCard from "./NeedsAttentionCard";
@@ -11,16 +13,32 @@ import PendingInvitationCard from "./PendingInvitationCard";
 import UpcomingTasks from "./UpcomingTasks";
 import styles from "./Dashboard.module.css";
 
-const dashboardStatuses = ["loading", "empty", "error", "ready"];
-
 function Dashboard() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const requestedState = searchParams.get("state");
-  // temporary, remove when API is connected
-  const [status, setStatus] = useState(() =>
-    dashboardStatuses.includes(requestedState) ? requestedState : "ready",
-  );
+  const [profile, setProfile] = useState(null);
+  const [status, setStatus] = useState("loading");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([getMyProfile(), getMyProjects()])
+      .then(([profileData, projectsData]) => {
+        if (!isMounted) return;
+
+        setProfile(profileData.user);
+        const projects = projectsData.projects ?? [];
+        setStatus(projects.length === 0 ? "empty" : "ready");
+      })
+      .catch((error) => {
+        console.error("Failed to load dashboard data:", error);
+        if (isMounted) setStatus("error");
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const date = new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -31,9 +49,7 @@ function Dashboard() {
   return (
     <div className={styles.dashboard}>
       <p className={styles.date}>{date}</p>
-      <h1 className={styles.heading}>
-        Good to see you, {dashboardData.user.name}
-      </h1>
+      <h1 className={styles.heading}>Good to see you, {profile?.name}</h1>
       <p className={styles.description}>
         Here&apos;s what needs your attention today.
       </p>
@@ -54,15 +70,23 @@ function Dashboard() {
 
       {status === "empty" && (
         <article className={activeProjectStyles.card}>
-          <h2 className={activeProjectStyles.title}>
-            Your first project starts here
-          </h2>
-          <p className={styles.description}>
-            No projects yet. Discover an open project or create your own.
-          </p>
-          <Button onClick={() => navigate("/discover")}>
-            Discover Projects
-          </Button>
+          <div className={styles.emptyState}>
+            <img
+              className={styles.emptyStateIcon}
+              src={listFilterIcon}
+              alt=""
+              aria-hidden="true"
+            />
+            <h2 className={activeProjectStyles.title}>
+              Your first project starts here
+            </h2>
+            <p className={styles.description}>
+              No projects yet. Discover an Open project or create your own.
+            </p>
+            <Button onClick={() => navigate("/discover")}>
+              Discover Projects
+            </Button>
+          </div>
         </article>
       )}
 
@@ -74,7 +98,7 @@ function Dashboard() {
                 <Alert variant="error" title="Dashboard could not refresh">
                   Refresh failed. Showing your last saved projects.
                 </Alert>
-                <Button onClick={() => setStatus("ready")}>
+                <Button onClick={() => window.location.reload()}>
                   Retry refresh
                 </Button>
               </div>
