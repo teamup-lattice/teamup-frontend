@@ -4,7 +4,7 @@ import Login from "./pages/Login/Login";
 import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile";
 import Projects from "./pages/Projects";
-import CreateProject from "./pages/CreateProject";
+import CreateProject from "./pages/CreateProject/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import Workspace from "./pages/Workspace";
 import ProjectPage from "./pages/ProjectPage";
@@ -21,8 +21,9 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/new" element={<CreateProject />} />
+        <Route path="/projects/:id/edit" element={<CreateProject />} />
       </Route>
-      <Route path="/projects/new" element={<CreateProject />} />
       <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route path="/projects/:id/workspace" element={<Workspace />} />
       <Route path="/projects/:id/page" element={<ProjectPage />} />

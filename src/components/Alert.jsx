@@ -2,6 +2,7 @@ import styles from "./Alert.module.css";
 
 const icons = {
   error: "!",
+  info: "i",
   success: "✓",
   warning: "!",
 };

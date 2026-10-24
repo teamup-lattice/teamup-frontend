@@ -15,6 +15,11 @@
   background: var(--color-red-light);
 }
 
+.info {
+  --alert-color: var(--color-purple);
+  background: var(--color-purple-light);
+}
+
 .success {
   --alert-color: var(--color-green);
   background: color-mix(in srgb, var(--color-green) 10%, var(--color-card));
