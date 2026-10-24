@@ -7,6 +7,7 @@ function Input({
   helperText,
   error,
   required = false,
+  multiline = false,
   id,
   ...rest
 }) {
@@ -40,15 +41,26 @@ function Input({
       </label>
 
       <div className={styles.control}>
-        <input
-          id={inputId}
-          className={inputClasses}
-          type={inputType}
-          aria-required={required}
-          aria-invalid={error ? "true" : "false"}
-          aria-describedby={describedBy}
-          {...rest}
-        />
+        {multiline ? (
+          <textarea
+            id={inputId}
+            className={`${inputClasses} ${styles.textarea}`}
+            aria-required={required}
+            aria-invalid={error ? "true" : "false"}
+            aria-describedby={describedBy}
+            {...rest}
+          />
+        ) : (
+          <input
+            id={inputId}
+            className={inputClasses}
+            type={inputType}
+            aria-required={required}
+            aria-invalid={error ? "true" : "false"}
+            aria-describedby={describedBy}
+            {...rest}
+          />
+        )}
         {isPassword && (
           <button
             type="button"

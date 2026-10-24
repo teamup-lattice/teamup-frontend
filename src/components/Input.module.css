@@ -33,6 +33,14 @@
   color: var(--color-navy);
 }
 
+.textarea {
+  height: auto;
+  min-height: calc(var(--input-height) * 2);
+  padding: var(--space-3);
+  resize: vertical;
+  line-height: var(--line-height-text);
+}
+
 .input:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
