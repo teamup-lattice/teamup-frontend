@@ -3,6 +3,7 @@ import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
 import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile";
+import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
@@ -17,6 +18,7 @@ function App() {
       <Route path="/" element={<Welcome />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />

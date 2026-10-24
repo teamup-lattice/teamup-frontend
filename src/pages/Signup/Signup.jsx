@@ -114,7 +114,7 @@ function Signup() {
               </p>
             </div>
           </div>
-          <Button fullWidth onClick={() => navigate("/profile")}>
+          <Button fullWidth onClick={() => navigate("/profile/setup")}>
             Set up required profile
           </Button>
           <AltLink to="/login">Sign in instead</AltLink>
