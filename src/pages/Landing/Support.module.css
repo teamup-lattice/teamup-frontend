@@ -1,0 +1,200 @@
+.section {
+  scroll-margin-top: var(--space-7);
+  background: var(--color-card);
+}
+
+.container {
+  width: min(100%, calc(var(--space-4) * 75));
+  margin: 0 auto;
+  padding: calc(var(--space-7) + var(--space-5)) var(--space-5);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: clamp(var(--font-size-title), 4vw, var(--font-size-heading));
+  line-height: var(--line-height-heading);
+}
+
+.description {
+  max-width: calc(var(--space-7) * 12);
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+}
+
+.card > svg {
+  color: var(--color-purple);
+}
+
+.greyCard {
+  background: var(--color-canvas);
+}
+
+.purpleCard {
+  background: var(--color-purple-light);
+}
+
+.card h3 {
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-heading);
+}
+
+.card > p:not(.footnote) {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.mockStack,
+.checkInCard,
+.notificationCard {
+  width: 100%;
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+}
+
+.mockStack {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.miniCard {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+}
+
+.miniCard span,
+.checkInCard > span {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 700;
+}
+
+.miniCard p,
+.checkInCard p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.checkInCard strong,
+.notificationCard strong {
+  display: block;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+}
+
+.checkInCard p {
+  margin-top: var(--space-2);
+}
+
+.footnote {
+  margin: auto 0 0;
+  padding-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.notificationCard {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.notificationCard strong {
+  margin-bottom: var(--space-1);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.option > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-chip);
+  color: var(--color-card);
+  font-size: var(--font-size-helper);
+  line-height: 1;
+}
+
+.option > .checked {
+  border-color: var(--color-purple);
+  background: var(--color-purple);
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
+
+  .cards {
+    gap: var(--space-3);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 833px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: var(--space-5);
+  }
+}
+
+@media (max-width: 390px) {
+  .container {
+    padding: var(--space-6) var(--space-4);
+  }
+}

@@ -1,0 +1,354 @@
+.section {
+  scroll-margin-top: var(--space-7);
+  background: var(--color-navy);
+  color: var(--color-card);
+}
+
+.container {
+  width: min(100%, calc(var(--space-4) * 75));
+  margin: 0 auto;
+  padding: calc(var(--space-7) + var(--space-5)) var(--space-5);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple-light);
+  font-size: var(--font-size-helper);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: var(--space-6);
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-card);
+  font-size: clamp(var(--font-size-title), 4vw, var(--font-size-heading));
+  line-height: var(--line-height-heading);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  align-items: start;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.workspaceCard,
+.contributionCard {
+  border-radius: var(--radius-card);
+  color: var(--color-navy);
+}
+
+.workspaceCard {
+  padding: var(--space-5);
+  background: var(--color-canvas);
+}
+
+.workspaceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.workspaceLabel {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspaceHeader h3 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.avatars {
+  display: flex;
+  padding-left: var(--space-1);
+}
+
+.avatars span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  margin-left: calc(var(--space-1) * -1);
+  border: 2px solid var(--color-canvas);
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 700;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.tabs span {
+  padding: var(--space-2) 0;
+}
+
+.activeTab {
+  border-bottom: 2px solid var(--color-purple);
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.progressHeader,
+.milestone {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-helper);
+}
+
+.progressHeader {
+  margin-top: var(--space-4);
+}
+
+.progressTrack {
+  height: var(--space-1);
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-chip);
+  background: var(--color-border-subtle);
+}
+
+.progressTrack span {
+  display: block;
+  width: 33%;
+  height: 100%;
+  background: var(--color-green);
+}
+
+.milestone {
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.taskList {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+}
+
+.task > div,
+.file > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.task strong {
+  font-size: var(--font-size-label);
+}
+
+.task > div > span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.taskBadge {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--color-action-disabled);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.blocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.contributionColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contributionCard {
+  padding: var(--space-5);
+  background: var(--color-card);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.personAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.contributionCard h3 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-heading);
+}
+
+.contributionText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-purple);
+}
+
+.file svg {
+  flex-shrink: 0;
+}
+
+.file strong {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+}
+
+.file span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.viewContribution {
+  display: block;
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-purple);
+  border-radius: var(--radius-control);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-align: center;
+}
+
+.contributionNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.contributionNote svg {
+  flex-shrink: 0;
+  color: var(--color-purple-light);
+}
+
+.caption {
+  margin: var(--space-5) 0 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-helper);
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
+
+  .cards {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: var(--space-4);
+  }
+
+  .workspaceCard,
+  .contributionCard {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 833px) {
+  .intro {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .container {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .workspaceCard,
+  .contributionCard {
+    padding: var(--space-3);
+  }
+
+  .tabs {
+    gap: var(--space-2);
+    font-size: var(--font-size-helper);
+  }
+
+  .task {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

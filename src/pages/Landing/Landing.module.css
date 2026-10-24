@@ -1,0 +1,6 @@
+.landingPage {
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-navy);
+  font-family: var(--font-family);
+}

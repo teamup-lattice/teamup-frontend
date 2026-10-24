@@ -84,7 +84,7 @@ function Signup() {
           step="Step 1 of 2 · Account"
           title="Your account is created"
           description="Next: complete your required profile."
-          backTo="/"
+          backTo="/welcome"
           backLabel={
             <>
               <span className={styles.desktopBackLabel}>Back to welcome</span>
@@ -129,7 +129,7 @@ function Signup() {
         step="Step 1 of 2 · Account"
         title="Create your account"
         description="Create your account, then complete your profile."
-        backTo="/"
+        backTo="/welcome"
         backLabel={
           <>
             <span className={styles.desktopBackLabel}>Back to welcome</span>

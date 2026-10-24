@@ -155,7 +155,7 @@ function RequiredProfile() {
       step="Step 2 of 2 · Required profile"
       title="Tell us what you bring"
       description="Find projects that fit your skills and availability."
-      backTo="/"
+      backTo="/welcome"
       backLabel="Back to welcome"
     >
       {accountName && (
