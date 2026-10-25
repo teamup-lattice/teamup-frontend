@@ -4,6 +4,7 @@ import {
   UserIcon,
 } from "../../components/Icons";
 import styles from "./HowItWorks.module.css";
+import useReveal from "./useReveal";
 
 const steps = [
   {
@@ -30,6 +31,10 @@ const steps = [
 ];
 
 function HowItWorks() {
+  const eyebrowReveal = useReveal();
+  const headingReveal = useReveal();
+  const stepsReveal = useReveal({ staggerChildren: true });
+
   return (
     <section
       id="how-it-works"
@@ -37,11 +42,17 @@ function HowItWorks() {
       aria-labelledby="how-it-works-title"
     >
       <div className={styles.container}>
-        <p className={styles.eyebrow}>From skills to shared work</p>
-        <h2 id="how-it-works-title" className={styles.heading}>
+        <p className={styles.eyebrow} ref={eyebrowReveal}>
+          From skills to shared work
+        </p>
+        <h2
+          id="how-it-works-title"
+          className={styles.heading}
+          ref={headingReveal}
+        >
           Your next project starts with you.
         </h2>
-        <div className={styles.steps}>
+        <div className={styles.steps} ref={stepsReveal}>
           {steps.map(({ number, title, description, Icon }) => (
             <article className={styles.step} key={number}>
               <div className={styles.stepHeader}>

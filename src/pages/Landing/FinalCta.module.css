@@ -10,6 +10,8 @@
 }
 
 .band {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   align-items: center;
@@ -20,7 +22,23 @@
   background: var(--color-purple-light);
 }
 
+.band::before {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 24px;
+  width: 200px;
+  height: 200px;
+  background: url("../../assets/teamup-mark.svg") center / contain no-repeat;
+  content: "";
+  opacity: 0.05;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 .copy {
+  position: relative;
+  z-index: 1;
   min-width: 0;
 }
 
@@ -81,17 +99,15 @@
   white-space: nowrap;
 }
 
-.getStarted:hover {
-  filter: brightness(0.92);
-}
-
 .getStarted:focus-visible {
   border-radius: var(--radius-control);
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
 .image {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 280px;
   height: 210px;
@@ -182,5 +198,22 @@
     width: 100%;
     height: auto;
     max-height: 200px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .getStarted {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .getStarted:hover {
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-navy) 16%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .getStarted:active {
+    transform: translateY(0) scale(0.98);
   }
 }

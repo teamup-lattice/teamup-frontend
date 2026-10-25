@@ -11,10 +11,10 @@ const values = [
   { label: "Show your contribution", Icon: FolderCheckIcon },
 ];
 
-function ValueStrip() {
+function ValueStrip({ revealRef }) {
   return (
     <section className={styles.strip} aria-label="TeamUp benefits">
-      <div className={styles.container}>
+      <div className={styles.container} ref={revealRef}>
         {values.map(({ label, Icon }) => (
           <div className={styles.item} key={label}>
             <Icon />

@@ -3,6 +3,7 @@ import {
   PaperclipIcon,
 } from "../../components/Icons";
 import styles from "./Workspace.module.css";
+import useReveal from "./useReveal";
 
 const tasks = [
   {
@@ -24,6 +25,11 @@ const tasks = [
 ];
 
 function Workspace() {
+  const eyebrowReveal = useReveal();
+  const headingReveal = useReveal();
+  const descriptionReveal = useReveal();
+  const cardsReveal = useReveal({ staggerChildren: true });
+
   return (
     <section
       id="build-together"
@@ -31,21 +37,27 @@ function Workspace() {
       aria-labelledby="workspace-title"
     >
       <div className={styles.container}>
-        <p className={styles.eyebrow}>Build together. Show your work.</p>
+        <p className={styles.eyebrow} ref={eyebrowReveal}>
+          Build together. Show your work.
+        </p>
         <div className={styles.intro}>
-          <h2 id="workspace-title" className={styles.heading}>
+          <h2
+            id="workspace-title"
+            className={styles.heading}
+            ref={headingReveal}
+          >
             Keep the work moving.
             <br />
             Keep a record of your part.
           </h2>
-          <p className={styles.description}>
+          <p className={styles.description} ref={descriptionReveal}>
             Bring tasks, milestones, updates and evidence into a shared
             workspace. Your dashboard keeps active work, invitations, blockers
             and upcoming tasks in view.
           </p>
         </div>
 
-        <div className={styles.cards}>
+        <div className={styles.cards} ref={cardsReveal}>
           <article
             className={styles.workspaceCard}
             aria-label="Illustrative project workspace"

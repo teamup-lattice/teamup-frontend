@@ -1,5 +1,6 @@
 import { ClipboardCheckIcon, ShieldCheckIcon } from "../../components/Icons";
 import styles from "./Commitment.module.css";
+import useReveal from "./useReveal";
 
 const commitmentDetails = [
   { label: "Role", value: "UI/UX Designer" },
@@ -9,17 +10,28 @@ const commitmentDetails = [
 ];
 
 function Commitment() {
+  const eyebrowReveal = useReveal();
+  const headingReveal = useReveal();
+  const descriptionReveal = useReveal();
+  const panelReveal = useReveal();
+
   return (
     <section className={styles.section} aria-labelledby="commitment-title">
       <div className={styles.container}>
         <div className={styles.copy}>
-          <p className={styles.eyebrow}>Clarity before commitment</p>
-          <h2 id="commitment-title" className={styles.heading}>
+          <p className={styles.eyebrow} ref={eyebrowReveal}>
+            Clarity before commitment
+          </p>
+          <h2
+            id="commitment-title"
+            className={styles.heading}
+            ref={headingReveal}
+          >
             Know what you&apos;re
             <br />
             saying yes to.
           </h2>
-          <p className={styles.description}>
+          <p className={styles.description} ref={descriptionReveal}>
             Review the role, weekly hours, duration and deadlines before
             joining. Workspace access begins only after you&apos;ve reviewed and
             saved your acceptance.
@@ -30,7 +42,11 @@ function Commitment() {
           </p>
         </div>
 
-        <div className={styles.panel} aria-hidden="true">
+        <div
+          className={styles.panel}
+          aria-hidden="true"
+          ref={panelReveal}
+        >
           <div className={styles.panelHeading}>
             <h3>Your commitment, made clear</h3>
             <ClipboardCheckIcon />

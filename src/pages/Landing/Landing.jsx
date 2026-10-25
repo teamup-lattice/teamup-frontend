@@ -10,8 +10,11 @@ import Support from "./Support";
 import FinalCta from "./FinalCta";
 import LandingFooter from "./LandingFooter";
 import styles from "./Landing.module.css";
+import useReveal from "./useReveal";
 
 function Landing() {
+  const valueStripReveal = useReveal({ staggerChildren: true });
+
   useEffect(() => {
     const previousTitle = document.title;
     document.title = "TeamUp: Learn a skill. Build with a team.";
@@ -40,7 +43,7 @@ function Landing() {
       <LandingHeader />
       <main>
         <Hero />
-        <ValueStrip />
+        <ValueStrip revealRef={valueStripReveal} />
         <HowItWorks />
         <Discover />
         <Commitment />

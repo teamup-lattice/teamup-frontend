@@ -1,14 +1,41 @@
 .section {
+  position: relative;
   scroll-margin-top: 96px;
   background: var(--color-navy);
   color: var(--color-card);
 }
 
+.section::after {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 160px;
+  height: 120px;
+  background: url("../../assets/teamup-mark.svg") center / contain no-repeat;
+  content: "";
+  opacity: 0.05;
+  pointer-events: none;
+}
+
 .container {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   padding: 96px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .progressTrack span {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 700ms ease-out;
+  }
+
+  .workspaceCard[data-revealed] .progressTrack span {
+    transform: scaleX(1);
+  }
 }
 
 .eyebrow {
@@ -212,8 +239,8 @@
 }
 
 .blocked {
-  background: var(--color-purple-light);
-  color: var(--color-purple);
+  background: var(--color-red-light);
+  color: var(--color-red);
 }
 
 .contributionColumn {
@@ -414,5 +441,4 @@
   .tabs::-webkit-scrollbar {
     display: none;
   }
-
 }

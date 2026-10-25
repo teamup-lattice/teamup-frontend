@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { SlidersIcon } from "../../components/Icons";
 import { GET_STARTED_PATH } from "./landingConfig";
 import styles from "./Discover.module.css";
+import useReveal from "./useReveal";
 
 const projects = [
   {
@@ -17,6 +18,11 @@ const projects = [
 ];
 
 function Discover() {
+  const eyebrowReveal = useReveal();
+  const headingReveal = useReveal();
+  const descriptionReveal = useReveal();
+  const projectsReveal = useReveal({ staggerChildren: true });
+
   return (
     <section
       id="discover-projects"
@@ -24,14 +30,20 @@ function Discover() {
       aria-labelledby="discover-title"
     >
       <div className={styles.container}>
-        <p className={styles.eyebrow}>Find your team</p>
+        <p className={styles.eyebrow} ref={eyebrowReveal}>
+          Find your team
+        </p>
         <div className={styles.intro}>
-          <h2 id="discover-title" className={styles.heading}>
+          <h2
+            id="discover-title"
+            className={styles.heading}
+            ref={headingReveal}
+          >
             A project that fits your skills.
             <br />
             A team you can build with.
           </h2>
-          <p className={styles.description}>
+          <p className={styles.description} ref={descriptionReveal}>
             Explore open projects by required skills, weekly hours and duration.
             Have an idea already? Find collaborators to help bring it to life.
           </p>
@@ -42,7 +54,7 @@ function Discover() {
           <span>or find collaborators for your own idea</span>
         </p>
 
-        <div className={styles.projectGrid}>
+        <div className={styles.projectGrid} ref={projectsReveal}>
           {projects.map((project) => (
             <article className={styles.projectCard} key={project.title}>
               <span className={styles.badge}>Open</span>

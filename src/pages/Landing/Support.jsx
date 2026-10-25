@@ -4,6 +4,7 @@ import {
   SlidersIcon,
 } from "../../components/Icons";
 import styles from "./Support.module.css";
+import useReveal from "./useReveal";
 
 const notificationOptions = [
   { label: "Deadline reminders", checked: true },
@@ -12,6 +13,11 @@ const notificationOptions = [
 ];
 
 function Support() {
+  const eyebrowReveal = useReveal();
+  const headingReveal = useReveal();
+  const descriptionReveal = useReveal();
+  const cardsReveal = useReveal({ staggerChildren: true });
+
   return (
     <section
       id="why-teamup"
@@ -19,18 +25,24 @@ function Support() {
       aria-labelledby="support-title"
     >
       <div className={styles.container}>
-        <p className={styles.eyebrow}>A little structure. A lot of support.</p>
-        <h2 id="support-title" className={styles.heading}>
+        <p className={styles.eyebrow} ref={eyebrowReveal}>
+          A little structure. A lot of support.
+        </p>
+        <h2
+          id="support-title"
+          className={styles.heading}
+          ref={headingReveal}
+        >
           Built for people,
           <br />
           not just project plans.
         </h2>
-        <p className={styles.description}>
+        <p className={styles.description} ref={descriptionReveal}>
           Stay in the loop, make room for honest check-ins, and choose how
           TeamUp fits into your week.
         </p>
 
-        <div className={styles.cards}>
+        <div className={styles.cards} ref={cardsReveal}>
           <article className={`${styles.card} ${styles.greyCard}`}>
             <BellIcon />
             <h3>Stay in the loop</h3>
