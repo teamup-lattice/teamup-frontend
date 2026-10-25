@@ -4,35 +4,40 @@
 
 .container {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 620px;
   align-items: center;
-  gap: var(--space-7);
-  width: min(100%, calc(var(--space-4) * 75));
+  gap: 72px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: calc(var(--space-7) + var(--space-5)) var(--space-5);
+  padding: 80px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
 }
 
 .copy {
-  max-width: calc(var(--space-7) * 11);
+  min-width: 0;
 }
 
 .eyebrow {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
   color: var(--color-purple);
-  font-size: var(--font-size-helper);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .heading {
-  display: flex;
-  flex-direction: column;
+  max-width: 520px;
   margin: 0;
   color: var(--color-navy);
-  font-size: clamp(var(--font-size-heading), 5vw, calc(var(--font-size-heading) * 2));
+  font-size: 64px;
   font-weight: 700;
-  line-height: var(--line-height-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.heading > span {
+  display: block;
 }
 
 .headingAccent {
@@ -40,35 +45,37 @@
 }
 
 .description {
-  max-width: calc(var(--space-7) * 10);
-  margin: var(--space-5) 0 0;
+  max-width: 548px;
+  margin: var(--space-6) 0 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-text);
+  font-size: 18px;
+  line-height: 30px;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: var(--space-5);
-  margin-top: var(--space-5);
+  margin-top: 40px;
 }
 
 .getStarted {
   display: inline-flex;
+  width: 180px;
+  height: 56px;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  min-height: var(--button-height);
-  padding: var(--space-2) var(--space-4);
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
   border: 1px solid var(--color-purple);
-  border-radius: var(--radius-control);
+  border-radius: 6px;
   background: var(--color-purple);
   color: var(--color-card);
   font-size: var(--font-size-label);
   font-weight: 600;
-  line-height: var(--line-height-text);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .getStarted:hover {
@@ -77,21 +84,27 @@
 
 .seeHow {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-purple);
+  color: var(--color-navy);
   font-size: var(--font-size-label);
   font-weight: 600;
+  text-decoration: none;
+}
+
+.seeHow:hover,
+.seeHow:focus-visible {
   text-decoration: underline;
 }
 
 .seeHow svg {
-  width: var(--icon-size);
-  height: var(--icon-size);
+  width: 16px;
+  height: 16px;
 }
 
 .note {
-  margin: var(--space-3) 0 0;
+  margin: 20px 0 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-helper);
   line-height: var(--line-height-text);
@@ -99,12 +112,9 @@
 
 .visual {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(var(--space-7) * 8);
-  overflow: hidden;
-  border-radius: var(--radius-card);
+  height: 480px;
+  padding: var(--space-4);
+  border-radius: 24px;
   background: var(--color-purple-light);
 }
 
@@ -112,59 +122,64 @@
   display: block;
   width: 100%;
   height: 100%;
+  border-radius: 16px;
   object-fit: cover;
 }
 
 .topChip,
 .bottomCard {
   position: absolute;
+  z-index: 1;
   display: flex;
   align-items: center;
-  border-radius: var(--radius-card);
   background: var(--color-card);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-navy) 12%, transparent);
 }
 
 .topChip {
-  top: var(--space-5);
-  left: var(--space-5);
+  top: 34px;
+  left: -20px;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) 20px;
+  border-radius: 12px;
   color: var(--color-navy);
   font-size: var(--font-size-helper);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .topChip svg {
+  width: 18px;
+  height: 18px;
   color: var(--color-purple);
 }
 
 .bottomCard {
-  right: var(--space-5);
-  bottom: var(--space-5);
-  left: var(--space-5);
+  right: 72px;
+  bottom: 16px;
+  left: 28px;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: 18px 20px;
+  border-radius: 16px;
 }
 
 .avatars {
   display: flex;
   flex-shrink: 0;
-  padding-left: var(--space-1);
+  gap: var(--space-2);
 }
 
 .avatars span {
   display: inline-flex;
+  width: 40px;
+  height: 40px;
   align-items: center;
   justify-content: center;
-  width: var(--space-6);
-  height: var(--space-6);
-  margin-left: calc(var(--space-1) * -1);
-  border: 2px solid var(--color-card);
   border-radius: 50%;
   background: var(--color-purple-light);
   color: var(--color-purple);
-  font-size: var(--font-size-helper);
-  font-weight: 700;
+  font-size: var(--font-size-label);
+  font-weight: 600;
 }
 
 .cardTitle,
@@ -174,8 +189,8 @@
 
 .cardTitle {
   color: var(--color-navy);
-  font-size: var(--font-size-label);
-  font-weight: 700;
+  font-size: var(--font-size-body);
+  font-weight: 600;
 }
 
 .cardText {
@@ -191,64 +206,124 @@
   outline-offset: 3px;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1199px) {
   .container {
-    gap: var(--space-5);
-    padding: var(--space-7) var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-7);
   }
 
-  .heading {
-    font-size: clamp(var(--font-size-heading), 5vw, calc(var(--font-size-heading) * 1.6));
+  .copy {
+    max-width: 700px;
   }
 
   .visual {
-    min-height: calc(var(--space-7) * 6);
+    width: min(100%, 620px);
+    justify-self: center;
   }
 }
 
 @media (max-width: 833px) {
   .container {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-  }
-
-  .copy {
-    max-width: calc(var(--space-7) * 14);
+    gap: 40px;
+    padding: 56px 20px;
   }
 
   .heading {
-    font-size: clamp(var(--font-size-heading), 7vw, calc(var(--font-size-heading) * 1.6));
+    font-size: 40px;
+    line-height: 1.1;
   }
 
-  .visual {
-    min-height: calc(var(--space-7) * 7);
-  }
-}
-
-@media (max-width: 390px) {
-  .container {
-    padding: var(--space-6) var(--space-4);
+  .description {
+    font-size: 16px;
+    line-height: 1.6;
   }
 
   .actions {
-    gap: var(--space-3);
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .getStarted {
+    width: auto;
+    min-width: 0;
+    min-height: 48px;
+    height: auto;
+    padding: 12px 24px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .seeHow {
+    font-size: 14px;
   }
 
   .visual {
-    min-height: calc(var(--space-7) * 5);
+    width: 100%;
+    height: auto;
+    min-height: 340px;
+    padding: 12px;
+  }
+
+  .heroImage {
+    height: 264px;
+    margin-top: 64px;
   }
 
   .topChip {
-    top: var(--space-3);
-    left: var(--space-3);
-    padding: var(--space-2) var(--space-3);
+    top: 16px;
+    left: -8px;
+    gap: var(--space-2);
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .topChip svg {
+    width: 16px;
+    height: 16px;
   }
 
   .bottomCard {
-    right: var(--space-3);
-    bottom: var(--space-3);
-    left: var(--space-3);
-    gap: var(--space-2);
-    padding: var(--space-3);
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .avatars {
+    gap: 6px;
+  }
+
+  .avatars span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cardTitle {
+    font-size: 14px;
+  }
+
+  .bottomCard > div:last-child {
+    min-width: 0;
+  }
+
+  .cardText {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 374px) {
+  .heroImage {
+    height: 230px;
+  }
+
+  .bottomCard {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .avatars {
+    gap: 4px;
   }
 }

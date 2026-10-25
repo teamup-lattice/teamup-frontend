@@ -1,6 +1,6 @@
 .landingPage {
   min-height: 100vh;
-  background: var(--color-canvas);
+  background: var(--color-card);
   color: var(--color-navy);
   font-family: var(--font-family);
 }

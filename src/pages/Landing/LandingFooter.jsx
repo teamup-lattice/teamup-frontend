@@ -6,7 +6,7 @@ function LandingFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        <div className={styles.topRow}>
+        <div className={styles.mainRow}>
           <Link to="/" className={styles.logo} aria-label="TeamUp home">
             <Logo />
           </Link>
@@ -17,11 +17,9 @@ function LandingFooter() {
           </nav>
           <p className={styles.tagline}>Learn a skill. Build with a team.</p>
         </div>
-        <div className={styles.bottomRow}>
-          <span>TeamUp</span>
-          <span>Real projects. Clear commitments. Shared progress.</span>
-          <span>Copyright 2026</span>
-        </div>
+        <p className={styles.copyright}>
+          © {new Date().getFullYear()} TeamUp
+        </p>
       </div>
     </footer>
   );

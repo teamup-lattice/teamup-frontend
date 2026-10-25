@@ -7,16 +7,14 @@ function LandingHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <div className={styles.left}>
-          <Link to="/" className={styles.logo} aria-label="TeamUp home">
-            <Logo />
-          </Link>
-          <nav className={styles.navigation} aria-label="Main">
-            <a href="#how-it-works">How it works</a>
-            <a href="#discover-projects">Discover projects</a>
-            <a href="#why-teamup">Why TeamUp</a>
-          </nav>
-        </div>
+        <Link to="/" className={styles.logo} aria-label="TeamUp home">
+          <Logo />
+        </Link>
+        <nav className={styles.navigation} aria-label="Main">
+          <a href="#how-it-works">How it works</a>
+          <a href="#discover-projects">Discover projects</a>
+          <a href="#why-teamup">Why TeamUp</a>
+        </nav>
         <div className={styles.actions}>
           <Link to={SIGN_IN_PATH} className={styles.signIn}>
             Sign in

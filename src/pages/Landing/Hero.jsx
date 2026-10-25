@@ -12,7 +12,11 @@ function Hero() {
           <p className={styles.eyebrow}>Make something together</p>
           <h1 id="landing-hero-title" className={styles.heading}>
             <span>Learn a skill.</span>
-            <span className={styles.headingAccent}>Build with a team.</span>
+            <span className={styles.headingAccent}>
+              Build with
+              <br />
+              a team.
+            </span>
           </h1>
           <p className={styles.description}>
             Turn what you know into something real. Find a project, agree on

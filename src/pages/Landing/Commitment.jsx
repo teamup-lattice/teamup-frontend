@@ -10,10 +10,7 @@ const commitmentDetails = [
 
 function Commitment() {
   return (
-    <section
-      className={styles.section}
-      aria-labelledby="commitment-title"
-    >
+    <section className={styles.section} aria-labelledby="commitment-title">
       <div className={styles.container}>
         <div className={styles.copy}>
           <p className={styles.eyebrow}>Clarity before commitment</p>
