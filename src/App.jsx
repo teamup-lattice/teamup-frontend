@@ -11,11 +11,13 @@ import Workspace from "./pages/Workspace";
 import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
+import Landing from "./pages/Landing/Landing";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Welcome />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/welcome" element={<Welcome />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/profile/setup" element={<RequiredProfile />} />

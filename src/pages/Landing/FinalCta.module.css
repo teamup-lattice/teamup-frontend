@@ -1,0 +1,219 @@
+.section {
+  background: var(--color-card);
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(var(--space-5), calc(9.383vw - 12.6px), 100px) 80px;
+}
+
+.band {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: center;
+  gap: 40px;
+  min-height: 290px;
+  padding: 40px var(--space-7);
+  border-radius: 24px;
+  background: var(--color-purple-light);
+}
+
+.band::before {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 24px;
+  width: 200px;
+  height: 200px;
+  background: url("../../assets/teamup-mark.svg") center / contain no-repeat;
+  content: "";
+  opacity: 0.05;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.description {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: var(--space-5);
+}
+
+.actions > span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.getStarted {
+  display: inline-flex;
+  width: 180px;
+  height: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--color-purple);
+  border-radius: 6px;
+  background: var(--color-purple);
+  color: var(--color-card);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.getStarted:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 280px;
+  height: 210px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+@media (max-width: 1199px) {
+  .heading {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .band {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .image {
+    width: 100%;
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 599px) {
+  .container {
+    padding-bottom: 64px;
+  }
+
+  .band {
+    gap: var(--space-5);
+    padding: 28px var(--space-5);
+  }
+
+  .heading {
+    font-size: 28px;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .image {
+    height: 210px;
+  }
+}
+
+@media (max-width: 833px) {
+  .container {
+    padding: 0 20px 56px;
+  }
+
+  .band {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 28px 24px;
+  }
+
+  .heading {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .description {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .getStarted {
+    width: auto;
+    min-width: 0;
+    min-height: 48px;
+    height: auto;
+    padding: 12px 24px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .image {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .getStarted {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .getStarted:hover {
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-navy) 16%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .getStarted:active {
+    transform: translateY(0) scale(0.98);
+  }
+}

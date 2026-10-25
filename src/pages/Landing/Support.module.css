@@ -1,0 +1,240 @@
+.section {
+  scroll-margin-top: 96px;
+  background: var(--color-card);
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 96px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.description {
+  max-width: 760px;
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: 1.65;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+.card {
+  display: flex;
+  min-width: 0;
+  min-height: 512px;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: 28px;
+  border-radius: 16px;
+}
+
+.card > svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-purple);
+}
+
+.greyCard {
+  background: var(--color-canvas);
+}
+
+.purpleCard {
+  background: var(--color-purple-light);
+}
+
+.card h3 {
+  margin: 20px 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.card > p:not(.footnote) {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: 1.75;
+}
+
+.mockStack,
+.checkInCard,
+.notificationCard {
+  width: 100%;
+  margin-top: 28px;
+}
+
+.mockStack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.miniCard,
+.checkInCard,
+.notificationCard {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  background: var(--color-card);
+}
+
+.miniCard span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-purple);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.miniCard p,
+.checkInCard p {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.checkInCard {
+  padding: var(--space-4);
+}
+
+.checkInCard > span {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-purple);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.checkInCard strong {
+  display: block;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.checkInCard p {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.footnote {
+  margin: var(--space-5) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.notificationCard {
+  display: grid;
+  gap: var(--space-2);
+  padding: 20px;
+}
+
+.notificationCard strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.option {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+}
+
+.option > span {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 4px;
+  color: var(--color-card);
+  font-size: var(--font-size-helper);
+  line-height: 1;
+}
+
+.option > .checked {
+  border-color: var(--color-purple);
+  background: var(--color-purple);
+}
+
+@media (max-width: 833px) {
+  .container {
+    padding: 56px 20px;
+  }
+
+  .heading {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .description {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .card > p:not(.footnote) {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .card {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card:hover {
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-navy) 12%, transparent);
+    transform: translateY(-4px);
+  }
+}

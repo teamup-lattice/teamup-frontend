@@ -1,0 +1,125 @@
+.footer {
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-canvas);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1440px;
+  min-height: 115px;
+  margin: 0 auto;
+  padding: 40px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+.mainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.logo {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.logo img {
+  display: block;
+  width: 176px;
+  height: auto;
+}
+
+.navigation {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: var(--space-6);
+}
+
+.navigation a {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.navigation a:hover {
+  color: var(--color-purple);
+  text-decoration: underline;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.copyright {
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 400;
+}
+
+.logo:focus-visible,
+.navigation a:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1023px) {
+  .mainRow {
+    gap: var(--space-3);
+  }
+
+  .navigation {
+    flex: initial;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-6);
+  }
+}
+
+@media (max-width: 833px) {
+  .container {
+    min-height: 0;
+    gap: 16px;
+    padding: 24px 20px;
+  }
+
+  .mainRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .navigation {
+    justify-content: flex-start;
+    gap: 12px 20px;
+  }
+
+  .copyright {
+    width: 100%;
+    margin-top: 0;
+    padding-top: 24px;
+  }
+}
+
+@media (max-width: 599px) {
+  .logo img {
+    width: auto;
+    height: 28px;
+  }
+
+  .tagline {
+    white-space: normal;
+  }
+}

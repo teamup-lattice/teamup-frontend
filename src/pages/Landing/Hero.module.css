@@ -1,0 +1,487 @@
+.hero {
+  background: var(--color-canvas);
+}
+
+.container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 620px;
+  align-items: center;
+  gap: 72px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 80px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+.copy {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-5);
+  color: var(--color-purple);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heading {
+  max-width: 520px;
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.heading > span {
+  display: block;
+}
+
+.headingAccent {
+  color: var(--color-purple);
+}
+
+.description {
+  max-width: 548px;
+  margin: var(--space-6) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  line-height: 30px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: 40px;
+}
+
+.getStarted {
+  display: inline-flex;
+  width: 180px;
+  height: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
+  border: 1px solid var(--color-purple);
+  border-radius: 6px;
+  background: var(--color-purple);
+  color: var(--color-card);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.seeHow {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.seeHow:hover,
+.seeHow:focus-visible {
+  text-decoration: underline;
+}
+
+.seeHow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.note {
+  margin: 20px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.visual {
+  position: relative;
+  height: 480px;
+  padding: var(--space-4);
+  border-radius: 24px;
+  background: var(--color-purple-light);
+}
+
+.heroImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.topChip,
+.bottomCard {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  background: var(--color-card);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-navy) 12%, transparent);
+}
+
+.topChip {
+  top: 34px;
+  left: -20px;
+  gap: var(--space-2);
+  padding: var(--space-4) 20px;
+  border-radius: 12px;
+  color: var(--color-navy);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.topChip svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-purple);
+}
+
+.chipContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.bottomCard {
+  right: 72px;
+  bottom: 16px;
+  left: 28px;
+  gap: var(--space-4);
+  padding: 18px 20px;
+  border-radius: 16px;
+}
+
+.cardContent {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.avatars {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+.avatars span {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.cardTitle,
+.cardText {
+  margin: 0;
+}
+
+.cardTitle {
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.cardText {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.getStarted:focus-visible,
+.seeHow:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1199px) {
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+
+  .copy {
+    max-width: 700px;
+  }
+
+  .visual {
+    width: min(100%, 620px);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 833px) {
+  .container {
+    gap: 40px;
+    padding: 56px 20px;
+  }
+
+  .heading {
+    font-size: 40px;
+    line-height: 1.1;
+  }
+
+  .description {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .getStarted {
+    width: auto;
+    min-width: 0;
+    min-height: 48px;
+    height: auto;
+    padding: 12px 24px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .seeHow {
+    font-size: 14px;
+  }
+
+  .visual {
+    width: 100%;
+    height: auto;
+    min-height: 340px;
+    padding: 12px;
+  }
+
+  .heroImage {
+    height: 264px;
+    margin-top: 64px;
+  }
+
+  .topChip {
+    top: 16px;
+    left: -8px;
+    gap: var(--space-2);
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .topChip svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bottomCard {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .avatars {
+    gap: 6px;
+  }
+
+  .avatars span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cardTitle {
+    font-size: 14px;
+  }
+
+  .bottomCard > div:last-child {
+    min-width: 0;
+  }
+
+  .cardText {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 374px) {
+  .heroImage {
+    height: 230px;
+  }
+
+  .bottomCard {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .avatars {
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes heroFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes heroPanelEnter {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes chipIdle {
+    0% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-4px);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes cardIdle {
+    0% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-4px);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  .copy > .eyebrow,
+  .heading,
+  .description,
+  .actions,
+  .note {
+    animation: heroFadeUp 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .heading {
+    animation-delay: 80ms;
+  }
+
+  .description {
+    animation-delay: 160ms;
+  }
+
+  .actions {
+    animation-delay: 240ms;
+  }
+
+  .note {
+    animation-delay: 320ms;
+  }
+
+  .visual {
+    animation: heroPanelEnter 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .topChip,
+  .bottomCard {
+    animation: heroFadeUp 500ms cubic-bezier(0.22, 1, 0.36, 1) 400ms both;
+  }
+
+  .topChip .chipContent {
+    animation-name: chipIdle;
+    animation-duration: 6s;
+    animation-timing-function: ease-in-out;
+    animation-delay: 1s;
+    animation-iteration-count: infinite;
+  }
+
+  .bottomCard .cardContent {
+    animation: cardIdle 6s ease-in-out 1.4s infinite;
+  }
+
+  .visual:not([data-in-view="true"]) .chipContent,
+  .visual:not([data-in-view="true"]) .cardContent {
+    animation-play-state: paused;
+  }
+
+  .getStarted {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .getStarted:hover {
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-navy) 16%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .getStarted:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .getStarted,
+  .seeHow {
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .getStarted:hover {
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-navy) 16%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .getStarted:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .seeHow svg {
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .seeHow:hover svg {
+    transform: translateY(3px);
+  }
+
+  .getStarted:focus-visible,
+  .seeHow:focus-visible {
+    outline: 2px solid var(--color-purple);
+    outline-offset: 2px;
+  }
+}

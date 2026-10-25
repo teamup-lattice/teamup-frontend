@@ -72,7 +72,7 @@ function Login() {
       <AuthLayout
         title="Welcome back"
         description="Sign in to pick up where you left off."
-        backTo="/"
+        backTo="/welcome"
         backLabel={
           <>
             <span className={styles.desktopBackLabel}>Back to welcome</span>
@@ -105,7 +105,7 @@ function Login() {
     <AuthLayout
       title="Welcome back"
       description="Sign in to pick up where you left off."
-      backTo="/"
+      backTo="/welcome"
       backLabel={
         <>
           <span className={styles.desktopBackLabel}>Back to welcome</span>
