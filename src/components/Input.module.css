@@ -12,6 +12,12 @@
   line-height: var(--line-height-text);
 }
 
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .required {
   color: var(--color-red);
 }
