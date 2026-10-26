@@ -1,13 +1,16 @@
-export function saveProfile(profile) {
-  void profile;
-  return new Promise((resolve, reject) => {
-    window.setTimeout(() => {
-      if (new URLSearchParams(window.location.search).get("save") === "fail") {
-        reject(new Error("Mock profile save failed."));
-        return;
-      }
+import { api } from "./api";
 
-      resolve();
-    }, 800);
+export const getSkills = () => api.get("/api/profile/skills");
+
+export function saveProfile(values) {
+  // Role is omitted because the backend does not have a field for it yet.
+  return api.put("/api/profile/users/me/onboarding", {
+    weeklyAvailabilityHours: Number(values.weeklyAvailability),
+    goals: values.goals.trim(),
+    preferredProjectDurationWeeks: parseInt(values.duration, 10),
+    skills: values.skills.map((skillId) => ({
+      skillId,
+      level: values.skillLevel.toUpperCase(),
+    })),
   });
 }

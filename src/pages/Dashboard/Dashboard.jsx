@@ -4,7 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import listFilterIcon from "../../assets/list-filter.svg";
 import dashboardData from "../../data/dashboardData";
-import { getMyProfile, getMyProjects } from "../../services/dashboardService";
+import { getDashboard } from "../../services/dashboardService";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
 import NeedsAttentionCard from "./NeedsAttentionCard";
@@ -21,13 +21,21 @@ function Dashboard() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([getMyProfile(), getMyProjects()])
-      .then(([profileData, projectsData]) => {
+    getDashboard()
+      .then((result) => {
         if (!isMounted) return;
 
-        setProfile(profileData.user);
-        const projects = projectsData.projects ?? [];
-        setStatus(projects.length === 0 ? "empty" : "ready");
+        if (result.view === "ONBOARDING") {
+          navigate("/profile/setup", { replace: true });
+          return;
+        }
+
+        setProfile(result.user);
+        if (result.view === "PROJECTS") {
+          setStatus("ready");
+        } else if (result.view === "DISCOVERY") {
+          setStatus("empty");
+        }
       })
       .catch((error) => {
         console.error("Failed to load dashboard data:", error);
@@ -37,7 +45,7 @@ function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [navigate]);
 
   const date = new Intl.DateTimeFormat("en-GB", {
     weekday: "long",

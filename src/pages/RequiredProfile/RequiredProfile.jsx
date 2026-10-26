@@ -7,7 +7,7 @@ import Checkbox from "../../components/Checkbox";
 import Input from "../../components/Input";
 import Select from "../../components/Select";
 import { getMyProfile } from "../../services/dashboardService";
-import { saveProfile } from "../../services/profileService";
+import { getSkills, saveProfile } from "../../services/profileService";
 import styles from "./RequiredProfile.module.css";
 
 const roles = [
@@ -15,12 +15,6 @@ const roles = [
   { value: "UI/UX Designer", label: "UI/UX Designer" },
   { value: "Frontend Developer", label: "Frontend Developer" },
   { value: "Backend Developer", label: "Backend Developer" },
-];
-
-const skills = [
-  "Product planning",
-  "User research",
-  "Product coordination",
 ];
 
 const skillLevels = [
@@ -59,6 +53,8 @@ function formatList(items) {
 function RequiredProfile() {
   const navigate = useNavigate();
   const [accountName, setAccountName] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [skillsLoadFailed, setSkillsLoadFailed] = useState(false);
   const [values, setValues] = useState({
     role: "",
     skills: [],
@@ -78,6 +74,14 @@ function RequiredProfile() {
 
   useEffect(() => {
     let isMounted = true;
+
+    getSkills()
+      .then((result) => {
+        if (isMounted) setSkills(result.skills);
+      })
+      .catch(() => {
+        if (isMounted) setSkillsLoadFailed(true);
+      });
 
     getMyProfile()
       .then((profileData) => {
@@ -100,11 +104,14 @@ function RequiredProfile() {
 
   function handleSkillChange(event) {
     const { checked, value } = event.target;
+    const skillId = skills.find((skill) => String(skill.id) === value)?.id;
+    if (skillId === undefined) return;
+
     setValues((current) => ({
       ...current,
       skills: checked
-        ? [...current.skills, value]
-        : current.skills.filter((skill) => skill !== value),
+        ? [...current.skills, skillId]
+        : current.skills.filter((selectedSkill) => selectedSkill !== skillId),
     }));
     setErrors((current) => ({ ...current, skills: undefined }));
   }
@@ -164,6 +171,12 @@ function RequiredProfile() {
         </p>
       )}
 
+      {skillsLoadFailed && (
+        <Alert variant="error" title="Skills could not load">
+          Skills could not be loaded. Please try again later.
+        </Alert>
+      )}
+
       {missingFields.length > 0 && (
         <Alert
           variant="error"
@@ -209,10 +222,10 @@ function RequiredProfile() {
           <div className={styles.skillsList}>
             {skills.map((skill) => (
               <Checkbox
-                key={skill}
-                label={skill}
-                value={skill}
-                checked={values.skills.includes(skill)}
+                key={skill.id}
+                label={skill.name}
+                value={skill.id}
+                checked={values.skills.includes(skill.id)}
                 onChange={handleSkillChange}
               />
             ))}
