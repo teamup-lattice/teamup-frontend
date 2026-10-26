@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
+import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile";
 import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
@@ -20,6 +22,8 @@ function App() {
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

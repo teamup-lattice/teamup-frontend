@@ -34,6 +34,23 @@ export async function signIn({ email, password }) {
   }
 }
 
+export async function forgotPassword({ email }) {
+  // Placeholder endpoint until the backend contract is confirmed.
+  return api.post("/api/auth/forgot-password", { email });
+}
+
+export async function resetPassword({ token, password }) {
+  try {
+    // Placeholder endpoint until the backend contract is confirmed.
+    return await api.post("/api/auth/reset-password", { token, password });
+  } catch (error) {
+    if ([400, 401, 404, 410].includes(error.status)) {
+      error.code = "INVALID_TOKEN";
+    }
+    throw error;
+  }
+}
+
 export async function signOut() {
   try {
     await api.post("/api/auth/logout");
