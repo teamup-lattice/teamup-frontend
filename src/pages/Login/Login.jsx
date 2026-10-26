@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
@@ -149,6 +149,11 @@ function Login() {
           onChange={handleChange}
           error={errors.password}
           disabled={isLoading}
+          labelAction={
+            <Link to="/forgot-password" className={styles.forgotLink}>
+              Forgot password?
+            </Link>
+          }
         />
 
         <Button
