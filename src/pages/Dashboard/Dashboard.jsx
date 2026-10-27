@@ -89,6 +89,8 @@ function Dashboard() {
           setStatus("ready");
         } else if (result.view === "DISCOVERY") {
           setStatus("empty");
+        } else {
+          setStatus("error");
         }
       })
       .catch((error) => {
@@ -159,7 +161,8 @@ function Dashboard() {
             <div className={styles.columns}>
               <div className={styles.column}>
                 <Alert variant="error" title="Dashboard could not refresh">
-                  Refresh failed. Showing your last saved projects.
+                  We could not load your dashboard. Check your connection and
+                  try again.
                 </Alert>
                 <Button onClick={() => window.location.reload()}>
                   Retry refresh
