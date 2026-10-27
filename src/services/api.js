@@ -36,6 +36,19 @@ async function request(method, path, body) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    // Session expired. Replace with refresh-token retry once the backend cookie is fixed.
+    if (
+      response.status === 401 &&
+      token &&
+      !path.startsWith("/api/auth/login") &&
+      !path.startsWith("/api/auth/signup")
+    ) {
+      clearToken();
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+    }
+
     const error = new Error(data.message || "Something went wrong");
     error.status = response.status;
     throw error;

@@ -93,7 +93,7 @@ function Login() {
         </p>
         <Button
           fullWidth
-          onClick={() => navigate(complete ? "/projects" : "/profile/setup")}
+          onClick={() => navigate(complete ? "/dashboard" : "/profile/setup")}
         >
           {complete ? "Open dashboard" : "Continue required profile"}
         </Button>

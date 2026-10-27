@@ -3,19 +3,72 @@ import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import listFilterIcon from "../../assets/list-filter.svg";
-import dashboardData from "../../data/dashboardData";
 import { getDashboard } from "../../services/dashboardService";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
-import NeedsAttentionCard from "./NeedsAttentionCard";
 import needsAttentionStyles from "./NeedsAttentionCard.module.css";
-import PendingInvitationCard from "./PendingInvitationCard";
-import UpcomingTasks from "./UpcomingTasks";
 import styles from "./Dashboard.module.css";
+
+function buildActiveProject(dashboard) {
+  if (!dashboard) return null;
+
+  const project =
+    dashboard.ownedProjects[0] ?? dashboard.memberProjects[0];
+  if (!project) return null;
+
+  const membership = project.memberships?.find(
+    (item) => item.userId === dashboard.user.id,
+  );
+  const start = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(project.startDate));
+  const end = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(project.targetEndDate));
+
+  return {
+    title: project.title,
+    status: project.status
+      .replaceAll("_", " ")
+      .toLowerCase()
+      .replace(/^./, (letter) => letter.toUpperCase()),
+    role: `${membership?.accessRole === "OWNER" ? "Owner" : "Member"}${
+      membership?.role?.title ? ` · ${membership.role.title}` : ""
+    }`,
+    hoursPerWeek:
+      membership?.committedHoursPerWeek ?? project.weeklyHours,
+    dates: `${start} to ${end} · ${project.durationWeeks} weeks`,
+    teammates: (project.memberships ?? [])
+      .filter((item) => item.status === "ACTIVE")
+      .map((item) => item.user.name),
+    tasksDone: project.taskCounts?.COMPLETED ?? 0,
+    tasksTotal: Object.entries(project.taskCounts ?? {}).reduce(
+      (total, [status, count]) =>
+        status === "CANCELLED" ? total : total + count,
+      0,
+    ),
+    milestones: (project.milestones ?? []).map((milestone) => ({
+      name: milestone.title,
+      due: new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+      }).format(new Date(milestone.dueDate)),
+      done:
+        milestone.status === "COMPLETED"
+          ? milestone._count?.tasks ?? 0
+          : 0,
+      total: milestone._count?.tasks ?? 0,
+    })),
+  };
+}
 
 function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -30,6 +83,7 @@ function Dashboard() {
           return;
         }
 
+        setDashboard(result);
         setProfile(result.user);
         if (result.view === "PROJECTS") {
           setStatus("ready");
@@ -53,6 +107,7 @@ function Dashboard() {
     month: "long",
     year: "numeric",
   }).format(new Date());
+  const activeProject = buildActiveProject(dashboard);
 
   return (
     <div className={styles.dashboard}>
@@ -130,22 +185,14 @@ function Dashboard() {
           </div>
           <div className={styles.columns}>
             <div className={styles.column}>
-              <ActiveProjectCard activeProject={dashboardData.activeProject} />
-              <section className={styles.section}>
-                <h2 className={styles.heading}>Pending invitation</h2>
-                <PendingInvitationCard
-                  pendingInvitation={dashboardData.pendingInvitation}
-                />
-              </section>
+              {activeProject && (
+                <ActiveProjectCard activeProject={activeProject} />
+              )}
+              {/* TODO: Re-enable when the backend returns the pending invitation shape. */}
             </div>
             <div className={styles.column}>
-              <section className={styles.section}>
-                <h2 className={styles.heading}>Needs attention</h2>
-                <NeedsAttentionCard
-                  needsAttention={dashboardData.needsAttention}
-                />
-              </section>
-              <UpcomingTasks tasks={dashboardData.upcomingTasks} />
+              {/* TODO: Re-enable when the backend returns the attentionTasks shape. */}
+              {/* TODO: Re-enable when the backend returns the upcomingTasks shape. */}
             </div>
           </div>
         </>
