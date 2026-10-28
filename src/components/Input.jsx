@@ -8,6 +8,7 @@ function Input({
   error,
   required = false,
   multiline = false,
+  labelAction,
   id,
   ...rest
 }) {
@@ -35,10 +36,13 @@ function Input({
 
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor={inputId}>
-        {label}
-        {required && <span className={styles.required}> *</span>}
-      </label>
+      <div className={styles.labelRow}>
+        <label className={styles.label} htmlFor={inputId}>
+          {label}
+          {required && <span className={styles.required}> *</span>}
+        </label>
+        {labelAction}
+      </div>
 
       <div className={styles.control}>
         {multiline ? (

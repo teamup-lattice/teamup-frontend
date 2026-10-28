@@ -25,3 +25,15 @@
     display: inline;
   }
 }
+
+.forgotLink {
+  font-size: var(--font-size-helper);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.forgotLink:hover {
+  color: var(--color-purple);
+  text-decoration: underline;
+}
