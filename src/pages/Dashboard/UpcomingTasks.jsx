@@ -7,7 +7,7 @@ function UpcomingTasks({ tasks }) {
       <h2 className={styles.heading}>Upcoming tasks</h2>
       <ul className={styles.list}>
         {tasks.map((task) => (
-          <li className={styles.task} key={task.title}>
+          <li className={styles.task} key={task.id}>
             <div className={styles.taskDetails}>
               <strong className={styles.title}>{task.title}</strong>
               <span className={styles.meta}>

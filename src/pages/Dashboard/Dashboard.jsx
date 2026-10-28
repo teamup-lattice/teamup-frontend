@@ -6,36 +6,64 @@ import listFilterIcon from "../../assets/list-filter.svg";
 import { getDashboard } from "../../services/dashboardService";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
+import NeedsAttentionCard from "./NeedsAttentionCard";
 import needsAttentionStyles from "./NeedsAttentionCard.module.css";
+import PendingInvitationCard from "./PendingInvitationCard";
 import styles from "./Dashboard.module.css";
+import UpcomingTasks from "./UpcomingTasks";
+
+function formatDate(iso, options) {
+  if (!iso) return "";
+
+  try {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
+  } catch {
+    return "";
+  }
+}
+
+function readable(status) {
+  return status
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function plural(n, word) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
 
 function buildActiveProject(dashboard) {
   if (!dashboard) return null;
 
   const project =
-    dashboard.ownedProjects[0] ?? dashboard.memberProjects[0];
+    dashboard.ownedProjects?.[0] ?? dashboard.memberProjects?.[0];
   if (!project) return null;
 
   const membership = project.memberships?.find(
     (item) => item.userId === dashboard.user.id,
   );
-  const start = new Intl.DateTimeFormat("en-GB", {
+  const start = formatDate(project.startDate, {
     day: "numeric",
     month: "short",
-  }).format(new Date(project.startDate));
-  const end = new Intl.DateTimeFormat("en-GB", {
+  });
+  const end = formatDate(project.targetEndDate, {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date(project.targetEndDate));
+  });
 
   return {
     title: project.title,
-    status: project.status
-      .replaceAll("_", " ")
-      .toLowerCase()
-      .replace(/^./, (letter) => letter.toUpperCase()),
-    role: `${membership?.accessRole === "OWNER" ? "Owner" : "Member"}${
+    status: readable(project.status),
+    role: `${
+      project.ownerId === dashboard.user.id ||
+      membership?.accessRole === "OWNER"
+        ? "Owner"
+        : "Member"
+    }${
       membership?.role?.title ? ` · ${membership.role.title}` : ""
     }`,
     hoursPerWeek:
@@ -52,16 +80,68 @@ function buildActiveProject(dashboard) {
     ),
     milestones: (project.milestones ?? []).map((milestone) => ({
       name: milestone.title,
-      due: new Intl.DateTimeFormat("en-GB", {
+      due: formatDate(milestone.dueDate, {
         day: "2-digit",
         month: "short",
-      }).format(new Date(milestone.dueDate)),
-      done:
-        milestone.status === "COMPLETED"
-          ? milestone._count?.tasks ?? 0
-          : 0,
-      total: milestone._count?.tasks ?? 0,
+      }),
+      done: milestone.completedTaskCount ?? 0,
+      total: milestone.taskCount ?? milestone._count?.tasks ?? 0,
     })),
+  };
+}
+
+function buildNeedsAttention(task) {
+  const statuses = [];
+  if (task.status === "BLOCKED") statuses.push("Blocked");
+  if (task.daysOverdue > 0) {
+    statuses.push(`Overdue ${plural(task.daysOverdue, "day")}`);
+  }
+  if (statuses.length === 0) statuses.push(readable(task.status));
+
+  const dueDate = task.dueDate
+    ? `Due ${formatDate(task.dueDate, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })}`
+    : "No due date";
+
+  return {
+    title: task.title,
+    status: statuses,
+    owner: `${task.assignee?.user?.name ?? "Unassigned"}${
+      task.assignee?.role?.title ? ` · ${task.assignee.role.title}` : ""
+    }`,
+    due: `${dueDate}${
+      task.milestone ? ` · ${task.milestone.title}` : ""
+    }`,
+    blockerNote: task.blockerNote,
+  };
+}
+
+function buildUpcomingTask(task) {
+  return {
+    id: task.id,
+    title: task.title,
+    owner: task.assignee?.user?.name ?? "Unassigned",
+    due:
+      formatDate(task.dueDate, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }) || "not set",
+    status: readable(task.status),
+  };
+}
+
+function buildInvitation(inv) {
+  return {
+    id: inv.id,
+    title: inv.project.title,
+    description: inv.project.description,
+    role: inv.role.title,
+    hoursPerWeek: inv.proposedHoursPerWeek ?? inv.role.hoursPerWeek,
+    weeks: inv.project.durationWeeks,
   };
 }
 
@@ -110,6 +190,9 @@ function Dashboard() {
     year: "numeric",
   }).format(new Date());
   const activeProject = buildActiveProject(dashboard);
+  const pendingInvitations = dashboard?.pendingInvitations ?? [];
+  const attentionTasks = dashboard?.attentionTasks ?? [];
+  const upcomingTasks = dashboard?.upcomingTasks ?? [];
 
   return (
     <div className={styles.dashboard}>
@@ -191,11 +274,33 @@ function Dashboard() {
               {activeProject && (
                 <ActiveProjectCard activeProject={activeProject} />
               )}
-              {/* TODO: Re-enable when the backend returns the pending invitation shape. */}
+              {pendingInvitations.length > 0 && (
+                <section className={styles.column}>
+                  <h2 className={styles.heading}>Pending invitation</h2>
+                  {pendingInvitations.map((inv) => (
+                    <PendingInvitationCard
+                      key={inv.id}
+                      pendingInvitation={buildInvitation(inv)}
+                    />
+                  ))}
+                </section>
+              )}
             </div>
             <div className={styles.column}>
-              {/* TODO: Re-enable when the backend returns the attentionTasks shape. */}
-              {/* TODO: Re-enable when the backend returns the upcomingTasks shape. */}
+              {attentionTasks.length > 0 && (
+                <section className={styles.column}>
+                  <h2 className={styles.heading}>Needs attention</h2>
+                  {attentionTasks.map((task) => (
+                    <NeedsAttentionCard
+                      key={task.id}
+                      needsAttention={buildNeedsAttention(task)}
+                    />
+                  ))}
+                </section>
+              )}
+              {upcomingTasks.length > 0 && (
+                <UpcomingTasks tasks={upcomingTasks.map(buildUpcomingTask)} />
+              )}
             </div>
           </div>
         </>
