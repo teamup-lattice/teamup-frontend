@@ -4,7 +4,7 @@ import Login from "./pages/Login/Login";
 import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile";
 import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
-import Projects from "./pages/Projects";
+import MyProjects from "./pages/MyProjects/MyProjects";
 import CreateProject from "./pages/CreateProject/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import Workspace from "./pages/Workspace";
@@ -22,7 +22,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
       </Route>
