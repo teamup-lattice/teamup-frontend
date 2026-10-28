@@ -1,0 +1,444 @@
+.section {
+  position: relative;
+  scroll-margin-top: 96px;
+  background: var(--color-navy);
+  color: var(--color-card);
+}
+
+.section::after {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 160px;
+  height: 120px;
+  background: url("../../assets/teamup-mark.svg") center / contain no-repeat;
+  content: "";
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 96px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .progressTrack span {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 700ms ease-out;
+  }
+
+  .workspaceCard[data-revealed] .progressTrack span {
+    transform: scaleX(1);
+  }
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple-light);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 490px);
+  align-items: start;
+  gap: var(--space-7);
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-card);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-body);
+  line-height: 1.65;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 704fr 512fr;
+  align-items: start;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+.workspaceCard,
+.contributionCard {
+  border-radius: 16px;
+  color: var(--color-navy);
+}
+
+.workspaceCard {
+  padding: 28px;
+  background: var(--color-canvas);
+}
+
+.workspaceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.workspaceLabel {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.workspaceHeader h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.avatars {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}
+
+.avatars span {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 500;
+}
+
+.tabs span {
+  padding: 0 0 var(--space-3);
+}
+
+.activeTab {
+  margin-bottom: -1px;
+  border-bottom: 2px solid var(--color-purple);
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.progressHeader,
+.milestone {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.progressHeader {
+  margin-top: 28px;
+  font-size: var(--font-size-label);
+}
+
+.progressHeader span,
+.milestone strong {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 400;
+}
+
+.progressTrack {
+  height: 8px;
+  margin-top: var(--space-3);
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-border-subtle);
+}
+
+.progressTrack span {
+  display: block;
+  width: 33%;
+  height: 100%;
+  background: var(--color-green);
+}
+
+.milestone {
+  margin-top: 28px;
+  color: var(--color-navy);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.taskList {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  background: var(--color-card);
+}
+
+.task > div,
+.file > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.task strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.task > div > span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.taskBadge {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--color-action-disabled);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.blocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.contributionColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contributionCard {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--color-card);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.personAvatar {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.contributionCard h3 {
+  margin: 20px 0 var(--space-2);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.contributionText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: 1.6;
+}
+
+.file {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: 20px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  background: var(--color-canvas);
+  color: var(--color-purple);
+}
+
+.file svg {
+  flex-shrink: 0;
+}
+
+.file strong {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.file span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: var(--line-height-text);
+}
+
+.viewContribution {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  padding: 0 20px;
+  border: 1px solid var(--color-purple);
+  border-radius: 8px;
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.contributionNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.contributionNote svg {
+  flex-shrink: 0;
+  color: var(--color-purple-light);
+}
+
+.caption {
+  margin: var(--space-6) 0 0;
+  color: var(--color-action-disabled);
+  font-size: var(--font-size-helper);
+}
+
+@media (max-width: 1023px) {
+  .intro {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .heading {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 599px) {
+  .container {
+    padding-block: 64px;
+  }
+
+  .workspaceCard,
+  .contributionCard {
+    padding: 20px;
+  }
+
+  .workspaceHeader > div:first-child {
+    min-width: 0;
+  }
+
+  .tabs {
+    gap: var(--space-4);
+    font-size: 12px;
+  }
+
+  .task {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heading {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 833px) {
+  .container {
+    padding: 56px 20px;
+  }
+
+  .intro {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .heading {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .description,
+  .contributionText {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .workspaceCard,
+  .contributionCard {
+    padding: 20px;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 16px;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+}

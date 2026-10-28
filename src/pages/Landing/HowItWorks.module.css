@@ -1,0 +1,103 @@
+.section {
+  scroll-margin-top: 96px;
+  background: var(--color-card);
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 96px clamp(var(--space-5), calc(9.383vw - 12.6px), 100px);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-purple);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-7);
+  margin-top: var(--space-7);
+}
+
+.step {
+  min-width: 0;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.number {
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.stepTitle {
+  margin: var(--space-5) 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+}
+
+.stepDescription {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: 1.8;
+}
+
+@media (max-width: 833px) {
+  .container {
+    padding: 56px 20px;
+  }
+
+  .heading {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .stepDescription {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
