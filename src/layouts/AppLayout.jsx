@@ -52,22 +52,31 @@ const navItems = [
   { label: "Profile", to: "/profile" },
 ];
 
+const MOBILE_QUERY = "(max-width: 599px)";
+
 function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(
-    () => !window.matchMedia("(max-width: 599px)").matches,
+    () => !window.matchMedia(MOBILE_QUERY).matches,
   );
 
   const handleSidebarLinkClick = () => {
-    if (window.matchMedia("(max-width: 599px)").matches) {
+    if (window.matchMedia(MOBILE_QUERY).matches) {
       setIsSidebarOpen(false);
     }
   };
 
   useEffect(() => {
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const sync = (event) => setIsSidebarOpen(!event.matches);
+    mql.addEventListener("change", sync);
+    return () => mql.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
     const closeOnEscape = (event) => {
       if (
         event.key === "Escape" &&
-        window.matchMedia("(max-width: 599px)").matches
+        window.matchMedia(MOBILE_QUERY).matches
       ) {
         setIsSidebarOpen(false);
       }
@@ -126,7 +135,6 @@ function AppLayout() {
         <nav
           id="app-sidebar"
           aria-label="Main"
-          aria-hidden={!isSidebarOpen}
           inert={!isSidebarOpen}
           className={`${styles.nav} ${isSidebarOpen ? styles.navOpen : styles.navClosed}`}
         >
@@ -137,7 +145,7 @@ function AppLayout() {
               className={({ isActive }) =>
                 `${styles.link} ${isActive ? styles.active : ""}`
               }
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={handleSidebarLinkClick}
             >
               {item.label}
             </NavLink>

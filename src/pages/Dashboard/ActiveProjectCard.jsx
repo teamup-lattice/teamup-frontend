@@ -28,7 +28,8 @@ function ActiveProjectCard({ activeProject }) {
 
       <div className={styles.meta}>
         <p>
-          {activeProject.role} · {activeProject.hoursPerWeek} hours/week
+          {activeProject.role} · {activeProject.hoursPerWeek}{" "}
+          {activeProject.hoursPerWeek === 1 ? "hour" : "hours"}/week
         </p>
         <p>{activeProject.dates}</p>
       </div>
@@ -42,7 +43,8 @@ function ActiveProjectCard({ activeProject }) {
           ))}
         </div>
         <p className={styles.teammateText}>
-          {activeProject.teammates.length} accepted teammates ·{" "}
+          {activeProject.teammates.length} accepted{" "}
+          {activeProject.teammates.length === 1 ? "teammate" : "teammates"} ·{" "}
           {formatNames(activeProject.teammates)}
         </p>
       </div>

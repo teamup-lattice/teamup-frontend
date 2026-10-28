@@ -31,15 +31,17 @@ function NeedsAttentionCard({ needsAttention }) {
 
       <div className={styles.owner}>
         <span className={styles.avatar} aria-hidden="true">
-          D
+          {needsAttention.owner.charAt(0).toUpperCase()}
         </span>
         <span>{needsAttention.owner}</span>
       </div>
 
       <p className={styles.due}>{needsAttention.due}</p>
-      <p className={styles.blocker}>
-        Blocker note: {needsAttention.blockerNote}
-      </p>
+      {needsAttention.blockerNote && (
+        <p className={styles.blocker}>
+          Blocker note: {needsAttention.blockerNote}
+        </p>
+      )}
 
       <Button variant="secondary" fullWidth>
         Open task details

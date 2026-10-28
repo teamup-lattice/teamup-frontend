@@ -8,8 +8,10 @@ function PendingInvitationCard({ pendingInvitation }) {
       <h3 className={styles.title}>{pendingInvitation.title}</h3>
       <p className={styles.description}>{pendingInvitation.description}</p>
       <p className={styles.meta}>
-        {pendingInvitation.role} · {pendingInvitation.hoursPerWeek} hours/week ·{" "}
-        {pendingInvitation.weeks} weeks
+        {pendingInvitation.role} · {pendingInvitation.hoursPerWeek}{" "}
+        {pendingInvitation.hoursPerWeek === 1 ? "hour" : "hours"}/week ·{" "}
+        {pendingInvitation.weeks}{" "}
+        {pendingInvitation.weeks === 1 ? "week" : "weeks"}
       </p>
       <Button>Review invitation</Button>
       <p className={styles.helper}>
