@@ -1,0 +1,72 @@
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.badge {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.neutral {
+  background: var(--color-action-disabled);
+  color: var(--color-text-secondary);
+}
+
+.purple {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.green {
+  background: var(--color-green-light);
+  color: var(--color-green);
+}
+
+.amber {
+  background: var(--color-amber-light);
+  color: var(--color-amber);
+}
+
+.title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
+
+.meta {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
+
+.note {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
