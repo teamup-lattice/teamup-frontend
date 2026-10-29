@@ -1,0 +1,238 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: min(100%, 720px);
+  padding: calc(var(--space-6) + var(--space-2));
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.container > [role="status"] {
+  margin-bottom: 0;
+}
+
+.publishedImage {
+  display: block;
+  align-self: flex-start;
+  width: 50%;
+  max-width: calc(var(--space-7) * 6 + var(--space-6));
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+}
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.badge {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--button-height);
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+}
+
+.ownerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.ownerText {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.milestonesCard {
+  padding: var(--space-4);
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 700;
+}
+
+.bodyText {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+  white-space: pre-wrap;
+}
+
+.metaLine {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.recruitmentNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.openRolesSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionHeading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 700;
+}
+
+.openRoleCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.roleTitle {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+.roleSubtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.roleSkills {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 400;
+}
+
+.milestoneRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.milestoneName {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+.milestoneDate {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-canvas);
+}
+
+.emptyCardIcon {
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+}
+
+.actions {
+  display: flex;
+  margin-top: calc(var(--space-4) - var(--space-5));
+}
+
+.actions :global(a) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--button-height);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-purple);
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+  color: var(--color-purple);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+  text-decoration: none;
+}
+
+.actions :global(a:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 599px) {
+  .container {
+    padding: var(--space-5);
+  }
+
+  .publishedImage {
+    width: 100%;
+  }
+}

@@ -11,3 +11,20 @@ export function saveDraft(draft) {
     }, 800);
   });
 }
+
+export function publishProject(project) {
+  void project;
+  return new Promise((resolve, reject) => {
+    window.setTimeout(() => {
+      if (
+        new URLSearchParams(window.location.search).get("publish") === "fail"
+      ) {
+        reject(new Error("Mock project publish failed."));
+        return;
+      }
+
+      resolve({ id: "mock-project-1" });
+    }, 800);
+  });
+}
+

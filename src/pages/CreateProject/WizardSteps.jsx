@@ -1,12 +1,23 @@
+import { useContext } from "react";
+import { WizardContext } from "./WizardContextValue";
 import styles from "./WizardSteps.module.css";
 
 const steps = ["Basics", "Roles", "Commitment", "Milestones", "Review"];
 
 function WizardSteps({ currentStep, completedSteps }) {
+  const context = useContext(WizardContext);
   const currentLabel = steps[currentStep - 1];
   const completedBeforeCurrent = completedSteps.filter(
     (stepNumber) => stepNumber !== currentStep,
   ).length;
+
+  const handleStepClick = (stepNumber) => {
+    if (completedSteps.includes(stepNumber) && stepNumber !== currentStep) {
+      if (context?.setCurrentStep) {
+        context.setCurrentStep(stepNumber);
+      }
+    }
+  };
 
   return (
     <nav className={styles.navigation} aria-label="Project creation steps">
@@ -25,10 +36,24 @@ function WizardSteps({ currentStep, completedSteps }) {
               className={`${styles.step} ${isCurrent ? styles.current : ""} ${isCompleted && !isCurrent ? styles.completed : ""}`}
               aria-current={isCurrent ? "step" : undefined}
             >
-              <span className={styles.stepNumber}>Step {stepNumber}</span>
-              <span className={styles.stepName}>{step}</span>
-              {isCompleted && (
-                <span className={styles.visuallyHidden}>completed</span>
+              {isCompleted && !isCurrent ? (
+                <button
+                  type="button"
+                  className={styles.stepButton}
+                  onClick={() => handleStepClick(stepNumber)}
+                >
+                  <span className={styles.stepNumber}>Step {stepNumber}</span>
+                  <span className={styles.stepName}>{step}</span>
+                  <span className={styles.visuallyHidden}>completed</span>
+                </button>
+              ) : (
+                <>
+                  <span className={styles.stepNumber}>Step {stepNumber}</span>
+                  <span className={styles.stepName}>{step}</span>
+                  {isCompleted && (
+                    <span className={styles.visuallyHidden}>completed</span>
+                  )}
+                </>
               )}
             </li>
           );

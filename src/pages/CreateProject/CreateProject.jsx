@@ -1,10 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useContext } from "react";
-import Button from "../../components/Button";
 import { WizardProvider } from "./WizardContext";
 import { WizardContext } from "./WizardContextValue";
 import WizardSteps from "./WizardSteps";
 import BasicsStep from "./BasicsStep";
+import RolesStep from "./RolesStep";
+import CommitmentStep from "./CommitmentStep";
+import MilestonesStep from "./MilestonesStep";
+import ReviewStep from "./ReviewStep";
+import PublishedView from "./PublishedView";
 import styles from "./CreateProject.module.css";
 
 function WizardContent() {
@@ -12,7 +16,17 @@ function WizardContent() {
   if (!context) {
     throw new Error("WizardContent must be used within a WizardProvider.");
   }
-  const { currentStep, completedSteps, goBack, goNext } = context;
+  const { currentStep, completedSteps, publishStatus } = context;
+
+  if (publishStatus === "published") {
+    return (
+      <div className={styles.page}>
+        <div className={styles.contentCard}>
+          <PublishedView />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -21,23 +35,11 @@ function WizardContent() {
         completedSteps={completedSteps}
       />
       <div className={styles.contentCard}>
-        {currentStep === 1 ? (
-          <BasicsStep />
-        ) : (
-          <section className={styles.placeholder}>
-            <p>
-              {currentStep === 2
-                ? "Roles step coming next"
-                : `${["", "", "Commitment", "Milestones", "Review"][currentStep]} step coming next`}
-            </p>
-            <div className={styles.placeholderActions}>
-              <Button variant="secondary" onClick={goBack}>
-                Back
-              </Button>
-              <Button onClick={goNext}>Continue</Button>
-            </div>
-          </section>
-        )}
+        {currentStep === 1 && <BasicsStep />}
+        {currentStep === 2 && <RolesStep />}
+        {currentStep === 3 && <CommitmentStep />}
+        {currentStep === 4 && <MilestonesStep />}
+        {currentStep === 5 && <ReviewStep />}
       </div>
     </div>
   );

@@ -1,0 +1,242 @@
+.card {
+  width: min(100%, 720px);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.description {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.localChanges {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lockedText {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.sectionHeader {
+  margin-top: var(--space-3);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-1);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+}
+
+.sectionSubtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+}
+
+.roleCards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.roleCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-canvas);
+}
+
+.roleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.roleName {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-chip);
+  background: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-navy);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.roleResponsibilities {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+  white-space: pre-wrap;
+}
+
+.expectationsCard {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-canvas);
+}
+
+.expectationsTitle {
+  margin: 0 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.expectationsList {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.expectationsList li {
+  margin-bottom: var(--space-1);
+}
+
+.expectationsNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.saveNote {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.projectActionsRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.projectActionsRow > a,
+.projectActionsRow > button {
+  width: 100%;
+  margin-top: 0;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-height);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  color: var(--color-purple);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.backLink:hover:not(:disabled) {
+  filter: brightness(0.85);
+}
+
+.backLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.backLink:disabled {
+  color: var(--color-action-disabled);
+  cursor: not-allowed;
+}
+
+.actionNote {
+  margin-top: var(--space-3);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.focusLink {
+  color: var(--color-purple);
+  font-weight: 600;
+  font-size: var(--font-size-label);
+}
+
+@media (max-width: 834px) {
+  .card {
+    padding: var(--space-5);
+  }
+}
+
+@media (max-width: 390px) {
+  .card {
+    padding: var(--space-4);
+  }
+
+  .projectActionsRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}
