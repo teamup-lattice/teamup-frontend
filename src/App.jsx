@@ -17,6 +17,7 @@ import Landing from "./pages/Landing/Landing";
 import FindCollaborators from "./pages/FindCollaborators/FindCollaborators";
 import RequestRole from "./pages/RequestRole/RequestRole";
 import RoleRequest from "./pages/RoleRequest/RoleRequest";
+import JoinRequests from "./pages/JoinRequests/JoinRequests";
 
 function App() {
   return (
@@ -42,6 +43,10 @@ function App() {
         <Route
           path="/role-requests/:requestId"
           element={<RoleRequest />}
+        />
+        <Route
+          path="/projects/:projectId/join-requests"
+          element={<JoinRequests />}
         />
       </Route>
       <Route path="/projects/:id" element={<ProjectDetails />} />
