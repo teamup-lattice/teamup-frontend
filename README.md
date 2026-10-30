@@ -33,20 +33,21 @@ npm run dev
 
 ## Staging
 
-https://teamup-lattice-project.netlify.app
+https://teamup-frontend-vert.vercel.app/
 
 Every merge to `main` deploys to staging automatically, with no manual steps.
 
-**How it works**
+### How it works
+
 1. A pull request triggers the `CI` workflow (`npm ci`, lint, build). The `build` check must pass before merging.
-2. After merge, Netlify builds the site (`npm run build`, output in `dist`) and publishes it.
-3. If the Netlify build fails, the previous version stays live.
+2. After merge, Vercel builds the site (`npm run build`, output in `dist`) and publishes it.
+3. If the Vercel build fails, the previous version stays live.
 
-**Rolling back**
-In Netlify, open Deploys, pick an older successful deploy and choose "Publish deploy". Then revert the bad commit on `main`.
+**Rolling back** In Vercel, open Deployments, find an earlier successful production deployment and use Instant Rollback from its menu. Then revert the bad commit on `main`.
 
-**Environment variables**
-`VITE_API_URL` (backend URL) is set in Netlify under Project configuration → Environment variables. Changing it needs a redeploy, because Vite bakes it in at build time. Never put secrets in `VITE_` variables.
+**Environment variables** `VITE_API_URL` (backend URL) is set in Vercel under Project Settings → Environment Variables. Changing it needs a redeploy, because Vite bakes it in at build time. Never put secrets in `VITE_` variables.
+
+**Routing** `vercel.json` rewrites all routes to `index.html` so client-side routes work on refresh.
 
 ## Folder structure
 
