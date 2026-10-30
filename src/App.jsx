@@ -19,6 +19,7 @@ import RequestRole from "./pages/RequestRole/RequestRole";
 import RoleRequest from "./pages/RoleRequest/RoleRequest";
 import JoinRequests from "./pages/JoinRequests/JoinRequests";
 import InvitationDetails from "./pages/InvitationDetails/InvitationDetails";
+import ReviewCommitment from "./pages/ReviewCommitment/ReviewCommitment";
 
 function App() {
   return (
@@ -49,6 +50,10 @@ function App() {
         <Route
           path="/invitations/:invitationId"
           element={<InvitationDetails />}
+        />
+        <Route
+          path="/invitations/:invitationId/commitment"
+          element={<ReviewCommitment />}
         />
       </Route>
       <Route path="/projects/:id" element={<ProjectDetails />} />
