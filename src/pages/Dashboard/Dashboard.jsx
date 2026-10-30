@@ -38,8 +38,7 @@ function plural(n, word) {
 function buildActiveProject(dashboard) {
   if (!dashboard) return null;
 
-  const project =
-    dashboard.ownedProjects?.[0] ?? dashboard.memberProjects?.[0];
+  const project = dashboard.ownedProjects?.[0] ?? dashboard.memberProjects?.[0];
   if (!project) return null;
 
   const membership = project.memberships?.find(
@@ -63,11 +62,8 @@ function buildActiveProject(dashboard) {
       membership?.accessRole === "OWNER"
         ? "Owner"
         : "Member"
-    }${
-      membership?.role?.title ? ` · ${membership.role.title}` : ""
-    }`,
-    hoursPerWeek:
-      membership?.committedHoursPerWeek ?? project.weeklyHours,
+    }${membership?.role?.title ? ` · ${membership.role.title}` : ""}`,
+    hoursPerWeek: membership?.committedHoursPerWeek ?? project.weeklyHours,
     dates: `${start} to ${end} · ${project.durationWeeks} weeks`,
     teammates: (project.memberships ?? [])
       .filter((item) => item.status === "ACTIVE")
@@ -112,9 +108,7 @@ function buildNeedsAttention(task) {
     owner: `${task.assignee?.user?.name ?? "Unassigned"}${
       task.assignee?.role?.title ? ` · ${task.assignee.role.title}` : ""
     }`,
-    due: `${dueDate}${
-      task.milestone ? ` · ${task.milestone.title}` : ""
-    }`,
+    due: `${dueDate}${task.milestone ? ` · ${task.milestone.title}` : ""}`,
     blockerNote: task.blockerNote,
   };
 }
