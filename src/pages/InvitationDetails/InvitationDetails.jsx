@@ -10,6 +10,7 @@ import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import TeamAgreementsCard from "../../components/collab/TeamAgreementsCard";
 import { invitation, people, project, roles, teamAgreements } from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
+import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./InvitationDetails.module.css";
 
 const invitee = people[invitation.to];
@@ -18,6 +19,7 @@ const supportedStates = [
   "default",
   "empty",
   "loading",
+  "saving",
   "declinefailed",
   "declined",
 ];
@@ -26,12 +28,34 @@ function InvitationDetails() {
   const { invitationId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
-  const state = supportedStates.includes(requestedState)
+  const isFrozenPreview = supportedStates.includes(requestedState);
+  const state = isFrozenPreview
     ? requestedState
-    : "default";
+    : actionStatus === "saving"
+      ? "saving"
+      : actionStatus === "failed"
+        ? "declinefailed"
+        : actionStatus === "done"
+          ? "declined"
+          : "default";
 
-  const setState = (nextState) => setSearchParams({ state: nextState });
+  const clearStateAndFailure = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setSearchParams(nextParams, { replace: true });
+  };
+  const retryDecline = () => {
+    clearStateAndFailure();
+    run({ ignoreFailure: true });
+  };
+  const declineInvitation = () => {
+    if (!isFrozenPreview) {
+      run();
+    }
+  };
 
   if (state === "empty") {
     return (
@@ -93,11 +117,11 @@ function InvitationDetails() {
           project and role context are kept.
         </Alert>
         <div className={styles.actions}>
-          <Button fullWidth onClick={() => setState("default")}>
+          <Button fullWidth onClick={retryDecline}>
             Recheck invitation status
           </Button>
           <div className={styles.dangerButton}>
-            <Button fullWidth onClick={() => setState("declined")}>
+            <Button fullWidth onClick={retryDecline}>
               Decline invitation
             </Button>
           </div>
@@ -155,6 +179,7 @@ function InvitationDetails() {
         <div className={styles.actions}>
           <Button
             fullWidth
+            disabled={state === "saving"}
             onClick={() =>
               navigate(`/invitations/${invitationId}/commitment`)
             }
@@ -162,7 +187,12 @@ function InvitationDetails() {
             Review commitment
           </Button>
           <div className={styles.dangerButton}>
-            <Button fullWidth onClick={() => setState("declinefailed")}>
+            <Button
+              fullWidth
+              loading={state === "saving"}
+              loadingText="Decline invitation"
+              onClick={declineInvitation}
+            >
               Decline invitation
             </Button>
           </div>

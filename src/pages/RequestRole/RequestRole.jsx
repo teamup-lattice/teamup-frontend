@@ -1,4 +1,4 @@
-import { useSearchParams, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
@@ -8,6 +8,7 @@ import MilestonesCard from "../../components/collab/MilestonesCard";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import { people, project, roles } from "../../data/collaborationData";
+import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./RequestRole.module.css";
 
 const requestRole = roles.frontend;
@@ -16,15 +17,39 @@ const supportedStates = ["default", "missing", "saving", "failed", "sent"];
 
 function RequestRole() {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
-  const state = supportedStates.includes(requestedState)
+  const isFrozenPreview = supportedStates.includes(requestedState);
+  const state = isFrozenPreview
     ? requestedState
-    : "default";
+    : actionStatus === "saving"
+      ? "saving"
+      : actionStatus === "failed"
+        ? "failed"
+        : actionStatus === "done"
+          ? "sent"
+          : "default";
   const projectDetailsPath = `/projects/${projectId}`;
 
   const setPreviewState = (nextState) => {
     setSearchParams({ state: nextState });
+  };
+  const clearStateAndFailure = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setSearchParams(nextParams, { replace: true });
+  };
+  const retryRequest = () => {
+    clearStateAndFailure();
+    run({ ignoreFailure: true });
+  };
+  const sendRequest = () => {
+    if (!isFrozenPreview) {
+      run();
+    }
   };
 
   if (state === "missing") {
@@ -88,7 +113,7 @@ function RequestRole() {
           Role and input retained. Check request status and role before
           retrying. Request and membership not confirmed.
         </Alert>
-        <Button fullWidth>
+        <Button fullWidth onClick={retryRequest}>
           Recheck request status
         </Button>
         <AltLink to={projectDetailsPath}>Back to project details</AltLink>
@@ -103,7 +128,12 @@ function RequestRole() {
           Pending Ada&apos;s review. You have not joined Campus Marketplace.
         </Alert>
         <RoleContributionCard role={requestRole} project={project} />
-        <Button fullWidth>View request status</Button>
+        <Button
+          fullWidth
+          onClick={() => navigate("/role-requests/req-1?state=pending")}
+        >
+          View request status
+        </Button>
       </main>
     );
   }
@@ -133,7 +163,11 @@ function RequestRole() {
             Ada reviews your request. Joining requires approval and saved
             commitment acceptance.
           </p>
-          <Button fullWidth onClick={() => setPreviewState("saving")}>
+          <Button
+            fullWidth
+            disabled={actionStatus === "saving"}
+            onClick={sendRequest}
+          >
             Send request
           </Button>
         </section>

@@ -22,7 +22,7 @@ function RoleRequest() {
 
   const handleAction = () => {
     if (state === "approved") {
-      navigate(`/invitations/${requestId}/commitment`);
+      navigate(`/invitations/${requestId}/commitment?variant=request`);
     } else if (state === "declined") {
       navigate("/discover");
     } else {

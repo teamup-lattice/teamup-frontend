@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
@@ -9,6 +9,7 @@ import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import TeamAgreementsCard from "../../components/collab/TeamAgreementsCard";
 import { invitation, joinRequest, people, project, roles, teamAgreements } from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
+import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./ReviewCommitment.module.css";
 
 const supportedStates = ["unchecked", "saving", "error", "accepted"];
@@ -18,11 +19,10 @@ function ReviewCommitment() {
   const { invitationId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
   const requestedVariant = searchParams.get("variant");
-  const state = supportedStates.includes(requestedState)
-    ? requestedState
-    : "unchecked";
+  const isFrozenPreview = supportedStates.includes(requestedState);
   const variant = supportedVariants.includes(requestedVariant)
     ? requestedVariant
     : "invitation";
@@ -30,13 +30,54 @@ function ReviewCommitment() {
   const participant = isInvitation ? people[invitation.to] : people[joinRequest.from];
   const role = roles[isInvitation ? invitation.roleKey : joinRequest.roleKey];
   const [isAccepted, setIsAccepted] = useState(false);
+  const [pendingAction, setPendingAction] = useState("accept");
+  const state = isFrozenPreview
+    ? requestedState
+    : actionStatus === "saving"
+      ? "saving"
+      : actionStatus === "failed"
+        ? "error"
+        : actionStatus === "done"
+          ? pendingAction === "decline"
+            ? "saving"
+            : "accepted"
+          : "unchecked";
   const isLocked = state === "saving";
   const isChecked = isLocked || state === "error" || isAccepted;
 
-  const setPreviewState = (nextState) => {
+  useEffect(() => {
+    if (
+      !isFrozenPreview &&
+      actionStatus === "done" &&
+      pendingAction === "decline"
+    ) {
+      navigate("/invitations/inv-1?state=declined", { replace: true });
+    }
+  }, [actionStatus, isFrozenPreview, navigate, pendingAction]);
+
+  const clearStateAndFailure = () => {
     const nextParams = new URLSearchParams(searchParams);
-    nextParams.set("state", nextState);
-    setSearchParams(nextParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setSearchParams(nextParams, { replace: true });
+  };
+  const startAcceptance = () => {
+    if (isChecked && !isFrozenPreview) {
+      setPendingAction("accept");
+      run();
+    }
+  };
+  const retryAcceptance = () => {
+    setIsAccepted(true);
+    setPendingAction("accept");
+    clearStateAndFailure();
+    run({ ignoreFailure: true });
+  };
+  const declineInvitation = () => {
+    if (!isFrozenPreview) {
+      setPendingAction("decline");
+      run();
+    }
   };
 
   if (state === "accepted") {
@@ -65,7 +106,7 @@ function ReviewCommitment() {
             Joined. Other roles may remain open; the project has not
             necessarily started.
           </p>
-          <Button fullWidth onClick={() => navigate(`/projects/${invitationId}/workspace`)}>
+          <Button fullWidth onClick={() => navigate("/projects/campus-marketplace/workspace")}>
             Open workspace
           </Button>
         </section>
@@ -73,10 +114,6 @@ function ReviewCommitment() {
     );
   }
 
-  const title =
-    state === "saving" || state === "error"
-      ? "Review your commitment"
-      : "Review your commitment";
   const subtitle = isInvitation
     ? `${project.name} · ${participant.name} / Invitation from Ada`
     : `${project.name} · ${participant.name} / Approved request`;
@@ -84,7 +121,7 @@ function ReviewCommitment() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.heading}>{title}</h1>
+        <h1 className={styles.heading}>Review your commitment</h1>
         <p className={styles.subtitle}>{subtitle}</p>
       </header>
 
@@ -154,12 +191,12 @@ function ReviewCommitment() {
             <Button
               fullWidth
               disabled={!isChecked || isLocked}
-              onClick={() => setPreviewState("saving")}
+              onClick={state === "error" ? retryAcceptance : startAcceptance}
             >
               Accept and join team
             </Button>
             {state === "error" && (
-              <Button variant="secondary" fullWidth onClick={() => setPreviewState("saving")}>
+              <Button variant="secondary" fullWidth onClick={retryAcceptance}>
                 Recheck current project and terms
               </Button>
             )}
@@ -168,7 +205,9 @@ function ReviewCommitment() {
                 <Button
                   fullWidth
                   disabled={isLocked}
-                  onClick={() => navigate(`/invitations/${invitationId}?state=declinefailed`)}
+                  loading={pendingAction === "decline" && isLocked}
+                  loadingText="Decline invitation"
+                  onClick={declineInvitation}
                 >
                   Decline invitation
                 </Button>

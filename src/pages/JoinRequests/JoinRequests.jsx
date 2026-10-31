@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
@@ -10,6 +11,7 @@ import MilestonesCard from "../../components/collab/MilestonesCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import { joinRequest, people, project, roles } from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
+import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./JoinRequests.module.css";
 
 const applicant = people[joinRequest.from];
@@ -58,14 +60,45 @@ function JoinRequests() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
-  const state = supportedStates.includes(requestedState)
+  const isFrozenPreview = supportedStates.includes(requestedState);
+  const [decision, setDecision] = useState("approved");
+  const state = isFrozenPreview
     ? requestedState
-    : "default";
+    : actionStatus === "saving"
+      ? "saving"
+      : actionStatus === "failed"
+        ? "failed"
+        : actionStatus === "done"
+          ? decision
+          : "default";
 
-  const setState = (nextState) => setSearchParams({ state: nextState });
+  const setTab = (nextTab) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextTab) {
+      nextParams.set("tab", nextTab);
+    } else {
+      nextParams.delete("tab");
+    }
+    setSearchParams(nextParams);
+  };
+  const startDecision = (nextDecision) => {
+    setDecision(nextDecision);
+    if (!isFrozenPreview) {
+      run();
+    }
+  };
+  const retryDecision = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setSearchParams(nextParams, { replace: true });
+    run({ ignoreFailure: true });
+  };
   const goToRequestList = () =>
     navigate(`/projects/${projectId}/join-requests`);
+  const isSentTab = searchParams.get("tab") === "sent";
 
   if (state === "guard") {
     return (
@@ -190,10 +223,32 @@ function JoinRequests() {
               onChange={() => {}}
             />
             <nav className={styles.tabs} aria-label="Recruitment">
-              <Button variant="secondary" fullWidth>
-                Join requests · 1 pending
-              </Button>
-              <AltLink to="/invitations">Sent invitations</AltLink>
+              {isSentTab ? (
+                <button
+                  type="button"
+                  className={styles.tabLink}
+                  onClick={() => setTab("")}
+                >
+                  Join requests · 1 pending
+                </button>
+              ) : (
+                <Button variant="secondary" fullWidth onClick={() => setTab("")}>
+                  Join requests · 1 pending
+                </Button>
+              )}
+              {isSentTab ? (
+                <Button variant="secondary" fullWidth onClick={() => setTab("sent")}>
+                  Sent invitations
+                </Button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.tabLink}
+                  onClick={() => setTab("sent")}
+                >
+                  Sent invitations
+                </button>
+              )}
               <AltLink to="/find-collaborators">Find Collaborators</AltLink>
             </nav>
           </>
@@ -212,11 +267,11 @@ function JoinRequests() {
                 Approval lets John review his commitment; it does not create
                 membership.
               </p>
-              <Button fullWidth onClick={() => setState("saving")}>
+              <Button fullWidth onClick={() => startDecision("approved")}>
                 Approve request
               </Button>
               <div className={styles.dangerButton}>
-                <Button fullWidth onClick={() => setState("saving")}>
+                <Button fullWidth onClick={() => startDecision("declined")}>
                   Decline request
                 </Button>
               </div>
@@ -226,14 +281,14 @@ function JoinRequests() {
         {isFailed && (
           <>
             <ApplicantCard />
-            <Button fullWidth onClick={() => setState("saving")}>
+            <Button fullWidth onClick={retryDecision}>
               Recheck current request
             </Button>
-            <Button fullWidth onClick={() => setState("saving")}>
+            <Button fullWidth onClick={() => startDecision("approved")}>
               Approve request
             </Button>
             <div className={styles.dangerButton}>
-              <Button fullWidth onClick={() => setState("saving")}>
+              <Button fullWidth onClick={() => startDecision("declined")}>
                 Decline request
               </Button>
             </div>

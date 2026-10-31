@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
-import AltLink from "../../components/AltLink";
 import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
@@ -10,18 +9,14 @@ import Select from "../../components/Select";
 import Skeleton from "../../components/Skeleton";
 import { formatDate } from "../CreateProject/formatDate";
 import { people, project, roles } from "../../data/collaborationData";
+import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./FindCollaborators.module.css";
 
-const role = roles.uiux;
-const person = people.david;
 const roleOptions = Object.entries(roles).map(([value, item]) => ({
   value,
   label: item.title,
 }));
 const projectOption = [{ value: "campus", label: `${project.name} · Open` }];
-const skillOptions = [...new Set([...project.skills, ...role.requiredSkills])].map(
-  (skill) => ({ value: skill, label: skill }),
-);
 const durationOptions = [...new Set(Object.values(roles).map((item) => item.weeks))].map(
   (weeks) => ({ value: String(weeks), label: `${weeks} weeks` }),
 );
@@ -32,8 +27,8 @@ const defaultFilters = {
   skill: "UI design",
   role: "uiux",
   projectType: project.type,
-  duration: String(role.weeks),
-  hours: String(role.hours),
+  duration: String(roles.uiux.weeks),
+  hours: String(roles.uiux.hours),
 };
 const emptyFilters = {
   skill: "",
@@ -52,7 +47,7 @@ const supportedStates = [
   "race",
 ];
 
-function OptionalFilters({ values, onChange, onReset }) {
+function OptionalFilters({ values, onChange, onReset, skills }) {
   const setValue = (key) => (event) => {
     onChange({ ...values, [key]: event.target.value });
   };
@@ -63,7 +58,7 @@ function OptionalFilters({ values, onChange, onReset }) {
       <div className={styles.filterFields}>
         <Select
           label="Skill"
-          options={skillOptions}
+          options={skills}
           value={values.skill}
           onChange={setValue("skill")}
           placeholder=""
@@ -111,15 +106,58 @@ function OptionalFilters({ values, onChange, onReset }) {
 function FindCollaborators() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { status: actionStatus, run } = useSimulatedAction();
   const queryState = searchParams.get("state");
-  const state = supportedStates.includes(queryState) ? queryState : "default";
+  const isFrozenPreview = supportedStates.includes(queryState);
   const [isReviewing, setIsReviewing] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
-  const [search, setSearch] = useState(person.name);
+  const [search, setSearch] = useState(people.david.name);
+  const [selectedProject, setSelectedProject] = useState("campus");
+  const [selectedRole, setSelectedRole] = useState("uiux");
   const [incompleteProject, setIncompleteProject] = useState("");
   const [incompleteRole, setIncompleteRole] = useState("");
+  const [dismissedFailure, setDismissedFailure] = useState(false);
+  const reviewCardRef = useRef(null);
+  const profileCardRef = useRef(null);
+  const hasOpenedReview = useRef(false);
+  const state = isFrozenPreview
+    ? queryState
+    : dismissedFailure
+      ? "default"
+      : actionStatus === "saving"
+      ? "saving"
+      : actionStatus === "failed"
+        ? "notsent"
+        : actionStatus === "done"
+          ? "sent"
+          : "default";
+
+  const role = roles[selectedRole];
+  const person = Object.values(people).find(
+    (candidate) => candidate.roleKey === selectedRole,
+  );
+  const optionalSkillOptions = [...new Set([
+    ...project.skills,
+    ...role.requiredSkills,
+  ])].map((skill) => ({ value: skill, label: skill }));
+
+  useEffect(() => {
+    if (isReviewing) {
+      hasOpenedReview.current = true;
+      reviewCardRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    } else if (hasOpenedReview.current) {
+      profileCardRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      hasOpenedReview.current = false;
+    }
+  }, [isReviewing]);
 
   const filterCount = Object.values(filters).filter(Boolean).length;
   const filterSummary = [
@@ -132,9 +170,9 @@ function FindCollaborators() {
 
   const pageTitle =
     state === "loading"
-      ? "Campus Marketplace · Designer"
+      ? `${project.name} · ${role.title}`
       : state === "notsent"
-        ? "Invitation to David"
+        ? `Invitation to ${person.name}`
         : state === "sent"
           ? "Invitation record"
           : "Find Collaborators";
@@ -148,10 +186,84 @@ function FindCollaborators() {
     setDraftFilters(filters);
     setIsFilterSheetOpen(false);
   };
-  const setPreviewState = (nextState) => {
-    setIsReviewing(false);
-    setSearchParams({ state: nextState });
+  const clearStateAndFailure = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setSearchParams(nextParams, { replace: true });
   };
+  const retryInvitation = () => {
+    setDismissedFailure(false);
+    clearStateAndFailure();
+    run({ ignoreFailure: true });
+  };
+  const beginInvitation = () => {
+    if (!isFrozenPreview) {
+      setDismissedFailure(false);
+      run();
+    }
+  };
+  const cancelReview = () => {
+    setIsReviewing(false);
+    if (state === "notsent") {
+      clearStateAndFailure();
+      setDismissedFailure(true);
+    }
+  };
+  const changeRole = (event) => {
+    const nextRole = event.target.value;
+    const nextRoleData = roles[nextRole];
+    const nextPerson = Object.values(people).find(
+      (candidate) => candidate.roleKey === nextRole,
+    );
+    setSelectedRole(nextRole);
+    if (nextPerson) {
+      setSearch(nextPerson.name);
+    }
+    setFilters((current) => ({
+      ...current,
+      skill: nextRoleData.requiredSkills[0],
+      role: nextRole,
+      duration: String(nextRoleData.weeks),
+      hours: String(nextRoleData.hours),
+    }));
+    setDraftFilters((current) => ({
+      ...current,
+      skill: nextRoleData.requiredSkills[0],
+      role: nextRole,
+      duration: String(nextRoleData.weeks),
+      hours: String(nextRoleData.hours),
+    }));
+    setIsReviewing(false);
+  };
+  const chooseIncompleteRole = () => {
+    if (!incompleteProject || !incompleteRole) {
+      return;
+    }
+    changeRole({ target: { value: incompleteRole } });
+    setSelectedProject(incompleteProject);
+    setIncompleteRole("");
+    setIncompleteProject("");
+    clearStateAndFailure();
+  };
+  const resetFromZero = () => {
+    setFilters(emptyFilters);
+    setDraftFilters(emptyFilters);
+    if (queryState === "zero") {
+      clearStateAndFailure();
+    }
+  };
+
+  const matches = person &&
+    role.requiredSkills.every((skill) => person.skills.includes(skill)) &&
+    person.hours === role.hours &&
+    person.weeks === role.weeks &&
+    person.name.toLowerCase().includes(search.trim().toLowerCase()) &&
+    (!filters.skill || person.skills.includes(filters.skill)) &&
+    (!filters.role || filters.role === selectedRole) &&
+    (!filters.projectType || filters.projectType === project.type) &&
+    (!filters.duration || Number(filters.duration) === person.weeks) &&
+    (!filters.hours || Number(filters.hours) === person.hours);
 
   return (
     <div className={styles.page}>
@@ -164,7 +276,13 @@ function FindCollaborators() {
         )}
         {state === "loading" && (
           <p className={styles.subtitle}>
-            UI design + Prototyping · 6 h / week · 6 weeks
+            {role.requiredSkills.join(" + ")} · {role.hours} h / week ·{" "}
+            {role.weeks} weeks
+          </p>
+        )}
+        {state === "notsent" && (
+          <p className={styles.subtitle}>
+            {role.title} · {role.hours} h / week · {role.weeks} weeks
           </p>
         )}
       </header>
@@ -182,14 +300,16 @@ function FindCollaborators() {
               <Select
                 label="Owned project"
                 options={projectOption}
-                value="campus"
-                onChange={() => {}}
+                value={selectedProject}
+                onChange={(event) => setSelectedProject(event.target.value)}
+                placeholder=""
               />
               <Select
                 label="Open role"
                 options={roleOptions}
-                value="uiux"
-                onChange={() => {}}
+                value={selectedRole}
+                onChange={changeRole}
+                placeholder=""
               />
             </div>
             <Input
@@ -202,6 +322,7 @@ function FindCollaborators() {
                 values={draftFilters}
                 onChange={setDraftFilters}
                 onReset={resetFilters}
+                skills={optionalSkillOptions}
               />
               <Button fullWidth onClick={applyFilters}>
                 Apply filters
@@ -250,9 +371,11 @@ function FindCollaborators() {
                     values={draftFilters}
                     onChange={setDraftFilters}
                     onReset={resetFilters}
+                    skills={optionalSkillOptions}
                   />
                   <Alert variant="info" title="Role eligibility stays on">
-                    UI design + Prototyping · 6 h / week · 6 weeks remain
+                    {role.requiredSkills.join(" + ")} · {role.hours} h / week ·{" "}
+                    {role.weeks} weeks remain
                     required after reset.
                   </Alert>
                   <Button fullWidth onClick={applyFilters}>
@@ -262,34 +385,72 @@ function FindCollaborators() {
               </div>
             )}
             <section className={styles.results}>
-              <h2 className={styles.sectionHeading}>1 eligible collaborator</h2>
-              <article className={styles.card}>
-                <h3 className={styles.cardTitle}>Public profile preview</h3>
-                <AvatarRow initial="D" text={`${person.name} · ${role.title}`} />
-                <p className={styles.helper}>
-                  Self-reported skills and availability
-                </p>
-                <p className={styles.body}>{person.skills.join(" · ")}</p>
-                <p className={styles.emphasis}>
-                  {person.level} · {person.hours} h / week · {person.weeks} weeks
-                </p>
-                <div>
-                  <p className={styles.label}>Goal</p>
-                  <p className={styles.body}>{person.goal}</p>
-                </div>
-                <p className={styles.helper}>
-                  Public fields only. Contact details hidden, including from the
-                  Owner.
-                </p>
-                <Button fullWidth onClick={() => setIsReviewing(true)}>
-                  Review invitation to David
-                </Button>
-              </article>
-              {isReviewing && (
-                <article className={styles.card}>
+              {matches ? (
+                <>
+                  <h2 className={styles.sectionHeading}>1 eligible collaborator</h2>
+                  <article className={styles.card} ref={profileCardRef}>
+                    <h3 className={styles.cardTitle}>Public profile preview</h3>
+                    <AvatarRow
+                      initial={person.name.charAt(0)}
+                      text={`${person.name} · ${role.title}`}
+                    />
+                    <p className={styles.helper}>
+                      Self-reported skills and availability
+                    </p>
+                    <p className={styles.body}>{person.skills.join(" · ")}</p>
+                    <p className={styles.emphasis}>
+                      {person.level ? `${person.level} · ` : ""}
+                      {person.hours} h / week · {person.weeks} weeks
+                    </p>
+                    <div>
+                      <p className={styles.label}>Goal</p>
+                      <p className={styles.body}>{person.goal}</p>
+                    </div>
+                    <p className={styles.helper}>
+                      Public fields only. Contact details hidden, including from the
+                      Owner.
+                    </p>
+                    <Button
+                      fullWidth
+                      onClick={() => setIsReviewing(true)}
+                    >
+                      Review invitation to {person.name}
+                    </Button>
+                  </article>
+                </>
+              ) : (
+                <EmptyState
+                  title="No eligible people found"
+                  text={
+                    <>
+                      <span className={styles.zeroDesktopText}>
+                        Adjust optional filters or return to your role definitions.
+                        Required skills, weekly hours and duration remain enforced.
+                      </span>
+                      <span className={styles.zeroMobileText}>
+                        Adjust optional filters or edit roles.{" "}
+                        {role.requiredSkills.join(", ")}, hours and duration still
+                        required.
+                      </span>
+                    </>
+                  }
+                >
+                  <Button
+                    fullWidth
+                    onClick={() => {
+                      setFilters(emptyFilters);
+                      setDraftFilters(emptyFilters);
+                    }}
+                  >
+                    Reset optional filters
+                  </Button>
+                </EmptyState>
+              )}
+              {isReviewing && matches && (
+                <article className={styles.card} ref={reviewCardRef}>
                   <h3 className={styles.cardTitle}>Review invitation</h3>
                   <p className={styles.emphasis}>
-                    Invite David to Campus Marketplace
+                    Invite {person.name} to Campus Marketplace
                   </p>
                   <p className={styles.body}>
                     {role.title} · {role.hours} h / week · {role.weeks} weeks
@@ -300,20 +461,23 @@ function FindCollaborators() {
                     · {role.availability}
                   </p>
                   <p className={styles.body}>
-                    Sending is not joining. David must review and save his
-                    commitment acceptance.
+                    Sending is not joining. {person.name} must review and save
+                    his commitment acceptance.
                   </p>
-                  <Button fullWidth onClick={() => setPreviewState("sent")}>
-                    Send invitation to David
+                  <Button
+                    fullWidth
+                    disabled={actionStatus === "saving"}
+                    onClick={beginInvitation}
+                  >
+                    Send invitation to {person.name}
                   </Button>
-                  <AltLink to="/find-collaborators">
-                    <span
-                      className={styles.cancelLink}
-                      onClick={() => setIsReviewing(false)}
-                    >
-                      Cancel invitation review
-                    </span>
-                  </AltLink>
+                  <button
+                    className={styles.textLink}
+                    type="button"
+                    onClick={cancelReview}
+                  >
+                    Cancel invitation review
+                  </button>
                 </article>
               )}
             </section>
@@ -345,7 +509,7 @@ function FindCollaborators() {
             <Button
               fullWidth
               disabled={!incompleteProject || !incompleteRole}
-              onClick={() => setPreviewState("default")}
+              onClick={chooseIncompleteRole}
             >
               Find people
             </Button>
@@ -374,6 +538,19 @@ function FindCollaborators() {
         </main>
       )}
 
+      {state === "saving" && (
+        <main className={styles.content}>
+          <div className={styles.skeletons}>
+            <Skeleton />
+            <Skeleton />
+          </div>
+          <div className={styles.loadingBar} role="status">
+            <span className={styles.spinner} aria-hidden="true" />
+            Send invitation to {person.name}
+          </div>
+        </main>
+      )}
+
       {state === "zero" && (
         <>
           <main className={styles.content}>
@@ -381,14 +558,16 @@ function FindCollaborators() {
               <Select
                 label="Owned project"
                 options={projectOption}
-                value="campus"
-                onChange={() => {}}
+                value={selectedProject}
+                onChange={(event) => setSelectedProject(event.target.value)}
+                placeholder=""
               />
               <Select
                 label="Open role"
                 options={roleOptions}
-                value="uiux"
-                onChange={() => {}}
+                value={selectedRole}
+                onChange={changeRole}
+                placeholder=""
               />
             </div>
             <EmptyState
@@ -406,7 +585,7 @@ function FindCollaborators() {
                 </>
               }
             >
-              <Button fullWidth onClick={() => setFilters(emptyFilters)}>
+              <Button fullWidth onClick={resetFromZero}>
                 Reset optional filters
               </Button>
             </EmptyState>
@@ -423,12 +602,19 @@ function FindCollaborators() {
             Invitation failed. Project, role and David retained. Check
             invitation status and role before retrying. No membership created.
           </Alert>
-          <AvatarRow initial="D" text="David · UI/UX Designer" />
+          <AvatarRow
+            initial={person.name.charAt(0)}
+            text={`${person.name} · ${role.title}`}
+          />
           <p className={styles.body}>
-            Campus Marketplace · 6 h / week · 6 weeks
+            {project.name} · {role.hours} h / week · {role.weeks} weeks
           </p>
-          <Button fullWidth>Recheck invitation status</Button>
-          <AltLink to="/find-collaborators">Cancel review</AltLink>
+          <Button fullWidth onClick={retryInvitation}>
+            Recheck invitation status
+          </Button>
+          <button className={styles.textLink} type="button" onClick={cancelReview}>
+            Cancel review
+          </button>
         </main>
       )}
 
@@ -438,11 +624,13 @@ function FindCollaborators() {
             Pending response and saved commitment acceptance. David has not
             joined.
           </Alert>
-          <AvatarRow initial="D" text="David · UI/UX Designer" />
+          <AvatarRow initial={person.name.charAt(0)} text={`${person.name} · ${role.title}`} />
           <p className={styles.body}>
-            Campus Marketplace · 6 h / week · 6 weeks
+            {project.name} · {role.hours} h / week · {role.weeks} weeks
           </p>
-          <Button fullWidth>View sent invitation</Button>
+          <Button fullWidth onClick={() => navigate("/invitations/inv-1")}>
+            View sent invitation
+          </Button>
         </main>
       )}
 
@@ -452,7 +640,15 @@ function FindCollaborators() {
             Role or eligibility changed. Recheck the project, role and
             availability before sending.
           </Alert>
-          <Button fullWidth>Recheck current role</Button>
+          <Button
+            fullWidth
+            onClick={() => {
+              setDismissedFailure(true);
+              clearStateAndFailure();
+            }}
+          >
+            Recheck current role
+          </Button>
           <Button fullWidth disabled>
             Send invitation
           </Button>
