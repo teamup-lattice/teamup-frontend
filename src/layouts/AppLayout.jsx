@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
 import styles from "./AppLayout.module.css";
 
@@ -55,6 +55,7 @@ const navItems = [
 const MOBILE_QUERY = "(max-width: 599px)";
 
 function AppLayout() {
+  const { pathname } = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     () => !window.matchMedia(MOBILE_QUERY).matches,
   );
@@ -143,7 +144,14 @@ function AppLayout() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `${styles.link} ${isActive ? styles.active : ""}`
+                `${styles.link} ${
+                  isActive ||
+                  (item.to === "/projects" &&
+                    (pathname.startsWith("/role-requests/") ||
+                      pathname.startsWith("/invitations/")))
+                    ? styles.active
+                    : ""
+                }`
               }
               onClick={handleSidebarLinkClick}
             >

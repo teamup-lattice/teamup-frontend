@@ -14,6 +14,12 @@ import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import Landing from "./pages/Landing/Landing";
+import FindCollaborators from "./pages/FindCollaborators/FindCollaborators";
+import RequestRole from "./pages/RequestRole/RequestRole";
+import RoleRequest from "./pages/RoleRequest/RoleRequest";
+import JoinRequests from "./pages/JoinRequests/JoinRequests";
+import InvitationDetails from "./pages/InvitationDetails/InvitationDetails";
+import ReviewCommitment from "./pages/ReviewCommitment/ReviewCommitment";
 
 function App() {
   return (
@@ -31,6 +37,24 @@ function App() {
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
+        <Route path="/collaborators" element={<FindCollaborators />} />
+        <Route
+          path="/projects/:projectId/request-role"
+          element={<RequestRole />}
+        />
+        <Route path="/role-requests/:requestId" element={<RoleRequest />} />
+        <Route
+          path="/projects/:projectId/join-requests"
+          element={<JoinRequests />}
+        />
+        <Route
+          path="/invitations/:invitationId"
+          element={<InvitationDetails />}
+        />
+        <Route
+          path="/invitations/:invitationId/commitment"
+          element={<ReviewCommitment />}
+        />
       </Route>
       <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route path="/projects/:id/workspace" element={<Workspace />} />
