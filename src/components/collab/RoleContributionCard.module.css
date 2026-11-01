@@ -26,6 +26,10 @@
   line-height: var(--line-height-text);
 }
 
+.commitment {
+  font-weight: 700;
+}
+
 .body {
   margin: 0;
   color: var(--color-text-secondary);
@@ -36,7 +40,7 @@
 .label {
   margin: 0 0 var(--space-1);
   color: var(--color-navy);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-body);
   font-weight: 600;
   line-height: var(--line-height-text);
 }

@@ -402,10 +402,14 @@ function FindCollaborators() {
                       initial={person.name.charAt(0)}
                       text={`${person.name} · ${role.title}`}
                     />
-                    <p className={styles.helper}>
-                      Self-reported skills and availability
-                    </p>
-                    <p className={styles.body}>{person.skills.join(" · ")}</p>
+                    <div>
+                      <p className={styles.label}>
+                        Self-reported skills and availability
+                      </p>
+                      <p className={styles.body}>
+                        {person.skills.join(" · ")}
+                      </p>
+                    </div>
                     <p className={styles.emphasis}>
                       {person.level ? `${person.level} · ` : ""}
                       {person.hours} h / week · {person.weeks} weeks

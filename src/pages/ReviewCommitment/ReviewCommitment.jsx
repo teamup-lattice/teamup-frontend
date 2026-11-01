@@ -40,6 +40,7 @@ function ReviewCommitment() {
   const role = roles[isInvitation ? invitation.roleKey : joinRequest.roleKey];
   const [isAccepted, setIsAccepted] = useState(false);
   const [pendingAction, setPendingAction] = useState("accept");
+  const [acceptedAt, setAcceptedAt] = useState(null);
   const state = isFrozenPreview
     ? requestedState
     : actionStatus === "saving"
@@ -49,20 +50,25 @@ function ReviewCommitment() {
         : actionStatus === "done"
           ? pendingAction === "decline"
             ? "saving"
-            : "accepted"
+            : acceptedAt
+              ? "accepted"
+              : "saving"
           : "unchecked";
   const isLocked = state === "saving";
   const isChecked = isLocked || state === "error" || isAccepted;
 
   useEffect(() => {
-    if (
-      !isFrozenPreview &&
-      actionStatus === "done" &&
-      pendingAction === "decline"
-    ) {
-      navigate(`/invitations/${invitationId}?state=declined`, {
-        replace: true,
-      });
+    if (!isFrozenPreview && actionStatus === "done") {
+      if (pendingAction === "decline") {
+        navigate(`/invitations/${invitationId}?state=declined`, {
+          replace: true,
+        });
+      } else {
+        const timer = window.setTimeout(() => {
+          setAcceptedAt(new Date());
+        }, 0);
+        return () => window.clearTimeout(timer);
+      }
     }
   }, [actionStatus, isFrozenPreview, navigate, pendingAction]);
 
@@ -74,16 +80,33 @@ function ReviewCommitment() {
   };
   const startAcceptance = () => {
     if (isChecked && !isFrozenPreview) {
+      setAcceptedAt(null);
       setPendingAction("accept");
       run();
     }
   };
   const retryAcceptance = () => {
     setIsAccepted(true);
+    setAcceptedAt(null);
     setPendingAction("accept");
     clearStateAndFailure();
     run({ ignoreFailure: true });
   };
+
+  const acceptedDate = acceptedAt
+    ? formatDate(
+        `${acceptedAt.getFullYear()}-${String(
+          acceptedAt.getMonth() + 1,
+        ).padStart(2, "0")}-${String(acceptedAt.getDate()).padStart(2, "0")}`,
+      )
+    : "";
+  const acceptedTime = acceptedAt
+    ? new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(acceptedAt)
+    : "";
   const declineInvitation = () => {
     if (!isFrozenPreview) {
       setPendingAction("decline");
@@ -108,7 +131,10 @@ function ReviewCommitment() {
             are confirmed.
           </Alert>
           <p className={styles.emphasis}>
-            Accepted {formatDate(project.startDate)} · 09:40
+            Accepted{" "}
+            {isFrozenPreview
+              ? "19 Oct 2026 · 09:40"
+              : `${acceptedDate} · ${acceptedTime}`}
           </p>
           <p className={styles.body}>
             Accepted by {participant.name} · {role.title}
@@ -123,7 +149,6 @@ function ReviewCommitment() {
           >
             Open workspace
           </Button>
-          <AltLink to="/discover">Discover Projects</AltLink>
         </section>
       </main>
     );
@@ -241,7 +266,6 @@ function ReviewCommitment() {
           </article>
         </section>
       </div>
-      <AltLink to="/discover">Discover Projects</AltLink>
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import AvatarRow from "../../components/AvatarRow";
@@ -22,9 +22,7 @@ import styles from "./JoinRequests.module.css";
 
 const applicant = people[joinRequest.from];
 const applicantRole = roles[joinRequest.roleKey];
-const projectOptions = [
-  { value: "campus-marketplace", label: `${project.name} · Open` },
-];
+const projectOptions = [{ value: projectId, label: `${project.name} · Open` }];
 const supportedStates = [
   "default",
   "empty",
@@ -46,8 +44,10 @@ function ApplicantCard() {
       <p className={styles.helper}>
         Pending · Received {formatDate(joinRequest.receivedOn)}
       </p>
-      <p className={styles.label}>Self-reported skills and availability</p>
-      <p className={styles.body}>{applicant.skills.join(" · ")}</p>
+      <div>
+        <p className={styles.label}>Self-reported skills and availability</p>
+        <p className={styles.body}>{applicant.skills.join(" · ")}</p>
+      </div>
       <p className={styles.emphasis}>
         {applicant.hours} h / week · {applicant.weeks} weeks
       </p>
@@ -63,12 +63,13 @@ function ApplicantCard() {
 }
 
 function JoinRequests() {
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
   const isFrozenPreview = supportedStates.includes(requestedState);
-  const [decision, setDecision] = useState("approved");
+  const [decision, setDecision] = useState(null);
   const state = isFrozenPreview
     ? requestedState
     : actionStatus === "saving"
@@ -76,7 +77,7 @@ function JoinRequests() {
       : actionStatus === "failed"
         ? "failed"
         : actionStatus === "done"
-          ? decision
+          ? decision ?? "default"
           : "default";
 
   const setTab = (nextTab) => {
@@ -101,8 +102,14 @@ function JoinRequests() {
     setSearchParams(nextParams, { replace: true });
     run({ ignoreFailure: true });
   };
-  const goToRequestList = () =>
-    navigate(`/projects/${projectId}/join-requests`);
+  const goToRequestList = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("state");
+    nextParams.delete("fail");
+    setDecision(null);
+    const query = nextParams.toString();
+    navigate(`${pathname}${query ? `?${query}` : ""}`, { replace: true });
+  };
   const isSentTab = searchParams.get("tab") === "sent";
 
   if (state === "guard") {
@@ -228,32 +235,22 @@ function JoinRequests() {
               onChange={() => {}}
             />
             <nav className={styles.tabs} aria-label="Recruitment">
-              {isSentTab ? (
-                <button
-                  type="button"
-                  className={styles.tabLink}
-                  onClick={() => setTab("")}
-                >
-                  Join requests · 1 pending
-                </button>
-              ) : (
-                <Button variant="secondary" fullWidth onClick={() => setTab("")}>
-                  Join requests · 1 pending
-                </Button>
-              )}
-              {isSentTab ? (
-                <Button variant="secondary" fullWidth onClick={() => setTab("sent")}>
-                  Sent invitations
-                </Button>
-              ) : (
-                <button
-                  type="button"
-                  className={styles.tabLink}
-                  onClick={() => setTab("sent")}
-                >
-                  Sent invitations
-                </button>
-              )}
+              <Button
+                variant="secondary"
+                fullWidth
+                className={isSentTab ? styles.tabLink : styles.tabActive}
+                onClick={() => setTab("")}
+              >
+                Join requests · 1 pending
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                className={isSentTab ? styles.tabActive : styles.tabLink}
+                onClick={() => setTab("sent")}
+              >
+                Sent invitations
+              </Button>
               <AltLink to="/collaborators">Find Collaborators</AltLink>
             </nav>
           </>

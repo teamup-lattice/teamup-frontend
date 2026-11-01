@@ -13,8 +13,8 @@
   width: var(--space-5);
   height: var(--space-5);
   border-radius: 50%;
-  background: var(--color-purple);
-  color: var(--color-card);
+  background: var(--color-purple-light);
+  color: var(--color-purple);
   font-size: var(--font-size-helper);
   font-weight: 600;
 }

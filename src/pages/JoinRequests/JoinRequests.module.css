@@ -37,32 +37,52 @@
 
 .tabs {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  align-items: stretch;
+  gap: var(--space-2);
 }
 
 .tabs > * {
   flex: 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
 }
 
-.tabs a {
+.tabs > a,
+.tabs > button {
+  min-height: var(--button-height);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.tabs > a {
+  margin: 0;
   color: var(--color-purple);
   font-size: var(--font-size-label);
   font-weight: 600;
-  text-align: center;
   text-decoration: underline;
 }
 
-.tabLink {
-  min-height: var(--button-height);
-  padding: var(--space-2) var(--space-4);
-  border: 0;
-  background: transparent;
-  color: var(--color-purple);
-  font: inherit;
+.tabs > button {
+  font-family: var(--font-family);
   font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
   font-weight: 600;
-  text-align: center;
+}
+
+.tabs > button.tabActive {
+  border-color: var(--color-purple);
+  color: var(--color-purple);
+  text-decoration: none;
+}
+
+.tabLink {
+  color: var(--color-purple);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -101,9 +121,9 @@
 }
 
 .label {
-  margin: 0;
+  margin: 0 0 var(--space-1);
   color: var(--color-navy);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-body);
   font-weight: 600;
   line-height: var(--line-height-text);
 }
@@ -112,7 +132,7 @@
   margin: 0;
   color: var(--color-navy);
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   line-height: var(--line-height-text);
 }
 
