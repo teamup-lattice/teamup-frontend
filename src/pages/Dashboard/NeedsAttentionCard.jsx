@@ -1,5 +1,6 @@
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
+import { projectId } from "../../data/collaborationData";
 import styles from "./NeedsAttentionCard.module.css";
 
 function NeedsAttentionCard({ needsAttention }) {
@@ -48,6 +49,9 @@ function NeedsAttentionCard({ needsAttention }) {
       </Button>
 
       <div className={styles.links}>
+        <AltLink to={`/projects/${projectId}/join-requests`}>
+          Review join requests
+        </AltLink>
         <AltLink to="/projects">Request new date</AltLink>
         <AltLink to="/projects">Hand over</AltLink>
       </div>

@@ -1,3 +1,7 @@
+export const projectId = "campus-marketplace";
+export const invitationId = "inv-1";
+export const requestId = "req-1";
+
 export const project = {
   name: "Campus Marketplace",
   status: "Open",
@@ -90,8 +94,8 @@ export const teamAgreements = {
     "Tell the team early when unavailable or a deadline is at risk.",
     "Raise blockers early so the team can help.",
   ],
-  proposal: "Agree a response window before starting. Suggested: weekday evenings.",
+  proposal:
+    "Agree a response window before starting. Suggested: weekday evenings.",
   note: "Response window: to be agreed.",
-  commitmentText:
-    "To be agreed before starting; suggested: weekday evenings.",
+  commitmentText: "To be agreed before starting; suggested: weekday evenings.",
 };

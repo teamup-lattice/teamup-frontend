@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
@@ -7,7 +7,17 @@ import Checkbox from "../../components/Checkbox";
 import MilestonesCard from "../../components/collab/MilestonesCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import TeamAgreementsCard from "../../components/collab/TeamAgreementsCard";
-import { invitation, joinRequest, people, project, roles, teamAgreements } from "../../data/collaborationData";
+import {
+  invitation,
+  invitationId,
+  joinRequest,
+  people,
+  project,
+  projectId,
+  requestId,
+  roles,
+  teamAgreements,
+} from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
 import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./ReviewCommitment.module.css";
@@ -16,7 +26,6 @@ const supportedStates = ["unchecked", "saving", "error", "accepted"];
 const supportedVariants = ["invitation", "request"];
 
 function ReviewCommitment() {
-  const { invitationId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { status: actionStatus, run } = useSimulatedAction();
@@ -51,7 +60,9 @@ function ReviewCommitment() {
       actionStatus === "done" &&
       pendingAction === "decline"
     ) {
-      navigate("/invitations/inv-1?state=declined", { replace: true });
+      navigate(`/invitations/${invitationId}?state=declined`, {
+        replace: true,
+      });
     }
   }, [actionStatus, isFrozenPreview, navigate, pendingAction]);
 
@@ -106,9 +117,13 @@ function ReviewCommitment() {
             Joined. Other roles may remain open; the project has not
             necessarily started.
           </p>
-          <Button fullWidth onClick={() => navigate("/projects/campus-marketplace/workspace")}>
+          <Button
+            fullWidth
+            onClick={() => navigate(`/projects/${projectId}/workspace`)}
+          >
             Open workspace
           </Button>
+          <AltLink to="/discover">Discover Projects</AltLink>
         </section>
       </main>
     );
@@ -213,7 +228,7 @@ function ReviewCommitment() {
                 </Button>
               </div>
             ) : (
-              <AltLink to={`/role-requests/${invitationId}`}>
+              <AltLink to={`/role-requests/${requestId}`}>
                 Back to request
               </AltLink>
             )}
@@ -226,6 +241,7 @@ function ReviewCommitment() {
           </article>
         </section>
       </div>
+      <AltLink to="/discover">Discover Projects</AltLink>
     </main>
   );
 }

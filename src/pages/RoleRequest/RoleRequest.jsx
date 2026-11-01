@@ -1,10 +1,15 @@
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import MilestonesCard from "../../components/collab/MilestonesCard";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
-import { joinRequest, project, roles } from "../../data/collaborationData";
+import {
+  joinRequest,
+  project,
+  requestId,
+  roles,
+} from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
 import styles from "./RoleRequest.module.css";
 
@@ -12,7 +17,6 @@ const requestRole = roles.frontend;
 const supportedStates = ["pending", "approved", "declined"];
 
 function RoleRequest() {
-  const { requestId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedState = searchParams.get("state");

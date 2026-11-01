@@ -8,7 +8,12 @@ import Input from "../../components/Input";
 import Select from "../../components/Select";
 import Skeleton from "../../components/Skeleton";
 import { formatDate } from "../CreateProject/formatDate";
-import { people, project, roles } from "../../data/collaborationData";
+import {
+  people,
+  project,
+  projectId,
+  roles,
+} from "../../data/collaborationData";
 import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./FindCollaborators.module.css";
 
@@ -16,7 +21,7 @@ const roleOptions = Object.entries(roles).map(([value, item]) => ({
   value,
   label: item.title,
 }));
-const projectOption = [{ value: "campus", label: `${project.name} · Open` }];
+const projectOption = [{ value: projectId, label: `${project.name} · Open` }];
 const durationOptions = [...new Set(Object.values(roles).map((item) => item.weeks))].map(
   (weeks) => ({ value: String(weeks), label: `${weeks} weeks` }),
 );
@@ -114,7 +119,10 @@ function FindCollaborators() {
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
   const [search, setSearch] = useState(people.david.name);
-  const [selectedProject, setSelectedProject] = useState("campus");
+  const [selectedProject, setSelectedProject] = useState(() => {
+    const requestedProject = searchParams.get("project");
+    return requestedProject === projectId ? requestedProject : projectId;
+  });
   const [selectedRole, setSelectedRole] = useState("uiux");
   const [incompleteProject, setIncompleteProject] = useState("");
   const [incompleteRole, setIncompleteRole] = useState("");
@@ -589,7 +597,11 @@ function FindCollaborators() {
                 Reset optional filters
               </Button>
             </EmptyState>
-            <Button variant="secondary" fullWidth>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => navigate(`/projects/${projectId}/edit`)}
+            >
               Return to role definitions
             </Button>
           </main>
@@ -628,7 +640,12 @@ function FindCollaborators() {
           <p className={styles.body}>
             {project.name} · {role.hours} h / week · {role.weeks} weeks
           </p>
-          <Button fullWidth onClick={() => navigate("/invitations/inv-1")}>
+          <Button
+            fullWidth
+            onClick={() =>
+              navigate(`/projects/${projectId}/join-requests?tab=sent`)
+            }
+          >
             View sent invitation
           </Button>
         </main>

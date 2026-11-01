@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
@@ -8,7 +8,14 @@ import MilestonesCard from "../../components/collab/MilestonesCard";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
 import TeamAgreementsCard from "../../components/collab/TeamAgreementsCard";
-import { invitation, people, project, roles, teamAgreements } from "../../data/collaborationData";
+import {
+  invitation,
+  invitationId,
+  people,
+  project,
+  roles,
+  teamAgreements,
+} from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
 import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./InvitationDetails.module.css";
@@ -25,7 +32,6 @@ const supportedStates = [
 ];
 
 function InvitationDetails() {
-  const { invitationId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { status: actionStatus, run } = useSimulatedAction();

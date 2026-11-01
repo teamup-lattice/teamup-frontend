@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import AvatarRow from "../../components/AvatarRow";
@@ -9,7 +9,13 @@ import Select from "../../components/Select";
 import Skeleton from "../../components/Skeleton";
 import MilestonesCard from "../../components/collab/MilestonesCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
-import { joinRequest, people, project, roles } from "../../data/collaborationData";
+import {
+  joinRequest,
+  people,
+  project,
+  projectId,
+  roles,
+} from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
 import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./JoinRequests.module.css";
@@ -57,7 +63,6 @@ function ApplicantCard() {
 }
 
 function JoinRequests() {
-  const { projectId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { status: actionStatus, run } = useSimulatedAction();
@@ -182,7 +187,7 @@ function JoinRequests() {
           >
             <Button
               fullWidth
-              onClick={() => navigate("/find-collaborators")}
+              onClick={() => navigate("/collaborators")}
             >
               Find Collaborators
             </Button>
@@ -249,7 +254,7 @@ function JoinRequests() {
                   Sent invitations
                 </button>
               )}
-              <AltLink to="/find-collaborators">Find Collaborators</AltLink>
+              <AltLink to="/collaborators">Find Collaborators</AltLink>
             </nav>
           </>
         )}

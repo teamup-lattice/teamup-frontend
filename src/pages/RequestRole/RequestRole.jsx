@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
@@ -7,18 +7,29 @@ import Skeleton from "../../components/Skeleton";
 import MilestonesCard from "../../components/collab/MilestonesCard";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
 import RoleContributionCard from "../../components/collab/RoleContributionCard";
-import { people, project, roles } from "../../data/collaborationData";
+import {
+  people,
+  project,
+  projectId,
+  roles,
+  requestId,
+} from "../../data/collaborationData";
 import useSimulatedAction from "../../hooks/useSimulatedAction";
 import styles from "./RequestRole.module.css";
 
-const requestRole = roles.frontend;
-const requester = people.john;
 const supportedStates = ["default", "missing", "saving", "failed", "sent"];
 
 function RequestRole() {
-  const { projectId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const roleKey = searchParams.get("role");
+  const selectedRoleKey = roles[roleKey] ? roleKey : "frontend";
+  const requestRole = roles[selectedRoleKey];
+  const requester =
+    Object.values(people).find(
+      (person) => person.roleKey === selectedRoleKey,
+    ) ??
+    people.john;
   const { status: actionStatus, run } = useSimulatedAction();
   const requestedState = searchParams.get("state");
   const isFrozenPreview = supportedStates.includes(requestedState);
@@ -33,9 +44,6 @@ function RequestRole() {
           : "default";
   const projectDetailsPath = `/projects/${projectId}`;
 
-  const setPreviewState = (nextState) => {
-    setSearchParams({ state: nextState });
-  };
   const clearStateAndFailure = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("state");
@@ -63,7 +71,7 @@ function RequestRole() {
           >
             <Button
               fullWidth
-              onClick={() => setPreviewState("default")}
+              onClick={() => navigate(projectDetailsPath)}
             >
               Choose role
             </Button>
@@ -80,9 +88,10 @@ function RequestRole() {
     return (
       <main className={styles.page}>
         <header className={styles.header}>
-          <h1 className={styles.heading}>Frontend Developer request</h1>
+          <h1 className={styles.heading}>{requestRole.title} request</h1>
           <p className={styles.subtitle}>
-            John · 8 h / week · 6 weeks
+            {requester.name} · {requestRole.hours} h / week ·{" "}
+            {requestRole.weeks} weeks
           </p>
         </header>
         <Alert variant="info" title="Sending request…">
@@ -104,9 +113,10 @@ function RequestRole() {
     return (
       <main className={styles.page}>
         <header className={styles.header}>
-          <h1 className={styles.heading}>Frontend Developer request</h1>
+          <h1 className={styles.heading}>{requestRole.title} request</h1>
           <p className={styles.subtitle}>
-            Campus Marketplace · 8 h / week · 6 weeks
+            Campus Marketplace · {requestRole.hours} h / week ·{" "}
+            {requestRole.weeks} weeks
           </p>
         </header>
         <Alert variant="error" title="Request could not send">
@@ -130,7 +140,7 @@ function RequestRole() {
         <RoleContributionCard role={requestRole} project={project} />
         <Button
           fullWidth
-          onClick={() => navigate("/role-requests/req-1?state=pending")}
+          onClick={() => navigate(`/role-requests/${requestId}`)}
         >
           View request status
         </Button>
