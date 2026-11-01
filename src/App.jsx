@@ -11,7 +11,6 @@ import CreateProject from "./pages/CreateProject/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import Workspace from "./pages/Workspace";
 import ProjectPage from "./pages/ProjectPage";
-import Projects from "./pages/Projects";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import Landing from "./pages/Landing/Landing";
