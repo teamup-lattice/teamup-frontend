@@ -1,0 +1,403 @@
+.overview {
+  min-width: 0;
+  color: var(--color-navy);
+}
+
+.pageHeader {
+  margin-bottom: var(--space-5);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.dateLine {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.overviewColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.leftStack,
+.rightStack {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.summaryCard {
+  overflow: hidden;
+  padding: 0;
+}
+
+.overviewImage {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.summaryContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-heading);
+}
+
+.summaryContent .cardTitle {
+  margin-bottom: 0;
+}
+
+.progressHeading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.progressBar {
+  display: block;
+  width: 100%;
+  height: var(--space-tight);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-chip);
+  appearance: none;
+  background: var(--color-action-disabled);
+}
+
+.progressBar::-webkit-progress-bar {
+  border-radius: var(--radius-chip);
+  background: var(--color-action-disabled);
+}
+
+.progressBar::-webkit-progress-value {
+  border-radius: var(--radius-chip);
+  background: var(--color-green);
+}
+
+.progressBar::-moz-progress-bar {
+  border-radius: var(--radius-chip);
+  background: var(--color-green);
+}
+
+.summaryMeta,
+.acceptedDate,
+.taskMeta,
+.blockerNote,
+.memberNote,
+.updateText {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+  overflow-wrap: anywhere;
+}
+
+.summaryMeta {
+  margin: var(--space-1) 0;
+}
+
+.memberRows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.memberAvatar,
+.ownerAvatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.memberAvatar {
+  width: var(--space-6);
+  height: var(--space-6);
+  font-size: var(--font-size-label);
+}
+
+.acceptedDate {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.buttonRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.milestonesCard .cardTitle {
+  margin-bottom: var(--space-3);
+}
+
+.dividedTitle {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.milestoneList {
+  padding: 0;
+  list-style: none;
+}
+
+.milestone {
+  padding: var(--space-3) 0;
+}
+
+.milestone + .milestone {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.taskTitle {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+  overflow-wrap: anywhere;
+}
+
+.textLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-4);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.textLink:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.attentionSection {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sectionLabel {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.attentionTaskGroup,
+.memberTasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.attentionTask {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.statusTag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: var(--space-5);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.statusBlocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.statusOverdue {
+  background: var(--color-amber-light);
+  color: var(--color-amber);
+}
+
+.statusInProgress {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.statusToDo {
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+}
+
+.attentionTitle {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.ownerLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ownerAvatar {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-helper);
+}
+
+.blockerNote {
+  margin: 0;
+}
+
+.memberNote {
+  margin: 0;
+}
+
+.taskList,
+.updateList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.taskItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.updateMeta {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.updateText {
+  margin-top: var(--space-1);
+}
+
+.checkIn {
+  margin-top: var(--space-4);
+}
+
+.updatesCard .textLink {
+  margin-top: var(--space-4);
+}
+
+.statePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 720px;
+  min-width: 0;
+}
+
+.stateMessage {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.skeletons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .overviewColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .leftStack,
+  .rightStack {
+    display: contents;
+  }
+
+  .summaryCard {
+    order: 1;
+  }
+
+  .attentionSection {
+    order: 2;
+  }
+
+  .upcomingCard {
+    order: 3;
+  }
+
+  .milestonesCard {
+    order: 4;
+  }
+
+  .updatesCard {
+    order: 5;
+  }
+}
+
+@media (max-width: 767px) {
+  .buttonRow button,
+  .attentionSection button,
+  .statePanel button {
+    width: 100%;
+  }
+
+  .skeletons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
