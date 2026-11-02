@@ -1,0 +1,77 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.memberCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.memberHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-weight: 700;
+}
+
+.memberName {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.memberRole,
+.memberResponsibilities,
+.metaLine {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.linkButton {
+  align-self: center;
+  border: none;
+  background: transparent;
+  color: var(--color-purple);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ownerActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.loadingList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

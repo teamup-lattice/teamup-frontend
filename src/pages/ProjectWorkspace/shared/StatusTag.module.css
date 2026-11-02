@@ -1,0 +1,34 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.done {
+  background: var(--color-green-light);
+  color: var(--color-green);
+}
+
+.blocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.overdue {
+  background: var(--color-amber-light);
+  color: var(--color-amber);
+}
+
+.inProgress,
+.toDo,
+.neutral {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}

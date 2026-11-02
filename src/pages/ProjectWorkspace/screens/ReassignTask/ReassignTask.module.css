@@ -1,0 +1,47 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.formCard,
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.sectionTitle,
+.reviewTitle {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.helper,
+.reviewBody,
+.footerNote,
+.savedNotice {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.buttonRow {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.confirmationRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

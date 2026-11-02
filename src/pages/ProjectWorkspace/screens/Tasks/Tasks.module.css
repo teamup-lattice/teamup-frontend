@@ -1,0 +1,200 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.progressTrack {
+  width: 100%;
+  height: 12px;
+  background: var(--color-green-light);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  background: var(--color-green);
+  border-radius: inherit;
+}
+
+.summaryText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.toggleRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.toggleButton {
+  min-height: var(--button-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggleButtonActive {
+  background: var(--color-purple);
+  border: 1px solid var(--color-purple);
+  color: var(--color-card);
+}
+
+.toggleButtonInactive {
+  background: var(--color-card);
+  border: 1px solid var(--color-purple);
+  color: var(--color-purple);
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.primaryAction {
+  width: 100%;
+}
+
+.desktopTableWrap {
+  display: block;
+}
+
+.taskTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.taskTable th,
+.taskTable td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.taskTable th {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 700;
+}
+
+.taskTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.taskLink {
+  color: var(--color-purple);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.dueCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mobileGrid {
+  display: none;
+}
+
+.mobileCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.mobileTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mobileTitle {
+  margin: 0;
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-heading);
+}
+
+.mobileMeta,
+.mobileNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.mobileNote {
+  color: var(--color-navy);
+}
+
+.openLink {
+  margin: 0 auto;
+  color: var(--color-purple);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.footerNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+}
+
+.loadingList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (max-width: 1024px) {
+  .desktopTableWrap {
+    display: none;
+  }
+
+  .mobileGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .filterRow,
+  .mobileGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .toggleRow {
+    grid-template-columns: 1fr;
+  }
+}
