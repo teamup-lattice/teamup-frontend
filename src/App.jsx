@@ -9,7 +9,6 @@ import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import MyProjects from "./pages/MyProjects/MyProjects";
 import CreateProject from "./pages/CreateProject/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
-import Workspace from "./pages/Workspace";
 import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
@@ -20,6 +19,17 @@ import RoleRequest from "./pages/RoleRequest/RoleRequest";
 import JoinRequests from "./pages/JoinRequests/JoinRequests";
 import InvitationDetails from "./pages/InvitationDetails/InvitationDetails";
 import ReviewCommitment from "./pages/ReviewCommitment/ReviewCommitment";
+import ProjectWorkspace from "./pages/ProjectWorkspace/ProjectWorkspace";
+import WorkspaceOverview from "./pages/ProjectWorkspace/screens/WorkspaceOverview/WorkspaceOverview";
+import Tasks from "./pages/ProjectWorkspace/screens/Tasks/Tasks";
+import CreateTask from "./pages/ProjectWorkspace/screens/CreateTask/CreateTask";
+import TaskDetail from "./pages/ProjectWorkspace/screens/TaskDetail/TaskDetail";
+import ReassignTask from "./pages/ProjectWorkspace/screens/ReassignTask/ReassignTask";
+import Team from "./pages/ProjectWorkspace/screens/Team/Team";
+import ReleaseRole from "./pages/ProjectWorkspace/screens/ReleaseRole/ReleaseRole";
+import Reminders from "./pages/ProjectWorkspace/screens/Reminders/Reminders";
+import ProjectUpdates from "./pages/ProjectWorkspace/screens/ProjectUpdates/ProjectUpdates";
+import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
 
 function App() {
   return (
@@ -55,9 +65,23 @@ function App() {
           path="/invitations/:invitationId/commitment"
           element={<ReviewCommitment />}
         />
+        <Route
+          path="/projects/:projectId/workspace"
+          element={<ProjectWorkspace />}
+        >
+          <Route index element={<WorkspaceOverview />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks/new" element={<CreateTask />} />
+          <Route path="tasks/:taskId" element={<TaskDetail />} />
+          <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
+          <Route path="team" element={<Team />} />
+          <Route path="team/release-role" element={<ReleaseRole />} />
+          <Route path="milestones" element={<Milestones />} />
+          <Route path="updates" element={<ProjectUpdates />} />
+          <Route path="reminders" element={<Reminders />} />
+        </Route>
       </Route>
       <Route path="/projects/:id" element={<ProjectDetails />} />
-      <Route path="/projects/:id/workspace" element={<Workspace />} />
       <Route path="/projects/:id/page" element={<ProjectPage />} />
     </Routes>
   );
