@@ -14,6 +14,7 @@ import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import Landing from "./pages/Landing/Landing";
+import DiscoverProjects from "./pages/DiscoverProjects/DiscoverProjects";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+         <Route path="/discover" element={<DiscoverProjects />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
