@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .pageTitle {
@@ -18,10 +18,10 @@
 .formCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  gap: 16px;
+  padding: 24px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: 8px;
   background: var(--color-card);
 }
 
@@ -29,10 +29,13 @@
 .footerText {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
 }
 
 .cancelLink {
+  align-self: center;
+  margin: 16px 0;
   border: none;
   background: transparent;
   color: var(--color-purple);
@@ -45,4 +48,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+@media (max-width: 767px) {
+  .formCard {
+    padding: 20px;
+  }
 }

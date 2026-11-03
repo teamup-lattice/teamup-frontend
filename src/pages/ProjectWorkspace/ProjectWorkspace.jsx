@@ -10,6 +10,7 @@ import {
   workspaceProject,
 } from "../../data/workspaceData";
 import styles from "./ProjectWorkspace.module.css";
+import "./shared/workspaceVisuals.css";
 
 const sectionOptions = [
   { value: "overview", label: "Overview" },
@@ -17,6 +18,8 @@ const sectionOptions = [
   { value: "updates", label: "Updates" },
   { value: "team", label: "Team" },
   { value: "milestones", label: "Milestones" },
+  { value: "contributions", label: "Contributions" },
+  { value: "completion", label: "Project completion" },
 ];
 
 function ProjectWorkspace() {
@@ -38,7 +41,11 @@ function ProjectWorkspace() {
         ? "team"
         : location.pathname.startsWith(`${workspacePath}/milestones`)
           ? "milestones"
-          : "overview";
+            : location.pathname.startsWith(`${workspacePath}/contributions`)
+              ? "contributions"
+              : location.pathname.startsWith(`${workspacePath}/completion`)
+                ? "completion"
+            : "overview";
   const workspaceContext = {
     project: workspaceProject,
     members,
@@ -82,10 +89,12 @@ function ProjectWorkspace() {
             Overview
           </NavLink>
           <NavLink
-            to={navigationTarget(`${workspacePath}/tasks`)}
+            to={navigationTarget(
+              `${workspacePath}/${currentSection === "team" ? "team" : "tasks"}`,
+            )}
             className={navClassName}
           >
-            Tasks
+            {currentSection === "team" ? "Team" : "Tasks"}
           </NavLink>
           <NavLink
             to={navigationTarget(`${workspacePath}/updates`)}
@@ -96,10 +105,12 @@ function ProjectWorkspace() {
         </div>
         <div className={styles.subLinks}>
           <NavLink
-            to={navigationTarget(`${workspacePath}/team`)}
+            to={navigationTarget(
+              `${workspacePath}/${currentSection === "team" ? "tasks" : "team"}`,
+            )}
             className={navClassName}
           >
-            Team
+            {currentSection === "team" ? "Tasks" : "Team"}
           </NavLink>
           <NavLink
             to={navigationTarget(`${workspacePath}/milestones`)}
@@ -107,8 +118,18 @@ function ProjectWorkspace() {
           >
             Milestones
           </NavLink>
-          <span className={styles.disabled}>Contributions</span>
-          <span className={styles.disabled}>Project completion</span>
+          <NavLink
+            to={navigationTarget(`${workspacePath}/contributions`)}
+            className={navClassName}
+          >
+            Contributions
+          </NavLink>
+          <NavLink
+            to={navigationTarget(`${workspacePath}/completion`)}
+            className={navClassName}
+          >
+            Project completion
+          </NavLink>
         </div>
       </nav>
 

@@ -6,31 +6,66 @@ function StatusTag({ status, overdueDays = 0, className = "" }) {
     .join(" ");
 
   if (status === "Blocked") {
-    return <span className={classes}>! Blocked</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true">!</span>
+        <span>Blocked</span>
+      </span>
+    );
   }
 
   if (status === "Overdue") {
     const label = `Overdue ${overdueDays} ${overdueDays === 1 ? "day" : "days"}`;
-    return <span className={classes}>{label}</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true" />
+        <span>{label}</span>
+      </span>
+    );
   }
 
   if (status === "Done") {
-    return <span className={classes}>✓ Done</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true">✓</span>
+        <span>Done</span>
+      </span>
+    );
   }
 
   if (status === "In progress") {
-    return <span className={classes}>● In progress</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true" />
+        <span>In progress</span>
+      </span>
+    );
   }
 
   if (status === "In review") {
-    return <span className={classes}>● In review</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true" />
+        <span>In review</span>
+      </span>
+    );
   }
 
   if (status === "To do") {
-    return <span className={classes}>● To do</span>;
+    return (
+      <span className={classes}>
+        <span className={styles.icon} aria-hidden="true" />
+        <span>To do</span>
+      </span>
+    );
   }
 
-  return <span className={classes}>{status}</span>;
+  return (
+    <span className={classes}>
+      <span className={styles.icon} aria-hidden="true" />
+      <span>{status}</span>
+    </span>
+  );
 }
 
 function statusToVariant(status) {

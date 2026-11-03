@@ -1,14 +1,36 @@
 .tag {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  gap: 6px;
+  width: 116px;
+  min-width: 96px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
+  text-align: center;
+}
+
+.tag > span:not(.icon) {
+  flex: 1;
+  text-align: center;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 14px;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .done {
@@ -31,4 +53,19 @@
 .neutral {
   background: var(--color-purple-light);
   color: var(--color-purple);
+}
+
+.toDo {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+}
+
+.inProgress .icon::before,
+.toDo .icon::before {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  content: "";
 }

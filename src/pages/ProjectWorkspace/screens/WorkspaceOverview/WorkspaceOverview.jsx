@@ -6,6 +6,7 @@ import Skeleton from "../../../../components/Skeleton";
 import overviewImage from "../../../../assets/overview.png";
 import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
+import StatusTag from "../../shared/StatusTag";
 import styles from "./WorkspaceOverview.module.css";
 
 const overviewDate = "2026-11-12";
@@ -29,20 +30,6 @@ function getDaysOverdue(task) {
   const dueDate = new Date(`${task.dueDate}T00:00:00Z`);
   const currentDate = new Date(`${overviewDate}T00:00:00Z`);
   return Math.max(0, Math.floor((currentDate - dueDate) / 86400000));
-}
-
-function getStatusClass(status) {
-  switch (status) {
-    case "Done":
-      return styles.statusDone;
-    case "Blocked":
-      return styles.statusBlocked;
-    case "In progress":
-    case "In review":
-      return styles.statusInProgress;
-    default:
-      return styles.statusToDo;
-  }
 }
 
 function WorkspaceOverview() {
@@ -153,21 +140,13 @@ function WorkspaceOverview() {
           <article className={`${styles.card} ${styles.attentionTask}`}>
             <div className={styles.tags}>
               {task.status === "Blocked" && (
-                <span className={`${styles.statusTag} ${styles.statusBlocked}`}>
-                  ! Blocked
-                </span>
+                <StatusTag status="Blocked" />
               )}
               {daysOverdue > 0 && (
-                <span className={`${styles.statusTag} ${styles.statusOverdue}`}>
-                  Overdue {daysOverdue} {daysOverdue === 1 ? "day" : "days"}
-                </span>
+                <StatusTag status="Overdue" overdueDays={daysOverdue} />
               )}
               {!isOwner && task.status !== "Blocked" && daysOverdue === 0 && (
-                <span
-                  className={`${styles.statusTag} ${getStatusClass(task.status)}`}
-                >
-                  {task.status}
-                </span>
+                <StatusTag status={task.status} />
               )}
             </div>
             <h3 className={styles.attentionTitle}>{task.title}</h3>

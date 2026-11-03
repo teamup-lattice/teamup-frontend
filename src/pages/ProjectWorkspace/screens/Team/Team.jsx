@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Skeleton from "../../../../components/Skeleton";
@@ -105,10 +105,9 @@ function Team() {
       <p className={styles.subtitle}>3 joined members · Saved acceptance: 19 Oct 2026</p>
 
       {members.map((member) => {
-            const isEditing = editingMember === member.name;
-        const isCurrentUser = member.name === currentUser.name;
+        const isEditing = editingMember === member.name;
 
-            if (isEditing) {
+        if (isEditing) {
           return (
             <div key={member.name} className={styles.memberCard}>
               <div className={styles.memberHeader}>
@@ -145,23 +144,36 @@ function Team() {
           <div key={member.name} className={styles.memberCard}>
             <div className={styles.memberHeader}>
               <div className={styles.avatar}>{member.name.charAt(0)}</div>
-              <div>
-                <h3 className={styles.memberName}>{member.name} · {member.role}</h3>
-              </div>
+              <p className={styles.memberName}>{member.name} · {member.role}</p>
             </div>
 
-            <p className={styles.memberRole}>Role: {member.role}</p>
+            <p className={styles.memberRole}>{member.role}</p>
             <p className={styles.memberResponsibilities}>Responsibilities: {memberResponsibilities[member.name] || "Project work"}</p>
-            <p className={styles.metaLine}>
-              Commitment summary · {member.hoursPerWeek} h / week · 6 weeks 19 Oct–30 Nov 2026 · {member.commitmentType}
+            <p className={styles.metaLine} id={`commitment-${member.name}`}>
+              Commitment summary · {member.hoursPerWeek} h / week · 6 weeks
+              <br />
+              19 Oct–30 Nov 2026 · {member.commitmentType}
             </p>
-            <button type="button" className={styles.linkButton}>View commitment summary</button>
+            <a className={styles.linkButton} href={`#commitment-${member.name}`}>
+              View commitment summary
+            </a>
 
-            {isOwner && !isCurrentUser && (
-              <div className={styles.ownerActions}>
-                <Button type="button" variant="secondary" onClick={() => openEdit(member)}>Edit role</Button>
-                <Button type="button" variant="secondary" onClick={() => openEdit(member)}>Release role</Button>
-              </div>
+            {isOwner && (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => openEdit(member)}
+                >
+                  Edit role
+                </Button>
+                {member.name === "David" && (
+                  <Link className={styles.releaseLink} to="./release-role">
+                    Review release of David&apos;s role
+                  </Link>
+                )}
+              </>
             )}
 
             {currentUser.name === "David" && member.name === "David" && !isOwner && (

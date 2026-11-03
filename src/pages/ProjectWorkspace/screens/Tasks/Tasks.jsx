@@ -6,6 +6,7 @@ import EmptyState from "../../../../components/EmptyState";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
 import { statuses, tasks as projectTasks, members } from "../../../../data/workspaceData";
+import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
 import StatusTag from "../../shared/StatusTag";
 import styles from "./Tasks.module.css";
@@ -248,9 +249,11 @@ function Tasks() {
                   <td>{task.assignee}</td>
                   <td>
                     <div className={styles.dueCell}>
-                      <span>{task.dueDate}</span>
+                      <span>{formatDate(task.dueDate)}</span>
                       {task.overdueDays > 0 && (
-                        <StatusTag status="Overdue" overdueDays={task.overdueDays} />
+                      <span className={styles.overdueText}>
+                        Overdue {task.overdueDays} {task.overdueDays === 1 ? "day" : "days"}
+                      </span>
                       )}
                     </div>
                   </td>
@@ -286,10 +289,12 @@ function Tasks() {
                 <StatusTag status={task.status} />
                 {task.overdueDays > 0 && <StatusTag status="Overdue" overdueDays={task.overdueDays} />}
               </div>
-              <h3 className={styles.mobileTitle}>{task.title}</h3>
+              <Link className={styles.mobileTitle} to={buildTaskLink(task.id)}>
+                {task.title}
+              </Link>
               <p className={styles.mobileMeta}>Owner: {task.assignee}</p>
               <p className={styles.mobileMeta}>
-                Due: {task.dueDate} · Milestone: {milestone ? `${milestone.id} ${milestone.name}` : "—"}
+                Due: {formatDate(task.dueDate)} · Milestone: {milestone ? `${milestone.id} ${milestone.name}` : "—"}
               </p>
               <p className={styles.mobileNote}>{task.blockerNote || task.note}</p>
               <Link className={styles.openLink} to={buildTaskLink(task.id)}>

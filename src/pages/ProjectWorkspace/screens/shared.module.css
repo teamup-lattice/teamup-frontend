@@ -1,7 +1,7 @@
 .title {
   margin: 0 0 var(--space-3);
   color: var(--color-navy);
-  font-size: calc(var(--font-size-body) * 1.5);
+  font-size: var(--font-size-heading);
   font-weight: 600;
   line-height: var(--line-height-heading);
 }
@@ -53,7 +53,7 @@
 .helper {
   margin: 0 0 var(--space-4);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
   line-height: var(--line-height-text);
 }
 
@@ -103,6 +103,7 @@
   display: block;
   width: 100%;
   min-height: var(--button-height);
+  margin: var(--space-4) 0;
   padding: 0;
   border: 0;
   background: none;

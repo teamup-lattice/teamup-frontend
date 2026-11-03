@@ -199,7 +199,11 @@ function TaskDetail() {
       <Alert variant="info" title="No comments yet">
         David&apos;s task remains Blocked. Comments do not change status.
       </Alert>
-      <Button type="button" onClick={() => document.getElementById("commentInput")?.focus()}>
+      <Button
+        type="button"
+        fullWidth
+        onClick={() => document.getElementById("commentInput")?.focus()}
+      >
         Add comment
       </Button>
     </div>
@@ -279,16 +283,29 @@ function TaskDetail() {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Task detail</h2>
-        <StateNotice
-          variant="error"
-          title="File did not upload"
-          text="onboarding-draft.fig was not attached. Your link, note and local Done selection are retained. Stored task is still Blocked."
-          buttonLabel="Retry file upload"
-          onButtonClick={() => navigate(location.pathname + (asParam ? `?as=${encodeURIComponent(asParam)}` : ""))}
-        />
-        <Button type="button" variant="primary" fullWidth>
-          Save Done without the file
-        </Button>
+        <div className={styles.uploadState}>
+          <Alert variant="error" title="File did not upload">
+            onboarding-draft.fig was not attached. Your link, note and local Done
+            selection are retained. Stored task is still Blocked.
+          </Alert>
+          <div className={styles.uploadActions}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                navigate(
+                  location.pathname +
+                    (asParam ? `?as=${encodeURIComponent(asParam)}` : ""),
+                )
+              }
+            >
+              Retry file upload
+            </Button>
+            <Button type="button" variant="primary">
+              Save Done without the file
+            </Button>
+          </div>
+        </div>
       </section>
     );
   }

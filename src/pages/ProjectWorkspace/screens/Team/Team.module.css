@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 20px;
 }
 
 .pageTitle {
@@ -18,10 +18,10 @@
 .memberCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: 12px;
+  padding: 24px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: 8px;
   background: var(--color-card);
 }
 
@@ -45,33 +45,64 @@
 
 .memberName {
   margin: 0;
-  font-size: var(--font-size-title);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+  color: var(--color-navy);
 }
 
-.memberRole,
-.memberResponsibilities,
+.memberRole {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+  font-weight: 700;
+}
+
+.memberResponsibilities {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
 .metaLine {
   margin: 0;
   color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
 }
 
 .linkButton {
-  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--color-purple);
+  font-size: var(--font-size-label);
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
 }
 
-.ownerActions {
+.releaseLink {
   display: flex;
-  gap: var(--space-3);
+  justify-content: center;
+  margin: 16px 0;
+  text-align: center;
 }
 
 .loadingList {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+@media (max-width: 767px) {
+  .memberCard {
+    padding: 20px;
+  }
 }
