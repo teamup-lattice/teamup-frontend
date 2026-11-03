@@ -8,7 +8,6 @@ import {
   getCachedProjectRecords,
   getMyProjectRecords,
 } from "../../services/myProjectsService";
-import { project as collaborationProject, projectId, requestId, roles } from "../../data/collaborationData";
 import ProjectCard from "./ProjectCard";
 import { STATUS_OPTIONS } from "./statusConfig";
 import styles from "./MyProjects.module.css";
@@ -25,43 +24,6 @@ const NUMBER_WORDS = [
   "Eight",
   "Nine",
   "Ten",
-];
-
-const entryPointProjects = [
-  {
-    id: `${projectId}-open`,
-    title: collaborationProject.name,
-    description: collaborationProject.description,
-    status: "Open",
-    details: ["Owner", collaborationProject.ownerRole, "Recruiting"],
-    note: "Review pending collaborator requests.",
-    hidePrimaryAction: true,
-    actions: [
-      {
-        label: "Find collaborators",
-        to: `/collaborators?project=${projectId}`,
-      },
-      {
-        label: "Review join requests · 1 pending",
-        to: `/projects/${projectId}/join-requests`,
-      },
-    ],
-  },
-  {
-    id: `${projectId}-request`,
-    title: collaborationProject.name,
-    description: collaborationProject.description,
-    status: "Open",
-    details: [roles.frontend.title, "Pending role request"],
-    note: "Your request is waiting for the project Owner.",
-    hidePrimaryAction: true,
-    actions: [
-      {
-        label: "Your role request",
-        to: `/role-requests/${requestId}`,
-      },
-    ],
-  },
 ];
 
 function MyProjects() {
@@ -122,7 +84,7 @@ function MyProjects() {
   };
 
   const isLoading = status === "loading";
-  const allRecords = [...records, ...entryPointProjects];
+  const allRecords = records;
   const hasRecords = allRecords.length > 0;
   const visibleRecords = statusFilter
     ? allRecords.filter((project) => project.status === statusFilter)
@@ -209,8 +171,6 @@ function MyProjects() {
             <li className={styles.item} key={project.id}>
               <ProjectCard
                 project={project}
-                actions={project.actions}
-                hidePrimaryAction={project.hidePrimaryAction}
               />
             </li>
           ))}

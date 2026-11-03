@@ -202,6 +202,7 @@
   text-align: center;
   text-decoration: underline;
   text-underline-offset: var(--space-1);
+  font-weight: 600;
 }
 
 .textLink:focus-visible {
