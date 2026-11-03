@@ -4,7 +4,7 @@ import Login from "./pages/Login/Login";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Welcome from "./pages/Welcome/Welcome";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile/Profile";
 import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import MyProjects from "./pages/MyProjects/MyProjects";
 import CreateProject from "./pages/CreateProject/CreateProject";
@@ -13,6 +13,7 @@ import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import Landing from "./pages/Landing/Landing";
+import DiscoverProjects from "./pages/DiscoverProjects/DiscoverProjects";
 import FindCollaborators from "./pages/FindCollaborators/FindCollaborators";
 import RequestRole from "./pages/RequestRole/RequestRole";
 import RoleRequest from "./pages/RoleRequest/RoleRequest";
@@ -43,6 +44,7 @@ function App() {
       <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+         <Route path="/discover" element={<DiscoverProjects />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />

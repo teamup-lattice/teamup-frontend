@@ -1,0 +1,131 @@
+.panel {
+  box-sizing: border-box;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.panelTitle,
+.sheetTitle {
+  margin: 0 0 var(--space-4);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.linkButton {
+  align-self: center;
+  min-height: var(--button-height);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--color-purple);
+  font-family: inherit;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.helper {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+  text-align: center;
+}
+
+/* Mobile filter sheet */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-navy) 40%, transparent);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--color-card);
+}
+
+.sheetTitle {
+  margin-bottom: var(--space-1);
+}
+
+.sheetTitle:focus {
+  outline: none;
+}
+
+.closeLink {
+  align-self: flex-start;
+  padding-left: 0;
+}
+
+.sheetText {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.chips {
+  margin-bottom: var(--space-4);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-chip);
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.chipRemove {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipRemove:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
