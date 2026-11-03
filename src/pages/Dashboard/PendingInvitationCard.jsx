@@ -1,7 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
+import { invitationId } from "../../data/collaborationData";
 import styles from "./PendingInvitationCard.module.css";
 
 function PendingInvitationCard({ pendingInvitation }) {
+  const navigate = useNavigate();
+
   return (
     <article className={styles.card}>
       <span className={styles.status}>Pending response</span>
@@ -13,7 +17,9 @@ function PendingInvitationCard({ pendingInvitation }) {
         {pendingInvitation.weeks}{" "}
         {pendingInvitation.weeks === 1 ? "week" : "weeks"}
       </p>
-      <Button>Review invitation</Button>
+      <Button onClick={() => navigate(`/invitations/${invitationId}`)}>
+        Review invitation
+      </Button>
       <p className={styles.helper}>
         Review your commitment. No workspace access until acceptance is saved.
       </p>
