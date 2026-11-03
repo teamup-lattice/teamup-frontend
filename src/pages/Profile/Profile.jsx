@@ -52,7 +52,10 @@ function Profile() {
           <ProfileDetailsCard profile={profile} />
           <ContactCard profile={profile} />
           <DiscoveryCard />
-          <CompletedProjectsCard project={project} shownOnProfile={saved.showProject} />
+          <CompletedProjectsCard
+            project={project}
+            shownOnProfile={saved.showProject}
+          />
         </div>
         <div className={styles.column}>
           <VisibilityCard

@@ -1,0 +1,89 @@
+.workspace main a,
+.workspace main a:visited,
+.workspace main a:hover,
+.workspace main a:focus {
+  color: var(--color-purple);
+}
+
+.workspace main a:focus-visible,
+.workspace main button:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.workspace main {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.workspace main a {
+  font-size: var(--font-size-label);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.workspace main a[class*="taskLink"],
+.workspace main a[class*="mobileTitle"] {
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  text-decoration: none;
+}
+
+.workspace main a[class*="taskLink"]:hover,
+.workspace main a[class*="taskLink"]:focus,
+.workspace main a[class*="mobileTitle"]:hover,
+.workspace main a[class*="mobileTitle"]:focus {
+  color: var(--color-navy);
+  text-decoration: underline;
+}
+
+.workspace main button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-align: center;
+}
+
+.workspace main button[class*="cancelLink"] {
+  min-height: auto;
+  padding: 0;
+  border-radius: 0;
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.workspace main label {
+  margin-bottom: 0;
+  font-size: var(--font-size-label);
+}
+
+.workspace main input,
+.workspace main select,
+.workspace main textarea {
+  padding: 10px 12px;
+}
+
+.workspace main [class*="field"] {
+  margin-bottom: 0;
+}
+
+.workspace main [class*="alert"] {
+  padding: 16px 20px;
+  margin-bottom: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-left: 4px solid var(--alert-color);
+  border-radius: 8px;
+}
+
+.workspace main [class*="alert"] > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

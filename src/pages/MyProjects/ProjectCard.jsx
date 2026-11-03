@@ -3,7 +3,7 @@ import Button from "../../components/Button";
 import { defaultStatusConfig, statusConfig } from "./statusConfig";
 import styles from "./ProjectCard.module.css";
 
-function ProjectCard({ project, actions = [], hidePrimaryAction = false }) {
+function ProjectCard({ project }) {
   const navigate = useNavigate();
   const config = statusConfig[project.status] ?? defaultStatusConfig;
   const badgeLabel = project.attention?.badge ?? project.status;
@@ -26,25 +26,12 @@ function ProjectCard({ project, actions = [], hidePrimaryAction = false }) {
       <p className={styles.description}>{project.description}</p>
       <p className={styles.meta}>{project.details.join(" · ")}</p>
 
-      {!hidePrimaryAction && (
-        <Button
-          aria-label={`${config.actionLabel}: ${project.title}`}
-          onClick={() => navigate(config.path(project.id))}
-        >
-          {config.actionLabel}
-        </Button>
-      )}
-
-      {actions.map(({ label, to }) => (
-        <Button
-          key={label}
-          variant="secondary"
-          fullWidth
-          onClick={() => navigate(to)}
-        >
-          {label}
-        </Button>
-      ))}
+      <Button
+        aria-label={`${config.actionLabel}: ${project.title}`}
+        onClick={() => navigate(config.path(project.id))}
+      >
+        {config.actionLabel}
+      </Button>
 
       <p className={styles.note}>{project.note}</p>
     </article>
