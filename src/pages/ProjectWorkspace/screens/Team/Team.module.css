@@ -13,6 +13,8 @@
 .subtitle {
   margin: 0;
   color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
 }
 
 .memberCard {
@@ -62,14 +64,14 @@
 .memberResponsibilities {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
+  font-size: var(--font-size-body);
   line-height: var(--line-height-text);
 }
 
 .metaLine {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
+  font-size: var(--font-size-body);
   line-height: var(--line-height-text);
 }
 
@@ -86,13 +88,6 @@
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
-}
-
-.releaseLink {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0;
-  text-align: center;
 }
 
 .loadingList {

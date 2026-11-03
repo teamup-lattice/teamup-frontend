@@ -10,7 +10,7 @@ import styles from "./Team.module.css";
 
 const memberResponsibilities = {
   Ada: "User stories and prototype review",
-  David: "Design onboarding, UI handoff and responsive layout review",
+  David: "Design onboarding and UI handoff",
   John: "Auth screens, discovery and prototype build",
 };
 
@@ -169,7 +169,7 @@ function Team() {
                   Edit role
                 </Button>
                 {member.name === "David" && (
-                  <Link className={styles.releaseLink} to="./release-role">
+                  <Link className={styles.linkButton} to="./release-role">
                     Review release of David&apos;s role
                   </Link>
                 )}
