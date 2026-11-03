@@ -4,7 +4,7 @@ import Login from "./pages/Login/Login";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import Welcome from "./pages/Welcome/Welcome";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile/Profile";
 import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import MyProjects from "./pages/MyProjects/MyProjects";
 import CreateProject from "./pages/CreateProject/CreateProject";
