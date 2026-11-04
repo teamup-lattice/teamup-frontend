@@ -1,0 +1,226 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-heading);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.description,
+.breadcrumb {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.breadcrumb {
+  font-size: var(--font-size-label);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Two columns when there is room, otherwise stacked (profile first). */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: start;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.cardDescription,
+.fieldText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.helper {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.helperLine {
+  display: block;
+}
+
+.skillsLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: var(--button-height);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.textLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.breadcrumb .textLink {
+  min-height: 0;
+  font-weight: 400;
+}
+
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notificationItem {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.notificationItem:last-child {
+  border-bottom: 0;
+}
+
+.saveRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.accountControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.accountAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* Account deletion screens */
+
+.deletionBody {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+  max-width: 640px;
+}
+
+.buttonRow,
+.buttonStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.buttonStack {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Loading skeleton */
+
+.skeletonLine,
+.skeletonBlock {
+  display: block;
+  border-radius: var(--radius-chip);
+  background: var(--color-action-disabled);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeletonLine {
+  width: 50%;
+  height: var(--space-3);
+}
+
+.skeletonShort {
+  width: 30%;
+}
+
+.skeletonBlock {
+  height: var(--input-height);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonLine,
+  .skeletonBlock {
+    animation: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .card {
+    padding: var(--space-4);
+  }
+}

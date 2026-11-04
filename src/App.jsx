@@ -31,6 +31,8 @@ import ReleaseRole from "./pages/ProjectWorkspace/screens/ReleaseRole/ReleaseRol
 import Reminders from "./pages/ProjectWorkspace/screens/Reminders/Reminders";
 import ProjectUpdates from "./pages/ProjectWorkspace/screens/ProjectUpdates/ProjectUpdates";
 import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
+import Settings from "./pages/Settings/Settings";
+import AccountDeletion from "./pages/Settings/AccountDeletion";
 
 function ContributionsPlaceholder() {
   return <h2>Contributions</h2>;
@@ -57,6 +59,8 @@ function App() {
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
         <Route
