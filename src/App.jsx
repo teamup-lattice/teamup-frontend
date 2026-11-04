@@ -7,8 +7,8 @@ import Welcome from "./pages/Welcome/Welcome";
 import Profile from "./pages/Profile/Profile";
 import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import MyProjects from "./pages/MyProjects/MyProjects";
+import ProjectDetails from "./pages/ProjectDetails/ProjectDetails";
 import CreateProject from "./pages/CreateProject/CreateProject";
-import ProjectDetails from "./pages/ProjectDetails";
 import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
@@ -49,6 +49,7 @@ function App() {
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
+        <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
         <Route
           path="/projects/:projectId/request-role"
