@@ -1,0 +1,22 @@
+.strong {
+  margin: 0 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.confirm {
+  box-sizing: border-box;
+  max-width: 480px;
+  margin: var(--space-5) 0 var(--space-3);
+  padding: var(--space-5);
+  border: 2px solid var(--color-border-control);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

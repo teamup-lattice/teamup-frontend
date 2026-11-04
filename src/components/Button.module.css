@@ -60,3 +60,8 @@
     transform: rotate(360deg);
   }
 }
+.danger {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: var(--color-card);
+}

@@ -10,7 +10,7 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
 }
 
 .projectHeader {
@@ -30,7 +30,9 @@
 }
 
 .navigation {
-  border-bottom: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .mainTabs,
@@ -38,43 +40,82 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 .mainTabs {
+  gap: var(--space-5);
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.subLinks {
-  padding: var(--space-2) 0;
-}
-
-.navLink,
-.disabled {
+.mainTabs .navLink {
   display: inline-flex;
   align-items: center;
-  min-height: var(--button-height);
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
+  min-height: 48px;
+  padding: 12px 4px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  line-height: var(--line-height-text);
   text-decoration: none;
 }
 
-.navLink:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.active {
-  background: var(--color-purple-light);
+.mainTabs .active {
+  border-bottom-color: var(--color-purple);
   color: var(--color-purple);
   font-weight: 600;
 }
 
-.disabled {
-  color: var(--color-text-secondary);
-  opacity: 0.65;
+.mainTabs .navLink:not(.active):visited {
+  color: var(--color-navy);
+}
+
+.subLinks {
+  gap: 20px;
+  padding: 0;
+}
+
+.subLinks .navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+  color: var(--color-navy);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: var(--line-height-text);
+  text-decoration: none;
+}
+
+.subLinks .active {
+  border-bottom-color: var(--color-purple);
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.navigation .navLink:hover,
+.navigation .navLink:focus-visible {
+  color: var(--color-navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.navigation .navLink.active:hover,
+.navigation .navLink.active:focus-visible {
+  color: var(--color-purple);
+}
+
+.navigation .navLink:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.navLink:focus-visible {
+  border-radius: 2px;
 }
 
 .mobileSection {
@@ -82,7 +123,7 @@
 }
 
 .screen {
-  padding-top: var(--space-5);
+  padding-top: 16px;
 }
 
 @media (max-width: 768px) {

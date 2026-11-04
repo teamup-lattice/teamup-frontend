@@ -32,6 +32,14 @@ import Reminders from "./pages/ProjectWorkspace/screens/Reminders/Reminders";
 import ProjectUpdates from "./pages/ProjectWorkspace/screens/ProjectUpdates/ProjectUpdates";
 import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
 
+function ContributionsPlaceholder() {
+  return <h2>Contributions</h2>;
+}
+
+function CompletionPlaceholder() {
+  return <h2>Project completion</h2>;
+}
+
 function App() {
   return (
     <Routes>
@@ -79,6 +87,11 @@ function App() {
           <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
           <Route path="team" element={<Team />} />
           <Route path="team/release-role" element={<ReleaseRole />} />
+          <Route
+            path="contributions"
+            element={<ContributionsPlaceholder />}
+          />
+          <Route path="completion" element={<CompletionPlaceholder />} />
           <Route path="milestones" element={<Milestones />} />
           <Route path="updates" element={<ProjectUpdates />} />
           <Route path="reminders" element={<Reminders />} />

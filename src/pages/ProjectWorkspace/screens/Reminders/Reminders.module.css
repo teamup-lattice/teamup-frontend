@@ -1,0 +1,43 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.chip {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-chip);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.blocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.overdue {
+  background: color-mix(in srgb, var(--color-amber) 10%, var(--color-card));
+  color: var(--color-amber);
+}
+
+.review {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.neutral {
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+}
+
+.inner {
+  box-sizing: border-box;
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}

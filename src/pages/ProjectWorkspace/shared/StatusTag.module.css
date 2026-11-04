@@ -1,0 +1,66 @@
+.tag {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 14px;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.done {
+  background: var(--color-green-light);
+  color: var(--color-green);
+}
+
+.blocked {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.overdue {
+  background: var(--color-amber-light);
+  color: var(--color-amber);
+}
+
+.inProgress,
+.toDo,
+.neutral {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.toDo {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+}
+
+.inProgress .icon::before,
+.toDo .icon::before {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  content: "";
+}

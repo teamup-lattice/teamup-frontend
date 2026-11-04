@@ -1,0 +1,57 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  line-height: var(--line-height-heading);
+}
+
+.helperText {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.formCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  background: var(--color-card);
+}
+
+.draftHelper,
+.footerText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.cancelLink {
+  align-self: center;
+  margin: 16px 0;
+  border: none;
+  background: transparent;
+  color: var(--color-purple);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.skeletonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (max-width: 767px) {
+  .formCard {
+    padding: 20px;
+  }
+}
