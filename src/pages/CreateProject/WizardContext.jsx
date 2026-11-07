@@ -1,7 +1,8 @@
 import { useState } from "react";
 import {
-  saveDraft as saveDraftService,
+  createProjectDraft,
   publishProject as publishProjectService,
+  updateProjectDraft,
 } from "../../services/projectService";
 import { WizardContext } from "./WizardContextValue";
 
@@ -100,9 +101,7 @@ export function WizardProvider({ children, initialDraftId = null }) {
   };
 
   const markStepIncomplete = (stepToReopen) => {
-    setCompletedSteps((steps) =>
-      steps.filter((step) => step !== stepToReopen),
-    );
+    setCompletedSteps((steps) => steps.filter((step) => step !== stepToReopen));
   };
 
   const goBack = () => {
@@ -117,14 +116,57 @@ export function WizardProvider({ children, initialDraftId = null }) {
 
     setSaveStatus("saving");
     try {
-      const result = await saveDraftService({
-        draftId,
-        basics,
-        roles,
-        commitment,
-        milestones,
-      });
-      setDraftId(result.id);
+      const data = {};
+      const addTextField = (field, value) => {
+        if (typeof value === "string" && value.trim()) {
+          data[field] = value.trim();
+        }
+      };
+
+      addTextField("title", basics.name);
+      addTextField("problem", basics.problem);
+      addTextField("description", basics.description);
+      addTextField("outcome", basics.outcome);
+      addTextField("targetEndDate", commitment.endDate);
+
+      const projectTypeMap = {
+        "web-application": "WEB_APPLICATION",
+      };
+      const projectType = projectTypeMap[basics.projectType];
+      if (projectType) {
+        data.projectType = projectType;
+      }
+
+      const teamSizeValue = roles.teamSize?.trim();
+      if (teamSizeValue) {
+        const teamSize = Number(teamSizeValue);
+        if (Number.isFinite(teamSize)) {
+          data.teamSize = teamSize;
+        }
+      }
+
+      const durationMatch = commitment.duration
+        ?.trim()
+        .match(/^(\d+(?:\.\d+)?)\s*(?:weeks?)?$/i);
+      if (durationMatch) {
+        const durationWeeks = Number(durationMatch[1]);
+        if (durationWeeks >= 1 && durationWeeks <= 52) {
+          data.durationWeeks = durationWeeks;
+        }
+      }
+
+      // TODO: Confirm backend payload shapes for roles, milestones, and skills.
+      if (draftId) {
+        await updateProjectDraft(draftId, data);
+      } else {
+        const result = await createProjectDraft(data);
+        const createdDraftId = result.project.id;
+        if (!createdDraftId) {
+          throw new Error("Draft creation response did not include an ID");
+        }
+        setDraftId(createdDraftId);
+      }
+
       setSaveStatus("saved");
     } catch {
       setSaveStatus("failed");
@@ -136,15 +178,14 @@ export function WizardProvider({ children, initialDraftId = null }) {
       return;
     }
 
+    if (!draftId) {
+      setPublishStatus("failed");
+      return;
+    }
+
     setPublishStatus("publishing");
     try {
-      const result = await publishProjectService({
-        draftId,
-        basics,
-        roles,
-        commitment,
-        milestones,
-      });
+      const result = await publishProjectService(draftId);
       setPublishedProjectId(result.id);
       setPublishStatus("published");
     } catch {
