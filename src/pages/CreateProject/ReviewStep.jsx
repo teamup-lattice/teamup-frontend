@@ -33,7 +33,9 @@ function formatOpenRolesCount(count) {
 
 function formatHours(rawHours) {
   if (!rawHours && rawHours !== 0) return "0";
-  const cleaned = String(rawHours).replace(/\s*(hours|hour|h)\b/gi, "").trim();
+  const cleaned = String(rawHours)
+    .replace(/\s*(hours|hour|h)\b/gi, "")
+    .trim();
   return cleaned || String(rawHours);
 }
 
@@ -48,6 +50,8 @@ function ReviewStep() {
     roles,
     commitment,
     milestones,
+    availableSkills,
+    skillsLoadStatus,
     draftId,
     saveStatus,
     saveDraft,
@@ -61,41 +65,53 @@ function ReviewStep() {
   const isPublishing = publishStatus === "publishing";
   const isSaving = saveStatus === "saving";
   const isFailed = publishStatus === "failed";
+  const skillsById = new Map(
+    availableSkills.map((skill) => [String(skill.id), skill.name]),
+  );
+  const getSkillNames = (skillIds) => {
+    const names = (Array.isArray(skillIds) ? skillIds : [])
+      .map((skillId) => skillsById.get(String(skillId)))
+      .filter(Boolean);
+    return names.length > 0
+      ? names.join(" · ")
+      : skillsLoadStatus === "loading"
+        ? "Loading skills..."
+        : "";
+  };
 
   // Check blockers
   const isBasicsComplete = Boolean(
     basics.name?.trim() &&
-      basics.problem?.trim() &&
-      basics.description?.trim() &&
-      basics.projectType?.trim() &&
-      basics.skills?.length > 0 &&
-      basics.outcome?.trim(),
+    basics.problem?.trim() &&
+    basics.description?.trim() &&
+    basics.projectType?.trim() &&
+    basics.skills?.length > 0 &&
+    basics.outcome?.trim(),
   );
 
   const hasRole = Boolean(
     roles.roles?.length > 0 &&
-      roles.roles.every(
-        (r) => r.title?.trim() && r.responsibilities?.trim() && r.skills?.length > 0,
-      ),
+    roles.roles.every(
+      (r) =>
+        r.title?.trim() && r.responsibilities?.trim() && r.skills?.length > 0,
+    ),
   );
 
   const hasDuration = Boolean(commitment.duration?.trim());
 
   const hasRoleHours = Boolean(
     roles.roles?.length > 0 &&
-      roles.roles.every((r) => {
-        const hours = commitment.hoursByRole?.[r.id];
-        return (
-          hours !== undefined &&
-          hours !== null &&
-          String(hours).trim() !== ""
-        );
-      }),
+    roles.roles.every((r) => {
+      const hours = commitment.hoursByRole?.[r.id];
+      return (
+        hours !== undefined && hours !== null && String(hours).trim() !== ""
+      );
+    }),
   );
 
   const hasDatedMilestone = Boolean(
     milestones?.length > 0 &&
-      milestones.some((m) => m.name?.trim() && m.date?.trim()),
+    milestones.some((m) => m.name?.trim() && m.date?.trim()),
   );
 
   const missingItems = [];
@@ -120,15 +136,21 @@ function ReviewStep() {
       <h1 id="review-heading" className={styles.heading}>
         Review and publish
       </h1>
-      <p className={styles.description}>Review your project before publishing.</p>
+      <p className={styles.description}>
+        Review your project before publishing.
+      </p>
       <p className={styles.lastSavedLine}>
-        Last saved status: Draft · {saveStatus === "saved" ? "all changes saved." : "local edits are not saved yet."}
+        Last saved status: Draft ·{" "}
+        {saveStatus === "saved"
+          ? "all changes saved."
+          : "local edits are not saved yet."}
       </p>
 
       {/* Alerts */}
       {isPublishing && (
         <Alert variant="info" title="Validating and publishing...">
-          Publishing. Not yet confirmed; do not resubmit. Your entries are retained.
+          Publishing. Not yet confirmed; do not resubmit. Your entries are
+          retained.
         </Alert>
       )}
 
@@ -151,7 +173,8 @@ function ReviewStep() {
 
       {!isPublishing && !isFailed && !hasBlockers && (
         <Alert variant="success" title="Ready to publish">
-          Required details complete. Publishing opens recruitment; it does not form or start a team.
+          Required details complete. Publishing opens recruitment; it does not
+          form or start a team.
         </Alert>
       )}
 
@@ -162,7 +185,8 @@ function ReviewStep() {
       )}
       {saveStatus === "saved" && (
         <Alert variant="success" title="Draft saved">
-          {basics.name || "Your project"} is saved and resumable from My Projects.
+          {basics.name || "Your project"} is saved and resumable from My
+          Projects.
         </Alert>
       )}
       {saveStatus === "failed" && (
@@ -186,7 +210,9 @@ function ReviewStep() {
                 Edit basics
               </button>
             </div>
-            <p className={styles.blockerText}>Project basics are not complete.</p>
+            <p className={styles.blockerText}>
+              Project basics are not complete.
+            </p>
           </div>
         ) : (
           <article className={styles.summaryCard}>
@@ -223,7 +249,7 @@ function ReviewStep() {
             </div>
             <div className={styles.summaryItem}>
               <span className={styles.itemLabel}>Required project skills</span>
-              <p className={styles.itemValue}>{basics.skills.join(" · ")}</p>
+              <p className={styles.itemValue}>{getSkillNames(basics.skills)}</p>
             </div>
             <div className={styles.summaryItem}>
               <span className={styles.itemLabel}>Expected outcome</span>
@@ -284,7 +310,9 @@ function ReviewStep() {
                 </div>
                 <div className={styles.summaryItem}>
                   <span className={styles.itemLabel}>Required skills</span>
-                  <p className={styles.itemValue}>{role.skills?.join(" · ")}</p>
+                  <p className={styles.itemValue}>
+                    {getSkillNames(role.skills)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -333,19 +361,23 @@ function ReviewStep() {
             <div className={styles.summaryItem}>
               <span className={styles.itemLabel}>Planned dates</span>
               <p className={styles.itemValue}>
-                {formatDate(commitment.startDate)} – {formatDate(commitment.endDate)}
+                {formatDate(commitment.startDate)} –{" "}
+                {formatDate(commitment.endDate)}
               </p>
             </div>
             <div className={styles.summaryItem}>
               <span className={styles.itemLabel}>Hours per role</span>
               {roles.roles.map((role) => (
                 <p key={role.id} className={styles.itemValue}>
-                  {role.title}: {formatHours(commitment.hoursByRole?.[role.id])} h / week
+                  {role.title}: {formatHours(commitment.hoursByRole?.[role.id])}{" "}
+                  h / week
                 </p>
               ))}
             </div>
             <div className={styles.summaryItem}>
-              <span className={styles.itemLabel}>Availability expectations</span>
+              <span className={styles.itemLabel}>
+                Availability expectations
+              </span>
               <p className={styles.itemValue}>{commitment.availability}</p>
             </div>
             <div className={styles.summaryItem}>

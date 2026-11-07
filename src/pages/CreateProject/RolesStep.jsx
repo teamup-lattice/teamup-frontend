@@ -7,15 +7,6 @@ import Input from "../../components/Input";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./RolesStep.module.css";
 
-const ALL_SKILLS = [
-  "UI design",
-  "Prototyping",
-  "Frontend development",
-  "React",
-  "Product planning",
-  "User research",
-];
-
 function RolesStep() {
   const context = useContext(WizardContext);
   if (!context) {
@@ -25,6 +16,10 @@ function RolesStep() {
   const {
     roles,
     setRoles,
+    availableSkills,
+    skillGroups,
+    skillsLoadStatus,
+    retrySkills,
     draftId,
     saveStatus,
     setSaveStatus,
@@ -46,6 +41,38 @@ function RolesStep() {
   const [newRoleError, setNewRoleError] = useState(null);
 
   const isSaving = saveStatus === "saving";
+  const skillsById = new Map(
+    availableSkills.map((skill) => [String(skill.id), skill]),
+  );
+  const getSelectedSkills = (skillIds) =>
+    (Array.isArray(skillIds) ? skillIds : [])
+      .map((skillId) => skillsById.get(String(skillId)))
+      .filter((skill) => skill?.name);
+  const renderSkillGroups = (selectedSkillIds, toggleSkill) =>
+    skillGroups.map((group, groupIndex) => (
+      <details
+        key={group.category}
+        className={styles.skillGroup}
+        open={groupIndex === 0}
+      >
+        <summary className={styles.skillGroupHeading}>
+          {group.category} ({group.skills.length})
+        </summary>
+        <div className={styles.skillGroupOptions}>
+          {group.skills.map((skill) => (
+            <Checkbox
+              key={skill.id}
+              label={skill.name}
+              checked={selectedSkillIds.some(
+                (skillId) => String(skillId) === String(skill.id),
+              )}
+              onChange={() => toggleSkill(skill.id)}
+              disabled={isSaving}
+            />
+          ))}
+        </div>
+      </details>
+    ));
 
   // Calculate open roles count
   const parsedTeamSize = parseInt(roles.teamSize, 10);
@@ -64,9 +91,10 @@ function RolesStep() {
     !Number.isNaN(parsedTeamSize) &&
     parsedTeamSize > 0;
 
-  const rolesMissingSkills = roles.roles.filter(
-    (role) => !role.skills || role.skills.length === 0,
-  );
+  const rolesMissingSkills =
+    skillsLoadStatus === "ready"
+      ? roles.roles.filter((role) => !role.skills || role.skills.length === 0)
+      : [];
   const rolesMissingTitle = roles.roles.filter(
     (role) => !role.title || !role.title.trim(),
   );
@@ -114,7 +142,7 @@ function RolesStep() {
     if (
       !newRole.title.trim() ||
       !newRole.responsibilities.trim() ||
-      newRole.skills.length === 0
+      (skillsLoadStatus === "ready" && newRole.skills.length === 0)
     ) {
       setNewRoleError(true);
       return;
@@ -267,6 +295,18 @@ function RolesStep() {
       <p className={styles.description}>
         Define each role&apos;s responsibilities and required skills.
       </p>
+      {skillsLoadStatus === "loading" && (
+        <p className={styles.localChanges} role="status">
+          Loading available skills...
+        </p>
+      )}
+      {skillsLoadStatus === "error" && (
+        <Alert variant="error" title="Skills could not be loaded">
+          <Button variant="secondary" onClick={retrySkills} disabled={isSaving}>
+            Retry loading skills
+          </Button>
+        </Alert>
+      )}
       <p className={styles.localChanges}>
         {saveStatus === "saved"
           ? "All changes saved."
@@ -330,9 +370,12 @@ function RolesStep() {
               ? "! Add responsibilities."
               : undefined;
           const roleSkillsError =
-            showValidation && (!role.skills || role.skills.length === 0)
+            showValidation &&
+            skillsLoadStatus === "ready" &&
+            (!role.skills || role.skills.length === 0)
               ? "! Select required skills for this role."
               : undefined;
+          const selectedRoleSkills = getSelectedSkills(role.skills);
 
           if (roleToRemove && roleToRemove.id === role.id) {
             return (
@@ -447,15 +490,10 @@ function RolesStep() {
               >
                 <legend className={styles.fieldLabel}>Required skills *</legend>
                 <div className={styles.checkboxes}>
-                  {ALL_SKILLS.map((skill) => (
-                    <Checkbox
-                      key={skill}
-                      label={skill}
-                      checked={Boolean(role.skills?.includes(skill))}
-                      onChange={() => toggleRoleSkill(role.id, skill)}
-                      disabled={isSaving}
-                    />
-                  ))}
+                  {skillsLoadStatus === "ready" &&
+                    renderSkillGroups(role.skills, (skillId) =>
+                      toggleRoleSkill(role.id, skillId),
+                    )}
                 </div>
                 {roleSkillsError && (
                   <p className={styles.fieldError}>{roleSkillsError}</p>
@@ -465,16 +503,16 @@ function RolesStep() {
                     Temporarily locked while saving.
                   </p>
                 )}
-                {role.skills && role.skills.length > 0 && (
+                {selectedRoleSkills.length > 0 && (
                   <ul className={styles.chips} aria-label="Selected skills">
-                    {role.skills.map((skill) => (
-                      <li key={skill} className={styles.chip}>
-                        <span>{skill}</span>
+                    {selectedRoleSkills.map((skill) => (
+                      <li key={skill.id} className={styles.chip}>
+                        <span>{skill.name}</span>
                         <button
                           type="button"
-                          onClick={() => toggleRoleSkill(role.id, skill)}
+                          onClick={() => toggleRoleSkill(role.id, skill.id)}
                           disabled={isSaving}
-                          aria-label={`Remove ${skill}`}
+                          aria-label={`Remove ${skill.name}`}
                         >
                           Remove ×
                         </button>
@@ -534,38 +572,35 @@ function RolesStep() {
 
             <fieldset
               className={`${styles.skillFieldset} ${
-                newRoleError && newRole.skills.length === 0
+                newRoleError &&
+                skillsLoadStatus === "ready" &&
+                newRole.skills.length === 0
                   ? styles.skillFieldsetError
                   : ""
               }`}
             >
               <legend className={styles.fieldLabel}>Required skills *</legend>
               <div className={styles.checkboxes}>
-                {ALL_SKILLS.map((skill) => (
-                  <Checkbox
-                    key={skill}
-                    label={skill}
-                    checked={newRole.skills.includes(skill)}
-                    onChange={() => toggleNewRoleSkill(skill)}
-                    disabled={isSaving}
-                  />
-                ))}
+                {skillsLoadStatus === "ready" &&
+                  renderSkillGroups(newRole.skills, toggleNewRoleSkill)}
               </div>
-              {newRoleError && newRole.skills.length === 0 && (
-                <p className={styles.fieldError}>
-                  ! Select required skills for this role.
-                </p>
-              )}
-              {newRole.skills.length > 0 && (
+              {newRoleError &&
+                skillsLoadStatus === "ready" &&
+                newRole.skills.length === 0 && (
+                  <p className={styles.fieldError}>
+                    ! Select required skills for this role.
+                  </p>
+                )}
+              {getSelectedSkills(newRole.skills).length > 0 && (
                 <ul className={styles.chips} aria-label="Selected skills">
-                  {newRole.skills.map((skill) => (
-                    <li key={skill} className={styles.chip}>
-                      <span>{skill}</span>
+                  {getSelectedSkills(newRole.skills).map((skill) => (
+                    <li key={skill.id} className={styles.chip}>
+                      <span>{skill.name}</span>
                       <button
                         type="button"
-                        onClick={() => toggleNewRoleSkill(skill)}
+                        onClick={() => toggleNewRoleSkill(skill.id)}
                         disabled={isSaving}
-                        aria-label={`Remove ${skill}`}
+                        aria-label={`Remove ${skill.name}`}
                       >
                         Remove ×
                       </button>

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createProjectDraft,
   publishProject as publishProjectService,
   updateProjectDraft,
 } from "../../services/projectService";
+import { getSkills } from "../../services/profileService";
 import { WizardContext } from "./WizardContextValue";
 
 const initialBasics = {
@@ -50,6 +51,61 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [saveStatus, setSaveStatus] = useState("idle");
   const [publishStatus, setPublishStatus] = useState("idle");
   const [publishedProjectId, setPublishedProjectId] = useState(null);
+  const [availableSkills, setAvailableSkills] = useState([]);
+  const [skillsLoadStatus, setSkillsLoadStatus] = useState("loading");
+  const [skillsLoadAttempt, setSkillsLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getSkills()
+      .then((result) => {
+        const skills = Array.isArray(result?.skills)
+          ? result.skills.filter(
+              (skill) =>
+                skill?.id !== undefined &&
+                skill?.id !== null &&
+                typeof skill.name === "string" &&
+                skill.name.trim(),
+            )
+          : [];
+
+        if (skills.length === 0) {
+          throw new Error("No skills returned");
+        }
+
+        if (isMounted) {
+          setAvailableSkills(skills);
+          setSkillsLoadStatus("ready");
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAvailableSkills([]);
+          setSkillsLoadStatus("error");
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [skillsLoadAttempt]);
+
+  const retrySkills = () => {
+    setSkillsLoadStatus("loading");
+    setSkillsLoadAttempt((attempt) => attempt + 1);
+  };
+
+  const skillGroups = availableSkills.reduce((groups, skill) => {
+    const category = skill.category?.trim() || "Other";
+    let group = groups.find((item) => item.category === category);
+    if (!group) {
+      group = { category, skills: [] };
+      groups.push(group);
+    }
+    group.skills.push(skill);
+    return groups;
+  }, []);
 
   const ownerName = "You";
 
@@ -171,6 +227,22 @@ export function WizardProvider({ children, initialDraftId = null }) {
         }
       }
 
+      const projectSkills = (Array.isArray(basics.skills) ? basics.skills : [])
+        .filter(
+          (skillId) =>
+            skillId !== undefined &&
+            skillId !== null &&
+            String(skillId).trim() !== "",
+        )
+        .map((skillId) => ({
+          skillId,
+          required: true,
+          minLevel: "BEGINNER",
+        }));
+      if (projectSkills.length > 0) {
+        data.skills = projectSkills;
+      }
+
       if (draftId) {
         data.roles = roles.roles.flatMap((role) => {
           const title = role.title?.trim();
@@ -192,7 +264,41 @@ export function WizardProvider({ children, initialDraftId = null }) {
             }
           }
 
+          const roleSkills = (Array.isArray(role.skills) ? role.skills : [])
+            .filter(
+              (skillId) =>
+                skillId !== undefined &&
+                skillId !== null &&
+                String(skillId).trim() !== "",
+            )
+            .map((skillId) => ({
+              skillId,
+              required: true,
+              minLevel: "BEGINNER",
+            }));
+          if (roleSkills.length > 0) {
+            roleData.skills = roleSkills;
+          }
+
           return [roleData];
+        });
+
+        data.milestones = milestones.flatMap((milestone, index) => {
+          const title = milestone.name?.trim();
+          const date = milestone.date?.trim();
+          if (!title || !date) {
+            return [];
+          }
+
+          const dueDate = new Date(date);
+          if (
+            Number.isNaN(dueDate.getTime()) ||
+            dueDate.toISOString().slice(0, 10) !== date
+          ) {
+            return [];
+          }
+
+          return [{ title, dueDate: dueDate.toISOString(), sortOrder: index }];
         });
 
         await updateProjectDraft(draftId, data);
@@ -253,6 +359,10 @@ export function WizardProvider({ children, initialDraftId = null }) {
     publishStatus,
     setPublishStatus,
     publishedProjectId,
+    availableSkills,
+    skillsLoadStatus,
+    skillGroups,
+    retrySkills,
     ownerName,
     goNext,
     goBack,
