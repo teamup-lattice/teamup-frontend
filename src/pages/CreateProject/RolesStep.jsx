@@ -49,9 +49,10 @@ function RolesStep() {
 
   // Calculate open roles count
   const parsedTeamSize = parseInt(roles.teamSize, 10);
-  const openRolesCount = !Number.isNaN(parsedTeamSize) && parsedTeamSize > 0
-    ? Math.max(0, parsedTeamSize - 1)
-    : roles.roles.filter((r) => !r.isOwner).length;
+  const openRolesCount =
+    !Number.isNaN(parsedTeamSize) && parsedTeamSize > 0
+      ? Math.max(0, parsedTeamSize - 1)
+      : roles.roles.filter((r) => !r.isOwner).length;
 
   const teamSizeHelper = `${ownerName} · Project Owner. ${openRolesCount} role${
     openRolesCount === 1 ? "" : "s"
@@ -110,7 +111,11 @@ function RolesStep() {
   };
 
   const handleKeepNewRole = () => {
-    if (!newRole.title.trim() || !newRole.responsibilities.trim() || newRole.skills.length === 0) {
+    if (
+      !newRole.title.trim() ||
+      !newRole.responsibilities.trim() ||
+      newRole.skills.length === 0
+    ) {
       setNewRoleError(true);
       return;
     }
@@ -277,7 +282,7 @@ function RolesStep() {
       )}
       {saveStatus === "saved" && (
         <Alert variant="success" title="Draft saved">
-          Team size and role entries are persisted. Resume from My Projects.
+          Basics and team size are persisted. Resume from My Projects.
         </Alert>
       )}
       {saveStatus === "failed" && (
@@ -376,7 +381,10 @@ function RolesStep() {
               aria-labelledby={`role-label-${role.id}`}
             >
               <div className={styles.roleCardHeader}>
-                <span id={`role-label-${role.id}`} className={styles.roleRoleBadge}>
+                <span
+                  id={`role-label-${role.id}`}
+                  className={styles.roleRoleBadge}
+                >
                   {isOwner ? `${ownerName} · Owner` : "Open role"}
                 </span>
                 {!isOwner && (
@@ -437,9 +445,7 @@ function RolesStep() {
                   roleSkillsError ? styles.skillFieldsetError : ""
                 }`}
               >
-                <legend className={styles.fieldLabel}>
-                  Required skills *
-                </legend>
+                <legend className={styles.fieldLabel}>Required skills *</legend>
                 <div className={styles.checkboxes}>
                   {ALL_SKILLS.map((skill) => (
                     <Checkbox

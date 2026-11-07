@@ -4,10 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
 import listFilterIcon from "../../assets/list-filter.svg";
-import {
-  getCachedProjectRecords,
-  getMyProjectRecords,
-} from "../../services/myProjectsService";
+import { getMyProjects } from "../../services/myProjectsService";
 import ProjectCard from "./ProjectCard";
 import { STATUS_OPTIONS } from "./statusConfig";
 import styles from "./MyProjects.module.css";
@@ -38,18 +35,17 @@ function MyProjects() {
   useEffect(() => {
     let isMounted = true;
 
-    getMyProjectRecords()
+    getMyProjects()
       .then((data) => {
         if (!isMounted) return;
 
-        setRecords(data);
+        setRecords(Array.isArray(data?.projects) ? data.projects : []);
         setStatus("ready");
       })
       .catch((error) => {
         console.error("Failed to load project records:", error);
         if (!isMounted) return;
 
-        setRecords(getCachedProjectRecords());
         setStatus("error");
       });
 
@@ -61,9 +57,9 @@ function MyProjects() {
   const handleRetry = () => {
     setIsRetrying(true);
 
-    getMyProjectRecords({ isRetry: true })
+    getMyProjects()
       .then((data) => {
-        setRecords(data);
+        setRecords(Array.isArray(data?.projects) ? data.projects : []);
         setStatus("ready");
         setWasRefreshed(true);
       })
@@ -169,9 +165,7 @@ function MyProjects() {
         <ul className={styles.grid}>
           {visibleRecords.map((project) => (
             <li className={styles.item} key={project.id}>
-              <ProjectCard
-                project={project}
-              />
+              <ProjectCard project={project} />
             </li>
           ))}
         </ul>
