@@ -32,6 +32,7 @@ import Reminders from "./pages/ProjectWorkspace/screens/Reminders/Reminders";
 import ProjectUpdates from "./pages/ProjectWorkspace/screens/ProjectUpdates/ProjectUpdates";
 import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
 import Settings from "./pages/Settings/Settings";
+import SharingPrivacy from "./pages/SharingPrivacy/SharingPrivacy";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
 
 function ContributionsPlaceholder() {
@@ -51,15 +52,16 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/profile/setup" element={<RequiredProfile />} />
+            <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
-         <Route path="/discover" element={<DiscoverProjects />} />
+        <Route path="/discover" element={<DiscoverProjects />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/projects" element={<MyProjects />} />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/sharing-privacy" element={<SharingPrivacy />} />
         <Route path="/settings/account-deletion" element={<AccountDeletion />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
