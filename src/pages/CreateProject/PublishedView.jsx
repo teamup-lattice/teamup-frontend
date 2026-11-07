@@ -16,7 +16,11 @@ function formatDuration(value) {
 }
 
 function formatHours(value) {
-  return String(value ?? 0).replace(/\s*(?:hours?|h)\s*$/i, "").trim() || "0";
+  return (
+    String(value ?? 0)
+      .replace(/\s*(?:hours?|h)\s*$/i, "")
+      .trim() || "0"
+  );
 }
 
 function formatDateRange(startDate, endDate) {
@@ -52,9 +56,24 @@ function PublishedView() {
     milestones,
     publishedProjectId,
     ownerName = "You",
+    availableSkills,
+    skillsLoadStatus,
   } = context;
 
   const navigate = useNavigate();
+  const skillsById = new Map(
+    availableSkills.map((skill) => [String(skill.id), skill.name]),
+  );
+  const getSkillNames = (skillIds) => {
+    const names = (Array.isArray(skillIds) ? skillIds : [])
+      .map((skillId) => skillsById.get(String(skillId)))
+      .filter(Boolean);
+    return names.length > 0
+      ? names.join(" · ")
+      : skillsLoadStatus === "loading"
+        ? "Loading skills..."
+        : "";
+  };
 
   const ownerRole = roles.roles?.find((r) => r.isOwner);
   const openRoles = roles.roles?.filter((r) => !r.isOwner) ?? [];
@@ -96,9 +115,7 @@ function PublishedView() {
       </Alert>
 
       <div className={styles.ownerRow}>
-        <div className={styles.avatar}>
-          {ownerName.charAt(0).toUpperCase()}
-        </div>
+        <div className={styles.avatar}>{ownerName.charAt(0).toUpperCase()}</div>
         <span className={styles.ownerText}>
           {ownerName} · Owner / {ownerRole?.title || "Project Owner"}
         </span>
@@ -132,13 +149,12 @@ function PublishedView() {
             <article key={role.id} className={styles.openRoleCard}>
               <h3 className={styles.roleTitle}>{role.title}</h3>
               <p className={styles.roleSubtitle}>
-                Unfilled ·{" "}
-                {formatHours(commitment.hoursByRole?.[role.id])} h / week ·{" "}
-                {duration}
+                Unfilled · {formatHours(commitment.hoursByRole?.[role.id])} h /
+                week · {duration}
               </p>
               <p className={styles.bodyText}>{role.responsibilities}</p>
               <p className={styles.roleSkills}>
-                Required skills: {role.skills?.join(" · ")}
+                Required skills: {getSkillNames(role.skills)}
               </p>
             </article>
           ))}
@@ -169,13 +185,15 @@ function PublishedView() {
           Find collaborators. Publishing does not invite or accept teammates
           automatically.
         </p>
-        <Button onClick={handleFindCollaborators}>
-          Find collaborators
-        </Button>
+        <Button onClick={handleFindCollaborators}>Find collaborators</Button>
       </div>
 
       <div className={styles.actions}>
-        <AltLink to={publishedProjectId ? `/projects/${publishedProjectId}` : "/projects"}>
+        <AltLink
+          to={
+            publishedProjectId ? `/projects/${publishedProjectId}` : "/projects"
+          }
+        >
           View project details
         </AltLink>
       </div>
