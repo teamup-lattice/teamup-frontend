@@ -122,12 +122,28 @@ export function WizardProvider({ children, initialDraftId = null }) {
           data[field] = value.trim();
         }
       };
+      const addIsoDateField = (field, value) => {
+        if (typeof value !== "string" || !value.trim()) {
+          return;
+        }
+
+        const date = new Date(value);
+        if (!Number.isNaN(date.getTime())) {
+          data[field] = date.toISOString();
+        }
+      };
 
       addTextField("title", basics.name);
       addTextField("problem", basics.problem);
       addTextField("description", basics.description);
       addTextField("outcome", basics.outcome);
-      addTextField("targetEndDate", commitment.endDate);
+      addIsoDateField("startDate", commitment.startDate);
+      addIsoDateField("targetEndDate", commitment.endDate);
+      addTextField("availabilityExpectation", commitment.availability);
+      addTextField(
+        "availabilityResponseExpectation",
+        commitment.responseExpectation,
+      );
 
       const projectTypeMap = {
         "web-application": "WEB_APPLICATION",
@@ -155,8 +171,30 @@ export function WizardProvider({ children, initialDraftId = null }) {
         }
       }
 
-      // TODO: Confirm backend payload shapes for roles, milestones, and skills.
       if (draftId) {
+        data.roles = roles.roles.flatMap((role) => {
+          const title = role.title?.trim();
+          if (!title) {
+            return [];
+          }
+
+          const roleData = { title };
+          const description = role.responsibilities?.trim();
+          if (description) {
+            roleData.description = description;
+          }
+
+          const hoursValue = commitment.hoursByRole?.[role.id];
+          if (hoursValue !== undefined && String(hoursValue).trim()) {
+            const hoursPerWeek = Number(hoursValue);
+            if (Number.isFinite(hoursPerWeek)) {
+              roleData.hoursPerWeek = hoursPerWeek;
+            }
+          }
+
+          return [roleData];
+        });
+
         await updateProjectDraft(draftId, data);
       } else {
         const result = await createProjectDraft(data);
@@ -166,6 +204,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
         }
         setDraftId(createdDraftId);
       }
+
+      // TODO: Load skills with backend IDs before adding them to the payload.
 
       setSaveStatus("saved");
     } catch {
