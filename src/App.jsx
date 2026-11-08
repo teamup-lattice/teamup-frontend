@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 import Signup from "./pages/Signup/Signup";
 import Login from "./pages/Login/Login";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
@@ -52,7 +52,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/profile/setup" element={<RequiredProfile />} />
+      <Route path="/profile/setup" element={<RequiredProfile />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/discover" element={<DiscoverProjects />} />
@@ -61,8 +61,16 @@ function App() {
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/sharing-privacy" element={<SharingPrivacy />} />
-        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
+        <Route
+          path="/sharing-privacy"
+          element={
+            <Navigate to="/projects/1/workspace/sharing-privacy" replace />
+          }
+        />
+        <Route
+          path="/settings/account-deletion"
+          element={<AccountDeletion />}
+        />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
         <Route
@@ -93,14 +101,12 @@ function App() {
           <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
           <Route path="team" element={<Team />} />
           <Route path="team/release-role" element={<ReleaseRole />} />
-          <Route
-            path="contributions"
-            element={<ContributionsPlaceholder />}
-          />
+          <Route path="contributions" element={<ContributionsPlaceholder />} />
           <Route path="completion" element={<CompletionPlaceholder />} />
           <Route path="milestones" element={<Milestones />} />
           <Route path="updates" element={<ProjectUpdates />} />
           <Route path="reminders" element={<Reminders />} />
+          <Route path="sharing-privacy" element={<SharingPrivacy />} />
         </Route>
       </Route>
       <Route path="/projects/:id" element={<ProjectDetails />} />

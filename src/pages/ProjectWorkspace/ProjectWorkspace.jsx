@@ -22,6 +22,11 @@ const sectionOptions = [
   { value: "completion", label: "Project completion" },
 ];
 
+const mobileSectionOptions = [
+  ...sectionOptions,
+  { value: "sharing-privacy", label: "Sharing settings" },
+];
+
 function ProjectWorkspace() {
   const { projectId } = useParams();
   const location = useLocation();
@@ -37,15 +42,17 @@ function ProjectWorkspace() {
     ? "tasks"
     : location.pathname.startsWith(`${workspacePath}/updates`)
       ? "updates"
-      : location.pathname.startsWith(`${workspacePath}/team`)
-        ? "team"
-        : location.pathname.startsWith(`${workspacePath}/milestones`)
-          ? "milestones"
+      : location.pathname.startsWith(`${workspacePath}/sharing-privacy`)
+        ? "sharing-privacy"
+        : location.pathname.startsWith(`${workspacePath}/team`)
+          ? "team"
+          : location.pathname.startsWith(`${workspacePath}/milestones`)
+            ? "milestones"
             : location.pathname.startsWith(`${workspacePath}/contributions`)
               ? "contributions"
               : location.pathname.startsWith(`${workspacePath}/completion`)
                 ? "completion"
-            : "overview";
+                : "overview";
   const workspaceContext = {
     project: workspaceProject,
     members,
@@ -136,7 +143,7 @@ function ProjectWorkspace() {
       <div className={styles.mobileSection}>
         <Select
           label="Project section"
-          options={sectionOptions.map((option) => ({
+          options={mobileSectionOptions.map((option) => ({
             ...option,
             value: sectionPath(option.value),
           }))}

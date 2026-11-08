@@ -6,19 +6,72 @@ import {
   getSharingPrivacy,
   saveProfileDisplay,
 } from "../../services/sharingPrivacyService";
+import shared from "../ProjectWorkspace/screens/shared.module.css";
 import styles from "./SharingPrivacy.module.css";
 
 const TEAM_ONLY = "team";
 const LINK_MODE = "link";
 
+function NoticeIcon({ tone }) {
+  const iconClass = {
+    info: styles.noticeIconInfo,
+    success: styles.noticeIconSuccess,
+    error: styles.noticeIconError,
+  }[tone];
+  const iconPath = {
+    info: (
+      <>
+        <circle cx="10" cy="10" r="8" />
+        <path d="M10 9v5M10 6.25h.01" />
+      </>
+    ),
+    success: (
+      <>
+        <circle cx="10" cy="10" r="8" />
+        <path d="m6.5 10 2.25 2.25L13.75 7.5" />
+      </>
+    ),
+    error: (
+      <>
+        <circle cx="10" cy="10" r="8" />
+        <path d="M10 6v5M10 14h.01" />
+      </>
+    ),
+  }[tone];
+
+  return (
+    <svg
+      className={`${styles.noticeIcon} ${iconClass}`}
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+    >
+      <g
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {iconPath}
+      </g>
+    </svg>
+  );
+}
+
 function Notice({ tone, title, children }) {
+  const toneClass = {
+    info: styles.noticeInfo,
+    success: styles.noticeSuccess,
+    error: styles.noticeError,
+  }[tone];
+
   return (
     <div
-      className={tone === "success" ? styles.noticeSuccess : styles.notice}
+      className={`${styles.notice} ${toneClass}`}
       role="status"
     >
       <p className={styles.noticeTitle}>
-        <span aria-hidden="true">{tone === "success" ? "✓ " : "ⓘ "}</span>
+        <NoticeIcon tone={tone} />
         {title}
       </p>
       <p className={styles.noticeText}>{children}</p>
@@ -78,8 +131,8 @@ function SharingPrivacy() {
   if (status === "loading") {
     return (
       <div className={styles.page} aria-busy="true">
-        <h1 className={styles.title}>Sharing and privacy</h1>
-        <p className={styles.meta}>Loading your sharing settings...</p>
+        <h2 className={shared.title}>Sharing and privacy</h2>
+        <p className={shared.description}>Loading your sharing settings...</p>
       </div>
     );
   }
@@ -87,7 +140,7 @@ function SharingPrivacy() {
   if (status === "error") {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Sharing and privacy</h1>
+        <h2 className={shared.title}>Sharing and privacy</h2>
         <Alert variant="error" title="Sharing settings could not load">
           We could not load your settings. Check your connection and try again.
         </Alert>
@@ -110,8 +163,8 @@ function SharingPrivacy() {
   if (project.status !== "Completed") {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>Sharing and privacy</h1>
-        <div className={styles.card}>
+        <h2 className={shared.title}>Sharing and privacy</h2>
+        <div className={shared.card}>
           <Notice tone="info" title="No project evidence page to share">
             {project.title} is still {project.status}. No share link or profile
             entry has been created.
@@ -130,8 +183,8 @@ function SharingPrivacy() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Sharing and privacy</h1>
-      <p className={styles.meta}>
+      <h2 className={shared.title}>Sharing and privacy</h2>
+      <p className={shared.description}>
         {project.completedOn} · {project.dates}
       </p>
 
@@ -143,8 +196,8 @@ function SharingPrivacy() {
       <div className={styles.columns}>
         <div className={styles.column}>
           {/* Team page sharing */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Team page sharing</h2>
+          <section className={shared.card}>
+            <h2 className={shared.cardTitle}>Team page sharing</h2>
 
             {isLinkPreview ? (
               <>
@@ -160,15 +213,15 @@ function SharingPrivacy() {
                   <option value={TEAM_ONLY}>Team-only</option>
                   <option value={LINK_MODE}>Link mode · LOCAL PREVIEW</option>
                 </select>
-                <p className={styles.strongText}>
+                <p className={`${shared.text} ${styles.strongText}`}>
                   Saved visibility: {sharing.savedVisibility}
                 </p>
-                <p className={styles.text}>
+                <p className={shared.text}>
                   Preview includes outcome, named roles, individual task
                   evidence and marketplace-prototype.zip only. No contacts,
                   private comments or drafts.
                 </p>
-                <div className={styles.buttonStack}>
+                <div className={shared.stack}>
                   <Button fullWidth disabled>
                     Activate sharing
                   </Button>
@@ -183,7 +236,7 @@ function SharingPrivacy() {
               </>
             ) : (
               <>
-                <p className={styles.strongText}>
+                <p className={`${shared.text} ${styles.strongText}`}>
                   {sharing.savedVisibility} (saved) · PRIVATE
                 </p>
                 <label className={styles.label} htmlFor="teamChoice">
@@ -198,10 +251,10 @@ function SharingPrivacy() {
                   <option value={TEAM_ONLY}>Team-only</option>
                   <option value={LINK_MODE}>Link mode · LOCAL PREVIEW</option>
                 </select>
-                <p className={styles.text}>
+                <p className={shared.text}>
                   Only accepted teammates can view the saved page.
                 </p>
-                <div className={styles.buttonStack}>
+                <div className={shared.stack}>
                   <Button
                     variant="secondary"
                     fullWidth
@@ -213,7 +266,7 @@ function SharingPrivacy() {
                     Activate sharing
                   </Button>
                 </div>
-                <p className={styles.helper}>
+                <p className={shared.helper}>
                   Link mode: preview only. Sharing unavailable pending policy
                   approval.
                 </p>
@@ -222,24 +275,24 @@ function SharingPrivacy() {
           </section>
 
           {/* Saved team-only view */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Saved team-only view</h2>
-            <p className={styles.strongText}>{project.title}</p>
-            <p className={styles.text}>
+          <section className={shared.card}>
+            <h2 className={shared.cardTitle}>Saved team-only view</h2>
+            <p className={`${shared.text} ${styles.strongText}`}>{project.title}</p>
+            <p className={shared.text}>
               {project.status} · PRIVATE · {project.completedOn}
             </p>
-            <p className={styles.summary}>{project.summary}</p>
-            <ul className={styles.teamList}>
+            <p className={shared.text}>{project.summary}</p>
+            <ul className={shared.list}>
               {project.team.map((member) => (
                 <li key={member.name}>
                   {member.name} · {member.role}
                 </li>
               ))}
             </ul>
-            <p className={styles.text}>
+            <p className={shared.text}>
               Outcome, individual task evidence and project deliverable.
             </p>
-            <p className={styles.helper}>
+            <p className={shared.helper}>
               Contacts, private task comments and drafts are excluded.
             </p>
           </section>
@@ -247,11 +300,11 @@ function SharingPrivacy() {
 
         <div className={styles.column}>
           {/* Independent choice / your profile */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Independent choice / your profile</h2>
+          <section className={shared.card}>
+            <h2 className={shared.cardTitle}>Independent choice / your profile</h2>
 
             <div className={styles.innerCard}>
-              <h3 className={styles.innerTitle}>Your profile · {user.name}</h3>
+              <h3 className={shared.cardTitle}>Your profile · {user.name}</h3>
 
               {saveState === "success" ? (
                 <>
@@ -259,7 +312,7 @@ function SharingPrivacy() {
                     Displayed on {user.name}&apos;s profile. {others} unchanged;
                     team page stays {sharing.savedVisibility}.
                   </Notice>
-                  <p className={styles.text}>
+                  <p className={shared.text}>
                     {savedLabel} (saved) · {user.name} only
                   </p>
                   <Button
@@ -273,11 +326,11 @@ function SharingPrivacy() {
               ) : (
                 <>
                   {saveState === "error" && (
-                    <Alert variant="error" title="Profile choice did not save">
+                    <Notice tone="error" title="Profile choice did not save">
                       {user.name}&apos;s local selection is retained; saved
                       profile remains {savedLabel}. Saved team page remains{" "}
                       {sharing.savedVisibility}.
-                    </Alert>
+                    </Notice>
                   )}
 
                   <label className={styles.checkboxRow}>
@@ -293,7 +346,7 @@ function SharingPrivacy() {
                     <span>Display on my profile</span>
                   </label>
 
-                  <p className={styles.helper}>
+                  <p className={shared.helper}>
                     {localDisplay !== savedDisplay
                       ? `${localLabel} selected locally · ${savedLabel} still saved`
                       : `${savedLabel} (saved) · ${
@@ -305,7 +358,8 @@ function SharingPrivacy() {
 
                   {isSaving ? (
                     <p className={styles.savingBox} role="status">
-                      <span aria-hidden="true">⟳ </span>Saving profile choice...
+                      <span className={styles.spinner} aria-hidden="true" />
+                      Saving profile choice…
                     </p>
                   ) : (
                     <Button
@@ -318,7 +372,7 @@ function SharingPrivacy() {
                     </Button>
                   )}
 
-                  <p className={styles.helper}>
+                  <p className={shared.helper}>
                     {isSaving
                       ? `${sharing.savedVisibility} remains saved. ${others} are unchanged.`
                       : `Changes your profile only. ${others} and team-page sharing are unaffected.`}
@@ -327,11 +381,11 @@ function SharingPrivacy() {
               )}
             </div>
 
-            <p className={styles.text}>
+            <p className={shared.text}>
               Completion does not display projects automatically. Profile
               display does not share the team page.
             </p>
-            <p className={styles.helper}>
+            <p className={shared.helper}>
               Cancel local choices leaves saved {savedLabel} and{" "}
               {sharing.savedVisibility} unchanged. Your choice never changes
               another person&apos;s profile.
@@ -347,21 +401,21 @@ function SharingPrivacy() {
           </section>
 
           {/* Preview comparison */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Preview comparison</h2>
-            <p className={styles.strongText}>
+          <section className={shared.card}>
+            <h2 className={shared.cardTitle}>Preview comparison</h2>
+            <p className={`${shared.text} ${styles.strongText}`}>
               {sharing.savedVisibility} · saved audience
             </p>
-            <p className={styles.text}>
+            <p className={shared.text}>
               Accepted team access only. No share link.
             </p>
-            <p className={styles.strongText}>
+            <p className={`${shared.text} ${styles.strongText}`}>
               Chosen link mode · LOCAL PREVIEW
             </p>
-            <p className={styles.text}>
+            <p className={shared.text}>
               Evidence preview only; not live, not published. No URL is created.
             </p>
-            <p className={styles.helper}>
+            <p className={shared.helper}>
               Audience, consent and authenticated-access exceptions are not yet
               defined.
             </p>
