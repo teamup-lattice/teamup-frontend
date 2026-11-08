@@ -8,8 +8,6 @@ import Select from "../../components/Select";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./BasicsStep.module.css";
 
-const skillOptions = ["UI design", "Frontend development", "Product planning"];
-
 const fields = [
   { key: "name", label: "project name" },
   { key: "problem", label: "problem or opportunity" },
@@ -37,6 +35,10 @@ function BasicsStep() {
   const {
     basics,
     setBasics,
+    skillGroups,
+    availableSkills,
+    skillsLoadStatus,
+    retrySkills,
     draftId,
     saveStatus,
     saveDraft,
@@ -45,9 +47,18 @@ function BasicsStep() {
   } = context;
   const [showValidation, setShowValidation] = useState(false);
   const isSaving = saveStatus === "saving";
+  const selectedSkillIds = Array.isArray(basics.skills) ? basics.skills : [];
+  const selectedSkills = selectedSkillIds
+    .map((skillId) =>
+      availableSkills.find((skill) => String(skill.id) === String(skillId)),
+    )
+    .filter((skill) => skill?.name);
 
   const missingFields = fields.filter((field) => {
     const value = basics[field.key];
+    if (field.key === "skills" && skillsLoadStatus !== "ready") {
+      return false;
+    }
     return Array.isArray(value) ? value.length === 0 : !value.trim();
   });
 
@@ -55,13 +66,17 @@ function BasicsStep() {
     setBasics({ [key]: value });
   };
 
-  const toggleSkill = (skill) => {
-    const selected = basics.skills.includes(skill);
+  const toggleSkill = (skillId) => {
+    const selected = selectedSkillIds.some(
+      (selectedId) => String(selectedId) === String(skillId),
+    );
     updateField(
       "skills",
       selected
-        ? basics.skills.filter((item) => item !== skill)
-        : [...basics.skills, skill],
+        ? selectedSkillIds.filter(
+            (selectedId) => String(selectedId) !== String(skillId),
+          )
+        : [...selectedSkillIds, skillId],
     );
   };
 
@@ -181,29 +196,59 @@ function BasicsStep() {
         >
           <legend className={styles.fieldLabel}>Required skills *</legend>
           <div className={styles.checkboxes}>
-            {skillOptions.map((skill) => (
-              <Checkbox
-                key={skill}
-                label={skill}
-                checked={basics.skills.includes(skill)}
-                onChange={() => toggleSkill(skill)}
-                disabled={isSaving}
-              />
-            ))}
+            {skillsLoadStatus === "loading" && (
+              <p role="status">Loading available skills...</p>
+            )}
+            {skillsLoadStatus === "error" && (
+              <Alert variant="error" title="Skills could not be loaded">
+                <Button
+                  variant="secondary"
+                  onClick={retrySkills}
+                  disabled={isSaving}
+                >
+                  Retry loading skills
+                </Button>
+              </Alert>
+            )}
+            {skillsLoadStatus === "ready" &&
+              skillGroups.map((group, groupIndex) => (
+                <details
+                  key={group.category}
+                  className={styles.skillGroup}
+                  open={groupIndex === 0}
+                >
+                  <summary className={styles.skillGroupHeading}>
+                    {group.category} ({group.skills.length})
+                  </summary>
+                  <div className={styles.skillGroupOptions}>
+                    {group.skills.map((skill) => (
+                      <Checkbox
+                        key={skill.id}
+                        label={skill.name}
+                        checked={selectedSkillIds.some(
+                          (skillId) => String(skillId) === String(skill.id),
+                        )}
+                        onChange={() => toggleSkill(skill.id)}
+                        disabled={isSaving}
+                      />
+                    ))}
+                  </div>
+                </details>
+              ))}
           </div>
           {fieldError("skills") && (
             <p className={styles.fieldError}>! {fieldError("skills")}</p>
           )}
-          {basics.skills.length > 0 && (
+          {selectedSkills.length > 0 && (
             <ul className={styles.chips} aria-label="Selected skills">
-              {basics.skills.map((skill) => (
-                <li key={skill} className={styles.chip}>
-                  <span>{skill}</span>
+              {selectedSkills.map((skill) => (
+                <li key={skill.id} className={styles.chip}>
+                  <span>{skill.name}</span>
                   <button
                     type="button"
-                    onClick={() => toggleSkill(skill)}
+                    onClick={() => toggleSkill(skill.id)}
                     disabled={isSaving}
-                    aria-label={`Remove ${skill}`}
+                    aria-label={`Remove ${skill.name}`}
                   >
                     Remove ×
                   </button>
