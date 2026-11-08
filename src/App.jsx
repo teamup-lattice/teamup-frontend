@@ -33,6 +33,7 @@ import ProjectUpdates from "./pages/ProjectWorkspace/screens/ProjectUpdates/Proj
 import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
 import Settings from "./pages/Settings/Settings";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
+import Notifications from "./pages/Notifications/Notifications";
 
 function ContributionsPlaceholder() {
   return <h2>Contributions</h2>;
@@ -60,6 +61,7 @@ function App() {
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/settings/account-deletion" element={<AccountDeletion />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />

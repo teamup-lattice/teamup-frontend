@@ -49,6 +49,7 @@ const navItems = [
   { label: "Discover Projects", to: "/discover" },
   { label: "Find Collaborators", to: "/collaborators" },
   { label: "My Projects", to: "/projects" },
+   { label: "Notifications", to: "/notifications" },
   { label: "Profile", to: "/profile" },
 ];
 
@@ -98,9 +99,13 @@ function AppLayout() {
             type="button"
             className={styles.notificationButton}
             aria-label="Notifications"
-          >
-            <BellIcon />
-          </button>
+          ><NavLink
+  to="/notifications"
+  className={styles.notificationButton}
+  aria-label="Notifications"
+>
+  <BellIcon />
+</NavLink>
           <span className={styles.notificationCount} aria-hidden="true">
             3
           </span>
