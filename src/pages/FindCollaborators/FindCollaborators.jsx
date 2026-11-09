@@ -4,55 +4,49 @@ import Alert from "../../components/Alert";
 import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
-import Input from "../../components/Input";
 import Select from "../../components/Select";
 import Skeleton from "../../components/Skeleton";
-import { formatDate } from "../CreateProject/formatDate";
+import { getMyProfile } from "../../services/dashboardService";
+import { getSkills } from "../../services/profileService";
 import {
-  people,
-  project,
-  projectId,
-  roles,
-} from "../../data/collaborationData";
-import useSimulatedAction from "../../hooks/useSimulatedAction";
+  inviteCollaborator,
+  getMyProjects,
+  getProjectCollaborators,
+} from "../../services/myProjectsService";
 import styles from "./FindCollaborators.module.css";
 
-const roleOptions = Object.entries(roles).map(([value, item]) => ({
-  value,
-  label: item.title,
-}));
-const projectOption = [{ value: projectId, label: `${project.name} · Open` }];
-const durationOptions = [...new Set(Object.values(roles).map((item) => item.weeks))].map(
-  (weeks) => ({ value: String(weeks), label: `${weeks} weeks` }),
-);
-const hoursOptions = [...new Set(Object.values(roles).map((item) => item.hours))].map(
-  (hours) => ({ value: String(hours), label: `${hours} h / week` }),
-);
-const defaultFilters = {
-  skill: "UI design",
-  role: "uiux",
-  projectType: project.type,
-  duration: String(roles.uiux.weeks),
-  hours: String(roles.uiux.hours),
-};
-const emptyFilters = {
+const PROJECT_TYPES = [
+  "WEB_APPLICATION",
+  "MOBILE_APP",
+  "DESKTOP_APP",
+  "API_SERVICE",
+  "DATA_SCIENCE",
+  "DESIGN",
+  "OTHER",
+];
+const EMPTY_FILTERS = {
   skill: "",
-  role: "",
   projectType: "",
   duration: "",
   hours: "",
 };
-const supportedStates = [
-  "default",
-  "incomplete",
-  "loading",
-  "zero",
-  "notsent",
-  "sent",
-  "race",
-];
 
-function OptionalFilters({ values, onChange, onReset, skills }) {
+function labelFor(value) {
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function OptionalFilters({
+  values,
+  onChange,
+  onReset,
+  skills,
+  projectTypes,
+  durations,
+  hours,
+}) {
   const setValue = (key) => (event) => {
     onChange({ ...values, [key]: event.target.value });
   };
@@ -69,29 +63,22 @@ function OptionalFilters({ values, onChange, onReset, skills }) {
           placeholder=""
         />
         <Select
-          label="Role"
-          options={roleOptions}
-          value={values.role}
-          onChange={setValue("role")}
-          placeholder=""
-        />
-        <Select
           label="Project type"
-          options={[{ value: project.type, label: project.type }]}
+          options={projectTypes}
           value={values.projectType}
           onChange={setValue("projectType")}
           placeholder=""
         />
         <Select
           label="Duration"
-          options={durationOptions}
+          options={durations}
           value={values.duration}
           onChange={setValue("duration")}
           placeholder=""
         />
         <Select
           label="Weekly hours"
-          options={hoursOptions}
+          options={hours}
           value={values.hours}
           onChange={setValue("hours")}
           placeholder=""
@@ -101,8 +88,7 @@ function OptionalFilters({ values, onChange, onReset, skills }) {
         Reset optional filters
       </button>
       <p className={styles.helper}>
-        Reset never removes the selected role&apos;s required skills, hours and
-        duration.
+        The selected open role remains required for every result.
       </p>
     </section>
   );
@@ -110,49 +96,201 @@ function OptionalFilters({ values, onChange, onReset, skills }) {
 
 function FindCollaborators() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedProjectId = searchParams.get("project");
   const navigate = useNavigate();
-  const { status: actionStatus, run } = useSimulatedAction();
-  const queryState = searchParams.get("state");
-  const isFrozenPreview = supportedStates.includes(queryState);
-  const [isReviewing, setIsReviewing] = useState(false);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [filters, setFilters] = useState(defaultFilters);
-  const [draftFilters, setDraftFilters] = useState(defaultFilters);
-  const [search, setSearch] = useState(people.david.name);
-  const [selectedProject, setSelectedProject] = useState(() => {
-    const requestedProject = searchParams.get("project");
-    return requestedProject === projectId ? requestedProject : projectId;
+  const [inviteAction, setInviteAction] = useState({
+    status: "idle",
+    userId: "",
+    user: null,
+    error: "",
   });
-  const [selectedRole, setSelectedRole] = useState("uiux");
-  const [incompleteProject, setIncompleteProject] = useState("");
-  const [incompleteRole, setIncompleteRole] = useState("");
-  const [dismissedFailure, setDismissedFailure] = useState(false);
+  const inviteInFlight = useRef(false);
+  const [setupAttempt, setSetupAttempt] = useState(0);
+  const [setup, setSetup] = useState({
+    status: "loading",
+    projects: [],
+    skills: [],
+    userId: null,
+    error: null,
+  });
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [draftFilters, setDraftFilters] = useState(EMPTY_FILTERS);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [results, setResults] = useState(null);
+  const [requestAttempt, setRequestAttempt] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [reviewedUserId, setReviewedUserId] = useState("");
   const reviewCardRef = useRef(null);
   const profileCardRef = useRef(null);
   const hasOpenedReview = useRef(false);
-  const state = isFrozenPreview
-    ? queryState
-    : dismissedFailure
-      ? "default"
-      : actionStatus === "saving"
-      ? "saving"
-      : actionStatus === "failed"
-        ? "notsent"
-        : actionStatus === "done"
-          ? "sent"
-          : "default";
-
-  const role = roles[selectedRole];
-  const person = Object.values(people).find(
-    (candidate) => candidate.roleKey === selectedRole,
-  );
-  const optionalSkillOptions = [...new Set([
-    ...project.skills,
-    ...role.requiredSkills,
-  ])].map((skill) => ({ value: skill, label: skill }));
 
   useEffect(() => {
-    if (isReviewing) {
+    let isMounted = true;
+
+    Promise.all([getMyProjects(), getMyProfile(), getSkills()])
+      .then(([projectsResponse, profileResponse, skillsResponse]) => {
+        const projects = Array.isArray(projectsResponse?.projects)
+          ? projectsResponse.projects
+          : [];
+        const userId = profileResponse?.user?.id;
+        if (userId == null) {
+          throw new Error("Profile response is missing the current user.");
+        }
+
+        const selectedProject = requestedProjectId
+          ? projects.find(
+              (project) => String(project.id) === requestedProjectId,
+            )
+          : projects.find(
+              (project) =>
+                project.status === "OPEN" &&
+                String(project.ownerId) === String(userId),
+            );
+        const skills = Array.isArray(skillsResponse?.skills)
+          ? skillsResponse.skills.filter(
+              (skill) =>
+                skill?.id != null &&
+                typeof skill.name === "string" &&
+                skill.name.trim(),
+            )
+          : [];
+        const openRoles =
+          selectedProject?.roles?.filter((role) => role.status === "OPEN") ??
+          [];
+
+        if (isMounted) {
+          setSetup({
+            status: "ready",
+            projects,
+            skills,
+            userId,
+            error: null,
+          });
+          setSelectedProjectId(
+            selectedProject ? String(selectedProject.id) : "",
+          );
+          setSelectedRoleId(openRoles[0] ? String(openRoles[0].id) : "");
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setSetup({
+            status: "error",
+            projects: [],
+            skills: [],
+            userId: null,
+            error,
+          });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [requestedProjectId, setupAttempt]);
+
+  const project =
+    setup.projects.find(
+      (item) => String(item.id) === selectedProjectId,
+    ) ?? null;
+  const openRoles = project?.roles?.filter((role) => role.status === "OPEN") ?? [];
+  const role =
+    openRoles.find((item) => String(item.id) === selectedRoleId) ??
+    openRoles[0] ??
+    null;
+  const queryKey =
+    setup.status === "ready" && project && role
+      ? JSON.stringify([
+          project.id,
+          role.id,
+          filters,
+          requestAttempt,
+        ])
+      : "";
+  const currentResults = results?.key === queryKey ? results : null;
+  const projectOptions = setup.projects
+    .filter(
+      (item) =>
+        item.status === "OPEN" || String(item.id) === selectedProjectId,
+    )
+    .map((item) => ({
+      value: String(item.id),
+      label: `${item.title}${item.status === "OPEN" ? " · Open" : ""}`,
+    }));
+  const skillOptions = setup.skills.map((skill) => ({
+    value: String(skill.id),
+    label: skill.name,
+  }));
+  const projectTypeOptions = PROJECT_TYPES.map((type) => ({
+    value: type,
+    label: labelFor(type),
+  }));
+  const durationOptions = Array.from({ length: 52 }, (_, index) => {
+    const weeks = index + 1;
+    return { value: String(weeks), label: `${weeks} weeks` };
+  });
+  const hourValues = [
+    ...new Set(
+      openRoles
+        .map((item) => item.hoursPerWeek)
+        .filter((hours) => Number.isInteger(hours) && hours > 0),
+    ),
+  ].sort((a, b) => a - b);
+  const hourOptions = hourValues.map((hours) => ({
+    value: String(hours),
+    label: `${hours} h / week`,
+  }));
+  const requiredSkills = (role?.skills ?? [])
+    .map((entry) => entry?.skill?.name)
+    .filter(Boolean);
+
+  useEffect(() => {
+    if (!queryKey || !project || !role) return undefined;
+    let isCurrent = true;
+
+    getProjectCollaborators(project.id, role.id, {
+      skills: filters.skill ? [filters.skill] : [],
+      projectType: filters.projectType || undefined,
+      durationWeeks: filters.duration || undefined,
+      weeklyHours: filters.hours || undefined,
+      page: 1,
+      limit: 20,
+    })
+      .then((response) => {
+        if (!isCurrent) return;
+        setResults({
+          key: queryKey,
+          status: "ready",
+          users: response.users,
+          count: response.count,
+          pagination: response.pagination ?? {
+            page: 1,
+            totalPages: 1,
+          },
+          error: null,
+        });
+      })
+      .catch((error) => {
+        if (!isCurrent) return;
+        setResults({
+          key: queryKey,
+          status: "error",
+          users: [],
+          count: 0,
+          pagination: null,
+          error,
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [queryKey, project, role, filters]);
+
+  useEffect(() => {
+    if (reviewedUserId) {
       hasOpenedReview.current = true;
       reviewCardRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -165,516 +303,488 @@ function FindCollaborators() {
       });
       hasOpenedReview.current = false;
     }
-  }, [isReviewing]);
+  }, [reviewedUserId]);
 
+  const applyFilters = () => {
+    setFilters(draftFilters);
+    setIsFilterSheetOpen(false);
+    setReviewedUserId("");
+  };
+  const resetFilters = () => setDraftFilters(EMPTY_FILTERS);
   const filterCount = Object.values(filters).filter(Boolean).length;
   const filterSummary = [
-    filters.skill && `Skill: ${filters.skill}`,
-    filters.role && `Role: ${roles[filters.role]?.title}`,
-    filters.projectType && `Type: ${filters.projectType}`,
+    filters.skill &&
+      `Skill: ${
+        setup.skills.find((skill) => String(skill.id) === filters.skill)?.name ??
+        ""
+      }`,
+    filters.projectType && `Type: ${labelFor(filters.projectType)}`,
     filters.duration && `Duration: ${filters.duration} weeks`,
     filters.hours && `Weekly hours: ${filters.hours} h / week`,
   ].filter(Boolean);
 
-  const pageTitle =
-    state === "loading"
-      ? `${project.name} · ${role.title}`
-      : state === "notsent"
-        ? `Invitation to ${person.name}`
-        : state === "sent"
-          ? "Invitation record"
-          : "Find Collaborators";
+  const changeProject = (event) => {
+    const nextProject = setup.projects.find(
+      (item) => String(item.id) === event.target.value,
+    );
+    const nextOpenRole =
+      nextProject?.roles?.find((item) => item.status === "OPEN") ?? null;
+    setSelectedProjectId(event.target.value);
+    setSelectedRoleId(nextOpenRole ? String(nextOpenRole.id) : "");
+    setReviewedUserId("");
+  };
+  const changeRole = (event) => {
+    setSelectedRoleId(event.target.value);
+    setReviewedUserId("");
+  };
 
-  const resetFilters = () => setDraftFilters(emptyFilters);
-  const applyFilters = () => {
-    setFilters(draftFilters);
-    setIsFilterSheetOpen(false);
+  const loadMore = async () => {
+    if (!currentResults || !project || !role) return;
+    setLoadingMore(true);
+    try {
+      const response = await getProjectCollaborators(project.id, role.id, {
+        skills: filters.skill ? [filters.skill] : [],
+        projectType: filters.projectType || undefined,
+        durationWeeks: filters.duration || undefined,
+        weeklyHours: filters.hours || undefined,
+        page: currentResults.pagination.page + 1,
+        limit: 20,
+      });
+      setResults((current) =>
+        current?.key === queryKey
+          ? {
+              ...current,
+              users: [...current.users, ...response.users],
+              count: response.count,
+              pagination: response.pagination,
+            }
+          : current,
+      );
+    } catch (error) {
+      setResults((current) =>
+        current?.key === queryKey
+          ? { ...current, status: "error", error }
+          : current,
+      );
+    } finally {
+      setLoadingMore(false);
+    }
   };
-  const closeFilterSheet = () => {
-    setDraftFilters(filters);
-    setIsFilterSheetOpen(false);
-  };
-  const clearStateAndFailure = () => {
+
+  if (setup.status === "loading") {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.heading}>Find Collaborators</h1>
+        <p role="status">Loading collaborators…</p>
+      </div>
+    );
+  }
+
+  if (setup.status === "error") {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.heading}>Find Collaborators</h1>
+        <Alert variant="error" title="Couldn't load collaborators">
+          {setup.error?.status === 403
+            ? "Only the project owner or a manager can find collaborators"
+            : "Please try again."}
+        </Alert>
+        <Button
+          onClick={() => {
+            setSetup((current) => ({
+              ...current,
+              status: "loading",
+              error: null,
+            }));
+            setSetupAttempt((attempt) => attempt + 1);
+          }}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.heading}>Find Collaborators</h1>
+        <EmptyState
+          title="No project available"
+          text="You don't have an open project to find collaborators for"
+        >
+          <Button fullWidth onClick={() => navigate("/projects/new")}>
+            Create project
+          </Button>
+        </EmptyState>
+      </div>
+    );
+  }
+
+  if (!role) {
+    return (
+      <div className={styles.page}>
+        <header className={styles.header}>
+          <h1 className={styles.heading}>Find Collaborators</h1>
+          <p className={styles.subtitle}>{project.title}</p>
+        </header>
+        <EmptyState
+          title="No open roles"
+          text="This project has no open roles to find collaborators for."
+        >
+          <Button fullWidth onClick={() => navigate("/projects/new")}>
+            Create project
+          </Button>
+        </EmptyState>
+      </div>
+    );
+  }
+
+  const error = currentResults?.status === "error" ? currentResults.error : null;
+  const loading = !currentResults;
+  const reviewedUser =
+    currentResults?.users.find((user) => String(user.id) === reviewedUserId) ??
+    (inviteAction.userId === reviewedUserId ? inviteAction.user : null);
+  const actionStatus =
+    inviteAction.userId === reviewedUserId ? inviteAction.status : "idle";
+  const isInvitationFailed = actionStatus === "failed";
+  const isInvitationDone = actionStatus === "done";
+  const clearFailureFlag = () => {
     const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete("state");
     nextParams.delete("fail");
     setSearchParams(nextParams, { replace: true });
   };
-  const retryInvitation = () => {
-    setDismissedFailure(false);
-    clearStateAndFailure();
-    run({ ignoreFailure: true });
-  };
-  const beginInvitation = () => {
-    if (!isFrozenPreview) {
-      setDismissedFailure(false);
-      run();
-    }
-  };
   const cancelReview = () => {
-    setIsReviewing(false);
-    if (state === "notsent") {
-      clearStateAndFailure();
-      setDismissedFailure(true);
-    }
+    if (isInvitationFailed) clearFailureFlag();
+    setReviewedUserId("");
   };
-  const changeRole = (event) => {
-    const nextRole = event.target.value;
-    const nextRoleData = roles[nextRole];
-    const nextPerson = Object.values(people).find(
-      (candidate) => candidate.roleKey === nextRole,
-    );
-    setSelectedRole(nextRole);
-    if (nextPerson) {
-      setSearch(nextPerson.name);
-    }
-    setFilters((current) => ({
-      ...current,
-      skill: nextRoleData.requiredSkills[0],
-      role: nextRole,
-      duration: String(nextRoleData.weeks),
-      hours: String(nextRoleData.hours),
-    }));
-    setDraftFilters((current) => ({
-      ...current,
-      skill: nextRoleData.requiredSkills[0],
-      role: nextRole,
-      duration: String(nextRoleData.weeks),
-      hours: String(nextRoleData.hours),
-    }));
-    setIsReviewing(false);
-  };
-  const chooseIncompleteRole = () => {
-    if (!incompleteProject || !incompleteRole) {
-      return;
-    }
-    changeRole({ target: { value: incompleteRole } });
-    setSelectedProject(incompleteProject);
-    setIncompleteRole("");
-    setIncompleteProject("");
-    clearStateAndFailure();
-  };
-  const resetFromZero = () => {
-    setFilters(emptyFilters);
-    setDraftFilters(emptyFilters);
-    if (queryState === "zero") {
-      clearStateAndFailure();
-    }
-  };
+  const submitInvitation = async () => {
+    if (!reviewedUser || inviteInFlight.current) return;
 
-  const matches = person &&
-    role.requiredSkills.every((skill) => person.skills.includes(skill)) &&
-    person.hours === role.hours &&
-    person.weeks === role.weeks &&
-    person.name.toLowerCase().includes(search.trim().toLowerCase()) &&
-    (!filters.skill || person.skills.includes(filters.skill)) &&
-    (!filters.role || filters.role === selectedRole) &&
-    (!filters.projectType || filters.projectType === project.type) &&
-    (!filters.duration || Number(filters.duration) === person.weeks) &&
-    (!filters.hours || Number(filters.hours) === person.hours);
+    inviteInFlight.current = true;
+    setInviteAction({
+      status: "saving",
+      userId: String(reviewedUser.id),
+      user: reviewedUser,
+      error: "",
+    });
+
+    try {
+      await inviteCollaborator({
+        projectId: project.id,
+        roleId: role.id,
+        inviteeId: reviewedUser.id,
+      });
+      setResults((current) =>
+        current?.key === queryKey
+          ? {
+              ...current,
+              users: current.users.filter(
+                (user) => String(user.id) !== String(reviewedUser.id),
+              ),
+              count: Math.max(0, current.count - 1),
+            }
+          : current,
+      );
+      setInviteAction({
+        status: "done",
+        userId: String(reviewedUser.id),
+        user: reviewedUser,
+        error: "",
+      });
+    } catch (requestError) {
+      const message =
+        requestError.status === 403
+          ? "Only the project owner or a manager can send invitations"
+          : requestError.status === 409
+            ? requestError.message || "Couldn't send the invitation. Try again."
+            : "Couldn't send the invitation. Try again.";
+      setInviteAction({
+        status: "failed",
+        userId: String(reviewedUser.id),
+        user: reviewedUser,
+        error: message,
+      });
+    } finally {
+      inviteInFlight.current = false;
+    }
+  };
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.heading}>{pageTitle}</h1>
-        {state === "default" && (
-          <p className={styles.subtitle}>
-            Choose an owned Open project and a specific open role.
-          </p>
-        )}
-        {state === "loading" && (
-          <p className={styles.subtitle}>
-            {role.requiredSkills.join(" + ")} · {role.hours} h / week ·{" "}
-            {role.weeks} weeks
-          </p>
-        )}
-        {state === "notsent" && (
-          <p className={styles.subtitle}>
-            {role.title} · {role.hours} h / week · {role.weeks} weeks
-          </p>
-        )}
+        <h1 className={styles.heading}>Find Collaborators</h1>
+        <p className={styles.subtitle}>
+          {project.title} · {role.title}
+        </p>
       </header>
 
-      {state === "default" && (
-        <>
-          <Alert variant="info" title="Required for this role">
-            {role.requiredSkills.join(" + ")} · {role.hours} h / week ·{" "}
-            {role.weeks} weeks, {formatDate(project.startDate)}–
-            {formatDate(project.endDate)}. People who do not meet all required
-            skills, hours and duration are excluded.
-          </Alert>
-          <main className={styles.content}>
-            <div className={styles.selectionFields}>
-              <Select
-                label="Owned project"
-                options={projectOption}
-                value={selectedProject}
-                onChange={(event) => setSelectedProject(event.target.value)}
-                placeholder=""
-              />
-              <Select
-                label="Open role"
-                options={roleOptions}
-                value={selectedRole}
-                onChange={changeRole}
-                placeholder=""
-              />
-            </div>
-            <Input
-              label="Search people"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <div className={styles.desktopFilters}>
+      <Alert variant="info" title="Required for this role">
+        {requiredSkills.length > 0 ? `${requiredSkills.join(" + ")} · ` : ""}
+        {role.hoursPerWeek != null
+          ? `${role.hoursPerWeek} h / week`
+          : "Weekly hours not specified"}
+        {project.durationWeeks != null
+          ? ` · ${project.durationWeeks} weeks`
+          : ""}
+        . Results are matched to this open role.
+      </Alert>
+
+      <main className={styles.content}>
+        <div className={styles.selectionFields}>
+          <Select
+            label="Owned project"
+            options={projectOptions}
+            value={selectedProjectId}
+            onChange={changeProject}
+            placeholder=""
+          />
+          <Select
+            label="Open role"
+            options={openRoles.map((item) => ({
+              value: String(item.id),
+              label: item.title,
+            }))}
+            value={String(role.id)}
+            onChange={changeRole}
+            placeholder=""
+          />
+        </div>
+
+        <div className={styles.desktopFilters}>
+          <OptionalFilters
+            values={draftFilters}
+            onChange={setDraftFilters}
+            onReset={resetFilters}
+            skills={skillOptions}
+            projectTypes={projectTypeOptions}
+            durations={durationOptions}
+            hours={hourOptions}
+          />
+          <Button fullWidth onClick={applyFilters}>
+            Apply filters
+          </Button>
+        </div>
+        <div className={styles.mobileFilters}>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setDraftFilters(filters);
+              setIsFilterSheetOpen(true);
+            }}
+          >
+            Filters · {filterCount} applied
+          </Button>
+          <p className={styles.filterSummary}>{filterSummary.join(" · ")}</p>
+        </div>
+
+        {isFilterSheetOpen && (
+          <div className={styles.sheetOverlay}>
+            <section
+              className={styles.sheet}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="filter-sheet-title"
+            >
+              <div className={styles.sheetHeader}>
+                <h2 className={styles.cardTitle} id="filter-sheet-title">
+                  Filter collaborators
+                </h2>
+                <button
+                  className={styles.textLink}
+                  type="button"
+                  onClick={() => {
+                    setDraftFilters(filters);
+                    setIsFilterSheetOpen(false);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+              <p className={styles.body}>
+                {project.title} · {role.title}
+              </p>
+              <p className={styles.helper}>
+                Apply to update results. Close to discard filter changes.
+              </p>
               <OptionalFilters
                 values={draftFilters}
                 onChange={setDraftFilters}
                 onReset={resetFilters}
-                skills={optionalSkillOptions}
+                skills={skillOptions}
+                projectTypes={projectTypeOptions}
+                durations={durationOptions}
+                hours={hourOptions}
               />
               <Button fullWidth onClick={applyFilters}>
-                Apply filters
+                Apply changes
               </Button>
-            </div>
-            <div className={styles.mobileFilters}>
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => {
-                  setDraftFilters(filters);
-                  setIsFilterSheetOpen(true);
-                }}
-              >
-                Filters · {filterCount} applied
-              </Button>
-              <p className={styles.filterSummary}>{filterSummary.join(" · ")}</p>
-            </div>
-            {isFilterSheetOpen && (
-              <div className={styles.sheetOverlay}>
-                <section
-                  className={styles.sheet}
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="filter-sheet-title"
-                >
-                  <div className={styles.sheetHeader}>
-                    <h2 className={styles.cardTitle} id="filter-sheet-title">
-                      Filter collaborators
-                    </h2>
-                    <button
-                      className={styles.textLink}
-                      type="button"
-                      onClick={closeFilterSheet}
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <p className={styles.body}>
-                    {project.name} · {role.title}
-                  </p>
-                  <p className={styles.helper}>
-                    Apply to update results. Close to discard filter changes.
-                  </p>
-                  <OptionalFilters
-                    values={draftFilters}
-                    onChange={setDraftFilters}
-                    onReset={resetFilters}
-                    skills={optionalSkillOptions}
-                  />
-                  <Alert variant="info" title="Role eligibility stays on">
-                    {role.requiredSkills.join(" + ")} · {role.hours} h / week ·{" "}
-                    {role.weeks} weeks remain
-                    required after reset.
-                  </Alert>
-                  <Button fullWidth onClick={applyFilters}>
-                    Apply changes
-                  </Button>
-                </section>
+            </section>
+          </div>
+        )}
+
+        <section className={styles.results}>
+          {loading && (
+            <>
+              <div className={styles.skeletons}>
+                <Skeleton />
+                <Skeleton />
               </div>
-            )}
-            <section className={styles.results}>
-              {matches ? (
-                <>
-                  <h2 className={styles.sectionHeading}>1 eligible collaborator</h2>
-                  <article className={styles.card} ref={profileCardRef}>
+              <p role="status">Loading collaborators…</p>
+            </>
+          )}
+          {error && (
+            <>
+              <Alert variant="error" title="Couldn't load collaborators">
+                {error.status === 403
+                  ? "Only the project owner or a manager can find collaborators"
+                  : "Please try again."}
+              </Alert>
+              <Button
+                onClick={() => setRequestAttempt((attempt) => attempt + 1)}
+              >
+                Retry
+              </Button>
+            </>
+          )}
+          {!loading && !error && currentResults.users.length === 0 && (
+            <EmptyState
+              title="No matching collaborators"
+              text="Try changing the optional filters for this role."
+            />
+          )}
+          {!loading && !error && currentResults.users.length > 0 && (
+            <>
+              <h2 className={styles.sectionHeading}>
+                {currentResults.count}{" "}
+                {currentResults.count === 1
+                  ? "person matches"
+                  : "people match"}
+              </h2>
+              {currentResults.users.map((user) => {
+                const userLabel = [user.name, user.headline]
+                  .filter(Boolean)
+                  .join(" · ");
+                const availability = [
+                  user.availability,
+                  user.preferredDuration,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <article
+                    className={styles.card}
+                    key={user.id}
+                    ref={
+                      String(user.id) === reviewedUserId
+                        ? profileCardRef
+                        : undefined
+                    }
+                  >
                     <h3 className={styles.cardTitle}>Public profile preview</h3>
                     <AvatarRow
-                      initial={person.name.charAt(0)}
-                      text={`${person.name} · ${role.title}`}
+                      initial={user.name.charAt(0) || "?"}
+                      text={userLabel}
                     />
-                    <div>
-                      <p className={styles.label}>
-                        Self-reported skills and availability
-                      </p>
-                      <p className={styles.body}>
-                        {person.skills.join(" · ")}
-                      </p>
-                    </div>
-                    <p className={styles.emphasis}>
-                      {person.level ? `${person.level} · ` : ""}
-                      {person.hours} h / week · {person.weeks} weeks
-                    </p>
-                    <div>
-                      <p className={styles.label}>Goal</p>
-                      <p className={styles.body}>{person.goal}</p>
-                    </div>
+                    {user.skills.length > 0 && (
+                      <div>
+                        <p className={styles.label}>Self-reported skills</p>
+                        <p className={styles.body}>{user.skills.join(" · ")}</p>
+                      </div>
+                    )}
+                    {availability && (
+                      <p className={styles.emphasis}>{availability}</p>
+                    )}
                     <p className={styles.helper}>
-                      Public fields only. Contact details hidden, including from the
-                      Owner.
+                      Public fields only. Contact details hidden, including from
+                      the Owner.
                     </p>
                     <Button
                       fullWidth
-                      onClick={() => setIsReviewing(true)}
+                      disabled={inviteAction.status === "saving"}
+                      onClick={() => {
+                        setInviteAction({
+                          status: "idle",
+                          userId: String(user.id),
+                          user,
+                          error: "",
+                        });
+                        setReviewedUserId(String(user.id));
+                      }}
                     >
-                      Review invitation to {person.name}
+                      Review invitation to {user.name}
                     </Button>
                   </article>
-                </>
-              ) : (
-                <EmptyState
-                  title="No eligible people found"
-                  text={
-                    <>
-                      <span className={styles.zeroDesktopText}>
-                        Adjust optional filters or return to your role definitions.
-                        Required skills, weekly hours and duration remain enforced.
-                      </span>
-                      <span className={styles.zeroMobileText}>
-                        Adjust optional filters or edit roles.{" "}
-                        {role.requiredSkills.join(", ")}, hours and duration still
-                        required.
-                      </span>
-                    </>
-                  }
+                );
+              })}
+              {currentResults.pagination.page <
+                currentResults.pagination.totalPages && (
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  loading={loadingMore}
+                  loadingText="Loading more…"
+                  onClick={loadMore}
                 >
-                  <Button
-                    fullWidth
-                    onClick={() => {
-                      setFilters(emptyFilters);
-                      setDraftFilters(emptyFilters);
-                    }}
-                  >
-                    Reset optional filters
-                  </Button>
-                </EmptyState>
+                  Load more
+                </Button>
               )}
-              {isReviewing && matches && (
-                <article className={styles.card} ref={reviewCardRef}>
-                  <h3 className={styles.cardTitle}>Review invitation</h3>
-                  <p className={styles.emphasis}>
-                    Invite {person.name} to Campus Marketplace
-                  </p>
-                  <p className={styles.body}>
-                    {role.title} · {role.hours} h / week · {role.weeks} weeks
-                  </p>
-                  <p className={styles.body}>{role.responsibilities}</p>
-                  <p className={styles.body}>
-                    {formatDate(project.startDate)}–{formatDate(project.endDate)}{" "}
-                    · {role.availability}
-                  </p>
-                  <p className={styles.body}>
-                    Sending is not joining. {person.name} must review and save
-                    his commitment acceptance.
-                  </p>
-                  <Button
-                    fullWidth
-                    disabled={actionStatus === "saving"}
-                    onClick={beginInvitation}
-                  >
-                    Send invitation to {person.name}
-                  </Button>
-                  <button
-                    className={styles.textLink}
-                    type="button"
-                    onClick={cancelReview}
-                  >
-                    Cancel invitation review
-                  </button>
-                </article>
+            </>
+          )}
+
+          {reviewedUser && (
+            <article className={styles.card} ref={reviewCardRef}>
+              <h3 className={styles.cardTitle}>Review invitation</h3>
+              <p className={styles.emphasis}>
+                Invite {reviewedUser.name} to {project.title}
+              </p>
+              <p className={styles.body}>
+                {role.title}
+                {role.hoursPerWeek != null
+                  ? ` · ${role.hoursPerWeek} h / week`
+                  : ""}
+                {project.durationWeeks != null
+                  ? ` · ${project.durationWeeks} weeks`
+                  : ""}
+              </p>
+              {role.description && (
+                <p className={styles.body}>{role.description}</p>
               )}
-            </section>
-          </main>
-        </>
-      )}
-
-      {state === "incomplete" && (
-        <main className={styles.content}>
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Choose the work first</h2>
-            <Select
-              label="Owned Open project"
-              options={projectOption}
-              placeholder="Choose project"
-              value={incompleteProject}
-              onChange={(event) => setIncompleteProject(event.target.value)}
-            />
-            <Select
-              label="Open role"
-              options={roleOptions}
-              placeholder="Choose role"
-              value={incompleteRole}
-              onChange={(event) => setIncompleteRole(event.target.value)}
-            />
-            <p className={styles.body}>
-              Select both to search eligible people.
-            </p>
-            <Button
-              fullWidth
-              disabled={!incompleteProject || !incompleteRole}
-              onClick={chooseIncompleteRole}
-            >
-              Find people
-            </Button>
-          </section>
-          <EmptyState
-            title="No owned Open project?"
-            text="Create a project and define its roles before inviting collaborators."
-          >
-            <Button fullWidth onClick={() => navigate("/projects/new")}>
-              Create project
-            </Button>
-          </EmptyState>
-        </main>
-      )}
-
-      {state === "loading" && (
-        <main className={styles.content}>
-          <div className={styles.skeletons}>
-            <Skeleton />
-            <Skeleton />
-          </div>
-          <div className={styles.loadingBar} role="status">
-            <span className={styles.spinner} aria-hidden="true" />
-            Loading eligible people…
-          </div>
-        </main>
-      )}
-
-      {state === "saving" && (
-        <main className={styles.content}>
-          <div className={styles.skeletons}>
-            <Skeleton />
-            <Skeleton />
-          </div>
-          <div className={styles.loadingBar} role="status">
-            <span className={styles.spinner} aria-hidden="true" />
-            Send invitation to {person.name}
-          </div>
-        </main>
-      )}
-
-      {state === "zero" && (
-        <>
-          <main className={styles.content}>
-            <div className={styles.selectionFields}>
-              <Select
-                label="Owned project"
-                options={projectOption}
-                value={selectedProject}
-                onChange={(event) => setSelectedProject(event.target.value)}
-                placeholder=""
-              />
-              <Select
-                label="Open role"
-                options={roleOptions}
-                value={selectedRole}
-                onChange={changeRole}
-                placeholder=""
-              />
-            </div>
-            <EmptyState
-              title="No eligible people found"
-              text={
-                <>
-                  <span className={styles.zeroDesktopText}>
-                    Adjust optional filters or return to your role definitions.
-                    Required skills, weekly hours and duration remain enforced.
-                  </span>
-                  <span className={styles.zeroMobileText}>
-                    Adjust optional filters or edit roles. UI design,
-                    Prototyping, hours and duration still required.
-                  </span>
-                </>
-              }
-            >
-              <Button fullWidth onClick={resetFromZero}>
-                Reset optional filters
+              {isInvitationFailed && (
+                <Alert variant="error" title="Invitation could not send">
+                  {inviteAction.error}
+                </Alert>
+              )}
+              {isInvitationDone && (
+                <Alert
+                  variant="success"
+                  title={`Invitation sent to ${reviewedUser.name}`}
+                >
+                  Pending response and saved commitment acceptance. The
+                  collaborator has not joined.
+                </Alert>
+              )}
+              <Button
+                fullWidth
+                disabled={actionStatus === "saving"}
+                onClick={submitInvitation}
+              >
+                {isInvitationFailed
+                  ? "Recheck invitation status"
+                  : `Send invitation to ${reviewedUser.name}`}
               </Button>
-            </EmptyState>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => navigate(`/projects/${projectId}/edit`)}
-            >
-              Return to role definitions
-            </Button>
-          </main>
-        </>
-      )}
-
-      {state === "notsent" && (
-        <main className={styles.content}>
-          <Alert variant="error" title="Invitation could not send">
-            Invitation failed. Project, role and David retained. Check
-            invitation status and role before retrying. No membership created.
-          </Alert>
-          <AvatarRow
-            initial={person.name.charAt(0)}
-            text={`${person.name} · ${role.title}`}
-          />
-          <p className={styles.body}>
-            {project.name} · {role.hours} h / week · {role.weeks} weeks
-          </p>
-          <Button fullWidth onClick={retryInvitation}>
-            Recheck invitation status
-          </Button>
-          <button className={styles.textLink} type="button" onClick={cancelReview}>
-            Cancel review
-          </button>
-        </main>
-      )}
-
-      {state === "sent" && (
-        <main className={styles.content}>
-          <Alert variant="success" title="Invitation sent to David">
-            Pending response and saved commitment acceptance. David has not
-            joined.
-          </Alert>
-          <AvatarRow initial={person.name.charAt(0)} text={`${person.name} · ${role.title}`} />
-          <p className={styles.body}>
-            {project.name} · {role.hours} h / week · {role.weeks} weeks
-          </p>
-          <Button
-            fullWidth
-            onClick={() =>
-              navigate(`/projects/${projectId}/join-requests?tab=sent`)
-            }
-          >
-            View sent invitation
-          </Button>
-        </main>
-      )}
-
-      {state === "race" && (
-        <main className={styles.content}>
-          <Alert variant="error" title="Invitation paused">
-            Role or eligibility changed. Recheck the project, role and
-            availability before sending.
-          </Alert>
-          <Button
-            fullWidth
-            onClick={() => {
-              setDismissedFailure(true);
-              clearStateAndFailure();
-            }}
-          >
-            Recheck current role
-          </Button>
-          <Button fullWidth disabled>
-            Send invitation
-          </Button>
-        </main>
-      )}
+              <button
+                className={styles.textLink}
+                type="button"
+                onClick={cancelReview}
+              >
+                Cancel invitation review
+              </button>
+            </article>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
