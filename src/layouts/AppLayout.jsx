@@ -95,22 +95,18 @@ function AppLayout() {
           <Logo />
         </NavLink>
         <div className={styles.headerActions}>
-          <button
-            type="button"
+          <NavLink
+            to="/notifications"
             className={styles.notificationButton}
             aria-label="Notifications"
-          ><NavLink
-  to="/notifications"
-  className={styles.notificationButton}
-  aria-label="Notifications"
->
-  <BellIcon />
-</NavLink>
+          >
+            <BellIcon />
+          </NavLink>
           <span className={styles.notificationCount} aria-hidden="true">
             3
           </span>
           <NavLink
-            to="/profile"
+            to="/settings"
             className={styles.settingsLink}
             aria-label="Settings"
           >

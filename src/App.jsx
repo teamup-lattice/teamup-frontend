@@ -62,21 +62,14 @@ function App() {
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
         <Route path="/settings" element={<Settings />} />
-<<<<<<< HEAD
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
-=======
         <Route
           path="/sharing-privacy"
           element={
             <Navigate to="/projects/1/workspace/sharing-privacy" replace />
           }
         />
-        <Route
-          path="/settings/account-deletion"
-          element={<AccountDeletion />}
-        />
->>>>>>> 614f293899436adf5270e48b3e1afe8b9f8d10aa
+        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
         <Route
