@@ -9,7 +9,9 @@ import styles from "./ForgotPassword.module.css";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const requestDescription =
-  "Enter the email address associated with your account. We'll send a secure reset link if it matches a registered profile.";
+  "Enter the email address associated with your account. We'll send a secure reset link if an account exists for that email.";
+const sentDescription =
+  "If an account exists for that email, we've sent a reset link.";
 
 function validate({ email }) {
   const errors = {};
@@ -27,6 +29,7 @@ function ForgotPassword() {
   const [values, setValues] = useState({ email: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
+  const [requestError, setRequestError] = useState("");
 
   const isLoading = status === "loading";
   const isSent = status === "sent";
@@ -35,15 +38,29 @@ function ForgotPassword() {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
+    setRequestError("");
   }
 
   async function sendResetLink() {
     setStatus("loading");
+    setRequestError("");
     try {
       await forgotPassword({ email: values.email.trim() });
       setStatus("sent");
-    } catch {
-      setStatus("error");
+    } catch (error) {
+      const emailError = error.errors?.find(
+        (fieldError) => fieldError.field === "email",
+      );
+
+      if (error.status === 400 && emailError) {
+        setErrors((current) => ({ ...current, email: emailError.message }));
+        setStatus("idle");
+      } else if (error.message === "Network error") {
+        setStatus("network-error");
+      } else {
+        setStatus("request-error");
+        setRequestError(error.message);
+      }
     }
   }
 
@@ -67,7 +84,7 @@ function ForgotPassword() {
       title={isSent ? "Check your email" : "Reset your password"}
       description={
         isSent
-          ? `If ${values.email.trim()} is registered, a reset link will arrive shortly. Check your inbox and spam folder.`
+          ? sentDescription
           : requestDescription
       }
       backTo="/login"
@@ -80,9 +97,8 @@ function ForgotPassword() {
     >
       {isSent ? (
         <>
-          <Alert variant="info" title="Email sent">
-            If the address is registered, you'll receive a secure reset link
-            shortly.
+          <Alert variant="info" title="Check your inbox">
+            It can take a few minutes. Look in your spam folder too.
           </Alert>
           <Button fullWidth loading={isLoading} onClick={sendResetLink}>
             Resend email
@@ -91,9 +107,14 @@ function ForgotPassword() {
         </>
       ) : (
         <>
-          {status === "error" && (
+          {status === "network-error" && (
             <Alert variant="error" title="We could not connect">
               Request not confirmed. Your entry is retained. Try again.
+            </Alert>
+          )}
+          {status === "request-error" && (
+            <Alert variant="error" title="Request failed">
+              {requestError}
             </Alert>
           )}
 

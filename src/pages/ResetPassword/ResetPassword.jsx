@@ -6,6 +6,7 @@ import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { resetPassword } from "../../services/authService";
+import { clearToken } from "../../services/api";
 import styles from "./ResetPassword.module.css";
 
 const passwordPolicyError =
@@ -39,6 +40,7 @@ function ResetPassword() {
   const token = searchParams.get("token");
   const [values, setValues] = useState({ password: "", confirmPassword: "" });
   const [errors, setErrors] = useState({});
+  const [requestError, setRequestError] = useState("");
   const [requestState, setRequestState] = useState({
     token,
     status: token ? "idle" : "expired",
@@ -52,7 +54,6 @@ function ResetPassword() {
         : "expired";
   const isLoading = status === "loading";
   const isExpired = status === "expired" || !token;
-  const isSuccess = status === "success";
 
   function updateStatus(nextStatus) {
     setRequestState({ token, status: nextStatus });
@@ -62,6 +63,7 @@ function ResetPassword() {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
+    setRequestError("");
   }
 
   async function handleSubmit(event) {
@@ -81,22 +83,37 @@ function ResetPassword() {
     updateStatus("loading");
     try {
       await resetPassword({ token, password: values.password });
-      updateStatus("success");
+      clearToken();
+      navigate("/login", {
+        state: { message: "Password changed, please sign in" },
+      });
     } catch (error) {
-      updateStatus(error.code === "INVALID_TOKEN" ? "expired" : "error");
+      if (error.code === "PASSWORD_VALIDATION") {
+        const passwordError = error.errors?.find(
+          (fieldError) => fieldError.field === "password",
+        );
+        setErrors((current) => ({
+          ...current,
+          password: passwordError?.message || error.message,
+        }));
+        updateStatus("idle");
+      } else if (error.code === "INVALID_TOKEN") {
+        updateStatus("expired");
+      } else if (error.message === "Network error") {
+        updateStatus("network-error");
+      } else {
+        setRequestError(error.message);
+        updateStatus("request-error");
+      }
     }
   }
 
   const title = isExpired
-    ? "Reset link expired"
-    : isSuccess
-      ? "Password reset complete"
-      : "Create a new password";
+    ? "Reset link invalid or expired"
+    : "Create a new password";
   const description = isExpired
     ? "This password reset link is no longer valid. Request a new link to continue."
-    : isSuccess
-      ? "Your password has been updated. Use it the next time you sign in."
-      : "Choose a password you do not use elsewhere. This link expires after one use.";
+    : "Choose a password you do not use elsewhere. This link expires after one use.";
 
   return (
     <AuthLayout
@@ -112,30 +129,24 @@ function ResetPassword() {
     >
       {isExpired ? (
         <>
-          <Alert variant="error" title="Reset link expired">
+          <Alert variant="error" title="Link invalid or expired">
             This link can no longer be used. Request a new reset email to
             continue.
           </Alert>
-          <Button fullWidth onClick={() => navigate("/forgot-password")}>
-            Request new reset link
-          </Button>
+          <AltLink to="/forgot-password">Request a new reset link</AltLink>
           <AltLink to="/login">Back to sign in</AltLink>
-        </>
-      ) : isSuccess ? (
-        <>
-          <Alert variant="success" title="Password updated">
-            You can now sign in with your new password.
-          </Alert>
-          <Button fullWidth onClick={() => navigate("/login")}>
-            Return to sign in
-          </Button>
         </>
       ) : (
         <>
-          {status === "error" && (
+          {status === "network-error" && (
             <Alert variant="error" title="We could not connect">
               Password update not confirmed. Your entries are retained. Try
               again.
+            </Alert>
+          )}
+          {status === "request-error" && (
+            <Alert variant="error" title="Request failed">
+              {requestError}
             </Alert>
           )}
 
