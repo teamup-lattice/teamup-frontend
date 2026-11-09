@@ -45,9 +45,8 @@ function Notifications() {
       {status === "loading" ? (
         <div aria-busy="true">
           <p className={styles.loadingText} role="status">
-            Checking notifications…
+            Loading your notifications…
           </p>
-          <p className={styles.loadingText}>Loading your notifications…</p>
           {[0, 1, 2].map((index) => (
             <div className={styles.skeletonCard} aria-hidden="true" key={index}>
               <span className={`${styles.skeletonBar} ${styles.skeletonWide}`} />
