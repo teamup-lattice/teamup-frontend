@@ -27,6 +27,16 @@ function VisibilityCard({
   const fieldsHelper = hasChanges(draft, saved)
     ? draftSummary(draft, saved)
     : savedSummary(saved);
+  const previewVisibility = {
+    ...saved,
+    name: saved.name && Boolean(profile.name),
+    role: saved.role && Boolean(profile.role),
+    skills: saved.skills && profile.skills.length > 0,
+    skillLevel: saved.skillLevel && Boolean(profile.skillLevel),
+    goals: saved.goals && Boolean(profile.goals),
+    availability: saved.availability && profile.availabilityHours != null,
+    duration: saved.duration && profile.durationWeeks != null,
+  };
   const projectLabel = project
     ? `Display ${project.title} on my profile`
     : "Display completed projects on my profile";
@@ -71,17 +81,21 @@ function VisibilityCard({
       </div>
       <p className={styles.helper}>{fieldsHelper}</p>
 
-      <h3 className={styles.subtitle}>Completed-project appearance</h3>
-      <Checkbox
-        label={projectLabel}
-        checked={draft.showProject}
-        onChange={() => onToggle("showProject")}
-        disabled={isSaving}
-      />
-      <p className={styles.helper}>
-        Saved: {saved.showProject ? "on" : "off"}. Changes your profile only;
-        team-page sharing is unchanged.
-      </p>
+      {project && (
+        <>
+          <h3 className={styles.subtitle}>Completed-project appearance</h3>
+          <Checkbox
+            label={projectLabel}
+            checked={draft.showProject}
+            onChange={() => onToggle("showProject")}
+            disabled={isSaving}
+          />
+          <p className={styles.helper}>
+            Saved: {saved.showProject ? "on" : "off"}. Changes your profile
+            only; team-page sharing is unchanged.
+          </p>
+        </>
+      )}
 
       <div className={styles.action}>
         <Button
@@ -94,7 +108,7 @@ function VisibilityCard({
         </Button>
       </div>
 
-      <PublicPreview visibility={saved} profile={profile} />
+      <PublicPreview visibility={previewVisibility} profile={profile} />
     </Card>
   );
 }

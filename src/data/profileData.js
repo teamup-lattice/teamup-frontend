@@ -1,25 +1,3 @@
-// Mock data until the backend exposes profile and visibility endpoints.
-export const profile = {
-  name: "Ada",
-  role: "Product Manager",
-  skills: ["Product planning", "User research"],
-  skillLevel: "Beginner",
-  goals: "Practice defining requirements and coordinating a small product team.",
-  availabilityHours: 5,
-  durationWeeks: 6,
-  email: "ada@example.org",
-  completedProjects: [
-    {
-      id: "campus-marketplace",
-      title: "Campus Marketplace",
-      completedOn: "30 Nov 2026",
-      roleAndDates: "Product Manager & Owner · 19 Oct–30 Nov 2026",
-      contribution: "defined requirements and coordinated the project team.",
-      pageTo: "/projects/campus-marketplace/page",
-    },
-  ],
-};
-
 export const VISIBILITY_FIELDS = [
   { key: "name", label: "Show name publicly", short: "name" },
   { key: "role", label: "Show professional role publicly", short: "role" },

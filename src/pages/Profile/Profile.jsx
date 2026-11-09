@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { NO_VISIBILITY, profile } from "../../data/profileData";
+import Alert from "../../components/Alert";
+import Button from "../../components/Button";
+import { NO_VISIBILITY } from "../../data/profileData";
+import { getProfile } from "../../services/profileService";
 import { saveVisibility } from "../../services/visibilityService";
 import {
   CompletedProjectsCard,
@@ -12,15 +14,34 @@ import VisibilityCard from "./VisibilityCard";
 import styles from "./Profile.module.css";
 
 function Profile() {
-  const [params] = useSearchParams();
-  // Dev-only switches for reviewing states: ?simulate=fail or ?simulate=empty
-  const simulate = import.meta.env.DEV ? params.get("simulate") : null;
-  const project = simulate === "empty" ? null : profile.completedProjects[0];
-
+  const [profile, setProfile] = useState(null);
+  const [loadStatus, setLoadStatus] = useState("loading");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [saved, setSaved] = useState(NO_VISIBILITY);
   const [draft, setDraft] = useState(NO_VISIBILITY);
   const [status, setStatus] = useState("idle"); // idle | saving | error | saved
   const errorRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getProfile()
+      .then((result) => {
+        if (!isMounted) return;
+        const visibility = { ...NO_VISIBILITY, ...result.visibilitySettings };
+        setProfile(result);
+        setSaved(visibility);
+        setDraft(visibility);
+        setLoadStatus("ready");
+      })
+      .catch(() => {
+        if (isMounted) setLoadStatus("error");
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loadAttempt]);
 
   useEffect(() => {
     if (status === "error" && errorRef.current) errorRef.current.focus();
@@ -34,13 +55,37 @@ function Profile() {
   async function handleSave() {
     setStatus("saving");
     try {
-      await saveVisibility(draft, { simulateFail: simulate === "fail" });
+      await saveVisibility(draft);
       setSaved(draft);
       setStatus("saved");
     } catch {
       setStatus("error");
     }
   }
+
+  if (loadStatus === "loading") {
+    return <p role="status">Loading your profile…</p>;
+  }
+
+  if (loadStatus === "error") {
+    return (
+      <>
+        <Alert variant="error" title="Couldn't load your profile">
+          Please try again.
+        </Alert>
+        <Button
+          onClick={() => {
+            setLoadStatus("loading");
+            setLoadAttempt((attempt) => attempt + 1);
+          }}
+        >
+          Retry
+        </Button>
+      </>
+    );
+  }
+
+  const project = profile.completedProjects[0] ?? null;
 
   return (
     <div>

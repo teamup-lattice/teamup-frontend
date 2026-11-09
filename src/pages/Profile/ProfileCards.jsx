@@ -4,24 +4,40 @@ import Card from "../../components/Card";
 import styles from "./ProfileCards.module.css";
 
 export function ProfileDetailsCard({ profile }) {
+  const name = profile.name ?? "";
+
   return (
     <Card aria-labelledby="details-title">
       <div className={styles.person}>
         <span className={styles.avatar} aria-hidden="true">
-          {profile.name.charAt(0)}
+          {name.charAt(0)}
         </span>
         <span className={styles.personText}>
-          {profile.name} · {profile.role}
+          {[name, profile.role].filter(Boolean).join(" · ")}
         </span>
       </div>
       <h2 id="details-title" className={styles.title}>
         Your profile details
       </h2>
-      <p className={styles.body}>{profile.skills.join(" · ")}</p>
-      <p className={styles.small}>Skill level: {profile.skillLevel} · self-reported</p>
-      <p className={styles.body}>{profile.goals}</p>
-      <p className={styles.small}>Availability: {profile.availabilityHours} hours/week</p>
-      <p className={styles.small}>Preferred duration: {profile.durationWeeks} weeks</p>
+      {profile.skills.length > 0 && (
+        <p className={styles.body}>{profile.skills.join(" · ")}</p>
+      )}
+      {profile.skillLevel && (
+        <p className={styles.small}>
+          Skill level: {profile.skillLevel} · self-reported
+        </p>
+      )}
+      {profile.goals && <p className={styles.body}>{profile.goals}</p>}
+      {profile.availabilityHours != null && (
+        <p className={styles.small}>
+          Availability: {profile.availabilityHours} hours/week
+        </p>
+      )}
+      {profile.durationWeeks != null && (
+        <p className={styles.small}>
+          Preferred duration: {profile.durationWeeks} weeks
+        </p>
+      )}
     </Card>
   );
 }
@@ -32,7 +48,7 @@ export function ContactCard({ profile }) {
       <h2 id="contact-title" className={styles.title}>
         Contact details
       </h2>
-      <p className={styles.body}>{profile.email}</p>
+      {profile.email && <p className={styles.body}>{profile.email}</p>}
       <p className={styles.helper}>
         Contact details: accepted teammates only, not visitors or pending invitees.
       </p>
