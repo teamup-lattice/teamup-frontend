@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import styles from "./ActiveProjectCard.module.css";
 
@@ -10,6 +11,7 @@ function formatNames(names) {
 }
 
 function ActiveProjectCard({ activeProject }) {
+  const navigate = useNavigate();
   const totalTasks = Math.max(activeProject.tasksTotal, 0);
   const completedTasks = Math.min(
     Math.max(activeProject.tasksDone, 0),
@@ -77,7 +79,16 @@ function ActiveProjectCard({ activeProject }) {
         ))}
       </ul>
 
-      <Button variant="secondary">Open project workspace</Button>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          if (activeProject.id) {
+            navigate(`/projects/${activeProject.id}/workspace`);
+          }
+        }}
+      >
+        Open project workspace
+      </Button>
     </article>
   );
 }
