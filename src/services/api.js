@@ -91,6 +91,7 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
 
     const error = new Error(data.message || "Something went wrong");
     error.status = response.status;
+    error.errors = data.errors;
     throw error;
   }
 

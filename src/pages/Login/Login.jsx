@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
@@ -27,7 +27,12 @@ function validate({ email, password }) {
 }
 
 function Login() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const passwordChangedMessage =
+    location.state?.message === "Password changed, please sign in"
+      ? location.state.message
+      : "";
   const [values, setValues] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
@@ -113,6 +118,11 @@ function Login() {
         </>
       }
     >
+      {passwordChangedMessage && (
+        <Alert variant="success" title="Password changed">
+          {passwordChangedMessage}
+        </Alert>
+      )}
       {status === "invalid" && (
         <Alert variant="error" title="Email or password is incorrect">
           Check your details and try again. You have not been signed in.

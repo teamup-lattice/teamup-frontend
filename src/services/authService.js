@@ -34,19 +34,29 @@ export async function signIn({ email, password }) {
   }
 }
 
+export async function getSessions() {
+  const data = await api.get("/api/auth/sessions");
+  return data.sessions;
+}
+
 export async function forgotPassword({ email }) {
-  // Placeholder endpoint until the backend contract is confirmed.
   return api.post("/api/auth/forgot-password", { email });
 }
 
 export async function resetPassword({ token, password }) {
   try {
-    // Placeholder endpoint until the backend contract is confirmed.
     return await api.post("/api/auth/reset-password", { token, password });
   } catch (error) {
-    if ([400, 401, 404, 410].includes(error.status)) {
+    const hasPasswordError = error.errors?.some(
+      (fieldError) => fieldError.field === "password",
+    );
+
+    if (error.status === 400 && hasPasswordError) {
+      error.code = "PASSWORD_VALIDATION";
+    } else if ([400, 401, 404, 410].includes(error.status)) {
       error.code = "INVALID_TOKEN";
     }
+
     throw error;
   }
 }
