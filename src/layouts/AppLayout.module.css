@@ -27,6 +27,12 @@
   gap: var(--space-3);
 }
 
+.notificationWrapper {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
 .notificationButton {
   display: inline-flex;
   align-items: center;
@@ -41,6 +47,12 @@
   cursor: pointer;
 }
 
+.notificationButton svg,
+.settingsLink svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
 .notificationButton:focus-visible,
 .settingsLink:focus-visible {
   outline: 2px solid var(--color-focus);
@@ -48,11 +60,16 @@
 }
 
 .notificationCount {
+  position: absolute;
+  top: -4px;
+  right: -4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-5);
-  height: var(--space-5);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-1);
+  box-sizing: border-box;
   border-radius: 50%;
   background: var(--color-purple);
   color: var(--color-card);
@@ -179,6 +196,45 @@
 }
 
 @media (max-width: 599px) {
+  .header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .logo img {
+    width: 120px;
+  }
+
+  .headerActions {
+    gap: var(--space-1);
+  }
+
+  .notificationButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .notificationButton svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .notificationCount {
+    top: 0;
+    right: 0;
+  }
+
+  .settingsLink {
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+  }
+
+  .headerActions .menuButton {
+    min-height: 44px;
+    margin-left: 0;
+    padding: 0 var(--space-2);
+  }
+
   .nav,
   .navClosed {
     position: absolute;

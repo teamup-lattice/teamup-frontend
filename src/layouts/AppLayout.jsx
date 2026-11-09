@@ -3,15 +3,11 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
 import styles from "./AppLayout.module.css";
 
+const UNREAD_COUNT = 3; // Replace with unreadCount from GET /api/notifications.
+
 function BellIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width="var(--icon-size)"
-      height="var(--icon-size)"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
         stroke="currentColor"
@@ -25,13 +21,7 @@ function BellIcon() {
 
 function GearIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width="var(--icon-size)"
-      height="var(--icon-size)"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"
         stroke="currentColor"
@@ -49,7 +39,7 @@ const navItems = [
   { label: "Discover Projects", to: "/discover" },
   { label: "Find Collaborators", to: "/collaborators" },
   { label: "My Projects", to: "/projects" },
-   { label: "Notifications", to: "/notifications" },
+  { label: "Notifications", to: "/notifications" },
   { label: "Profile", to: "/profile" },
 ];
 
@@ -76,10 +66,7 @@ function AppLayout() {
 
   useEffect(() => {
     const closeOnEscape = (event) => {
-      if (
-        event.key === "Escape" &&
-        window.matchMedia(MOBILE_QUERY).matches
-      ) {
+      if (event.key === "Escape" && window.matchMedia(MOBILE_QUERY).matches) {
         setIsSidebarOpen(false);
       }
     };
@@ -95,15 +82,19 @@ function AppLayout() {
           <Logo />
         </NavLink>
         <div className={styles.headerActions}>
-          <NavLink
-            to="/notifications"
-            className={styles.notificationButton}
-            aria-label="Notifications"
-          >
-            <BellIcon />
-          </NavLink>
-          <span className={styles.notificationCount} aria-hidden="true">
-            3
+          <span className={styles.notificationWrapper}>
+            <NavLink
+              to="/notifications"
+              className={styles.notificationButton}
+              aria-label={`Notifications, ${UNREAD_COUNT} unread`}
+            >
+              <BellIcon />
+            </NavLink>
+            {UNREAD_COUNT > 0 && (
+              <span className={styles.notificationCount} aria-hidden="true">
+                {UNREAD_COUNT > 9 ? "9+" : UNREAD_COUNT}
+              </span>
+            )}
           </span>
           <NavLink
             to="/settings"
