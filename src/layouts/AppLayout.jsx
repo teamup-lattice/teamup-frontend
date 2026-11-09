@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
+import { getUnreadCount } from "../services/notificationsService";
 import styles from "./AppLayout.module.css";
-
-const UNREAD_COUNT = 3; // Replace with unreadCount from GET /api/notifications.
 
 function BellIcon() {
   return (
@@ -47,9 +46,31 @@ const MOBILE_QUERY = "(max-width: 599px)";
 
 function AppLayout() {
   const { pathname } = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     () => !window.matchMedia(MOBILE_QUERY).matches,
   );
+
+  useEffect(() => {
+    let isCurrent = true;
+    const loadUnreadCount = () => {
+      getUnreadCount()
+        .then((count) => {
+          if (isCurrent) setUnreadCount(count);
+        })
+        .catch((error) => {
+          console.error("Failed to load unread notification count:", error);
+        });
+    };
+
+    loadUnreadCount();
+    window.addEventListener("notifications:changed", loadUnreadCount);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener("notifications:changed", loadUnreadCount);
+    };
+  }, [pathname]);
 
   const handleSidebarLinkClick = () => {
     if (window.matchMedia(MOBILE_QUERY).matches) {
@@ -86,13 +107,13 @@ function AppLayout() {
             <NavLink
               to="/notifications"
               className={styles.notificationButton}
-              aria-label={`Notifications, ${UNREAD_COUNT} unread`}
+              aria-label={`Notifications, ${unreadCount} unread`}
             >
               <BellIcon />
             </NavLink>
-            {UNREAD_COUNT > 0 && (
+            {unreadCount > 0 && (
               <span className={styles.notificationCount} aria-hidden="true">
-                {UNREAD_COUNT > 9 ? "9+" : UNREAD_COUNT}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </span>
