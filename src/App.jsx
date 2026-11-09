@@ -34,6 +34,7 @@ import Milestones from "./pages/ProjectWorkspace/screens/Milestones/Milestones";
 import Settings from "./pages/Settings/Settings";
 import SharingPrivacy from "./pages/SharingPrivacy/SharingPrivacy";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
+import Notifications from "./pages/Notifications/Notifications";
 
 function ContributionsPlaceholder() {
   return <h2>Contributions</h2>;
@@ -61,16 +62,14 @@ function App() {
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects/:id/edit" element={<CreateProject />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route
           path="/sharing-privacy"
           element={
             <Navigate to="/projects/1/workspace/sharing-privacy" replace />
           }
         />
-        <Route
-          path="/settings/account-deletion"
-          element={<AccountDeletion />}
-        />
+        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/collaborators" element={<FindCollaborators />} />
         <Route
