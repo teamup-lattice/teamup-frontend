@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Input from "../../components/Input";
 import styles from "./Settings.module.css";
 
-function ProfileDataCard({ values, nameError, disabled, onChange }) {
+function ProfileDataCard({ values, disabled, onChange }) {
   return (
     <div className={styles.column}>
       <section className={styles.card} aria-labelledby="profile-data-heading">
@@ -19,9 +19,7 @@ function ProfileDataCard({ values, nameError, disabled, onChange }) {
             name="name"
             autoComplete="name"
             value={values.name}
-            error={nameError}
-            disabled={disabled}
-            onChange={onChange}
+            disabled
           />
           <Input
             label="Goals"
