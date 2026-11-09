@@ -7,7 +7,6 @@ import listFilterIcon from "../../assets/list-filter.svg";
 import publishImg from "../../assets/publish-img.png";
 import { WizardContext } from "./WizardContextValue";
 import { formatDate } from "./formatDate";
-import { projectId } from "../../data/collaborationData";
 import styles from "./PublishedView.module.css";
 
 function formatDuration(value) {
@@ -88,7 +87,7 @@ function PublishedView() {
   const duration = formatDuration(commitment.duration);
 
   const handleFindCollaborators = () => {
-    navigate(`/collaborators?project=${projectId}`);
+    navigate(`/collaborators?project=${publishedProjectId}`);
   };
 
   return (

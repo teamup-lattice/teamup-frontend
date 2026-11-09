@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
-import { invitationId } from "../../data/collaborationData";
 import styles from "./PendingInvitationCard.module.css";
 
 function PendingInvitationCard({ pendingInvitation }) {
@@ -17,7 +16,7 @@ function PendingInvitationCard({ pendingInvitation }) {
         {pendingInvitation.weeks}{" "}
         {pendingInvitation.weeks === 1 ? "week" : "weeks"}
       </p>
-      <Button onClick={() => navigate(`/invitations/${invitationId}`)}>
+      <Button onClick={() => navigate(`/invitations/${pendingInvitation.id}`)}>
         Review invitation
       </Button>
       <p className={styles.helper}>

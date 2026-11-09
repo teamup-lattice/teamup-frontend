@@ -55,6 +55,7 @@ function buildActiveProject(dashboard) {
   });
 
   return {
+    id: project.id,
     title: project.title,
     status: readable(project.status),
     role: `${
