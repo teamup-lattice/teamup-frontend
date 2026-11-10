@@ -1,194 +1,286 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
-import Skeleton from "../../components/Skeleton";
-import MilestonesCard from "../../components/collab/MilestonesCard";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
-import RoleContributionCard from "../../components/collab/RoleContributionCard";
-import {
-  people,
-  project,
-  projectId,
-  roles,
-  requestId,
-} from "../../data/collaborationData";
-import useSimulatedAction from "../../hooks/useSimulatedAction";
+import Select from "../../components/Select";
+import { getProjectById } from "../../services/projectService";
+import { sendJoinRequest } from "../../services/joinRequestsService";
 import styles from "./RequestRole.module.css";
 
-const supportedStates = ["default", "missing", "saving", "failed", "sent"];
-
-function RequestRole() {
+function RequestRoleContent({ projectId }) {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const roleKey = searchParams.get("role");
-  const selectedRoleKey = roles[roleKey] ? roleKey : "frontend";
-  const requestRole = roles[selectedRoleKey];
-  const requester =
-    Object.values(people).find(
-      (person) => person.roleKey === selectedRoleKey,
-    ) ??
-    people.john;
-  const { status: actionStatus, run } = useSimulatedAction();
-  const requestedState = searchParams.get("state");
-  const isFrozenPreview = supportedStates.includes(requestedState);
-  const state = isFrozenPreview
-    ? requestedState
-    : actionStatus === "saving"
-      ? "saving"
-      : actionStatus === "failed"
-        ? "failed"
-        : actionStatus === "done"
-          ? "sent"
-          : "default";
-  const projectDetailsPath = `/projects/${projectId}`;
+  const [searchParams] = useSearchParams();
+  const queryRoleId = searchParams.get("role");
+  const navigationRoleId = location.state?.roleId;
+  const requestedRoleId = queryRoleId || navigationRoleId || "";
 
-  const clearStateAndFailure = () => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete("state");
-    nextParams.delete("fail");
-    setSearchParams(nextParams, { replace: true });
+  const [project, setProject] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [sentRequestId, setSentRequestId] = useState(null);
+  const [hasSentRequest, setHasSentRequest] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    getProjectById(projectId)
+      .then((response) => {
+        if (!response?.project) {
+          throw new Error("Project response is missing project data.");
+        }
+        if (isCurrent) setProject(response.project);
+      })
+      .catch((error) => {
+        console.error("Failed to load project for role request:", error);
+        if (isCurrent) setLoadError(true);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [projectId, retryCount]);
+
+  if (!project && loadError) {
+    return (
+      <main className={styles.page}>
+        <Alert variant="error" title="Couldn't load this project">
+          Try again to load the project and its open roles.
+        </Alert>
+        <Button
+          fullWidth
+          onClick={() => {
+            setLoadError(false);
+            setRetryCount((count) => count + 1);
+          }}
+        >
+          Retry
+        </Button>
+      </main>
+    );
+  }
+
+  if (!project) {
+    return (
+      <main className={styles.page}>
+        <p role="status">Loading…</p>
+      </main>
+    );
+  }
+
+  const roles = Array.isArray(project.roles) ? project.roles : [];
+  const openRoles = roles.filter((role) => role.status === "OPEN");
+  const roleId = requestedRoleId || selectedRoleId || openRoles[0]?.id || "";
+  const selectedRole = roles.find(
+    (role) => String(role.id) === String(roleId),
+  );
+  const projectDetailsPath = `/projects/${projectId}`;
+  const projectSummary = {
+    name: project.title ?? "",
+    expectedOutcome: project.outcome ?? "",
+    ownerName: project.owner?.name ?? "",
   };
-  const retryRequest = () => {
-    clearStateAndFailure();
-    run({ ignoreFailure: true });
-  };
-  const sendRequest = () => {
-    if (!isFrozenPreview) {
-      run();
+  const requiredSkills = (Array.isArray(selectedRole?.skills)
+    ? selectedRole.skills
+    : []
+  )
+    .map((item) => item?.skill?.name)
+    .filter(Boolean);
+  const projectSkills = (Array.isArray(project.skills) ? project.skills : [])
+    .map((item) => item?.skill?.name)
+    .filter(Boolean);
+  const roleHours =
+    selectedRole.hoursPerWeek == null
+      ? "Hours not specified"
+      : `${selectedRole.hoursPerWeek} h / week`;
+
+  const handleSubmit = async () => {
+    if (!selectedRole || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await sendJoinRequest({
+        projectId,
+        roleId: String(selectedRole.id),
+      });
+      const requestId =
+        response?.joinRequest?.id ?? response?.request?.id ?? response?.id;
+      setSentRequestId(requestId ?? null);
+      setHasSentRequest(true);
+    } catch (error) {
+      const messages = {
+        400: error.message || "Something went wrong. Try again.",
+        403: "You can't request a role on your own project.",
+        404: "We couldn't find that project or role.",
+        409: "You already have a pending request, an invitation, or a place on this project.",
+      };
+      setSubmitError(
+        messages[error.status] ?? "Something went wrong. Try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (state === "missing") {
+  if (openRoles.length === 0 || !selectedRole) {
     return (
       <main className={styles.page}>
         <section className={styles.card}>
-          <h1 className={styles.cardTitle}>{project.name}</h1>
+          <h1 className={styles.cardTitle}>{project.title}</h1>
           <EmptyState
-            title="Choose an open role first"
-            text="Select a role and review its requirements before sending a request."
+            title={
+              openRoles.length === 0
+                ? "No open roles available"
+                : "Choose an open role first"
+            }
+            text="Select an open role and review its requirements before sending a request."
           >
-            <Button
-              fullWidth
-              onClick={() => navigate(projectDetailsPath)}
-            >
-              Choose role
+            <Button fullWidth onClick={() => navigate(projectDetailsPath)}>
+              Back to project details
             </Button>
           </EmptyState>
-          <Button fullWidth disabled>
-            Send request
-          </Button>
         </section>
       </main>
     );
   }
 
-  if (state === "saving") {
-    return (
-      <main className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.heading}>{requestRole.title} request</h1>
-          <p className={styles.subtitle}>
-            {requester.name} · {requestRole.hours} h / week ·{" "}
-            {requestRole.weeks} weeks
-          </p>
-        </header>
-        <Alert variant="info" title="Sending request…">
-          Sending. Request not yet saved; submit temporarily locked.
-        </Alert>
-        <div className={styles.skeletons}>
-          <Skeleton />
-          <Skeleton />
-        </div>
-        <div className={styles.loadingBar} role="status">
-          <span className={styles.spinner} aria-hidden="true" />
-          Sending request…
-        </div>
-      </main>
-    );
-  }
-
-  if (state === "failed") {
-    return (
-      <main className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.heading}>{requestRole.title} request</h1>
-          <p className={styles.subtitle}>
-            Campus Marketplace · {requestRole.hours} h / week ·{" "}
-            {requestRole.weeks} weeks
-          </p>
-        </header>
-        <Alert variant="error" title="Request could not send">
-          Role and input retained. Check request status and role before
-          retrying. Request and membership not confirmed.
-        </Alert>
-        <Button fullWidth onClick={retryRequest}>
-          Recheck request status
-        </Button>
-        <AltLink to={projectDetailsPath}>Back to project details</AltLink>
-      </main>
-    );
-  }
-
-  if (state === "sent") {
-    return (
-      <main className={styles.page}>
-        <Alert variant="success" title="Request sent">
-          Pending Ada&apos;s review. You have not joined Campus Marketplace.
-        </Alert>
-        <RoleContributionCard role={requestRole} project={project} />
-        <Button
-          fullWidth
-          onClick={() => navigate(`/role-requests/${requestId}`)}
-        >
-          View request status
-        </Button>
-      </main>
-    );
-  }
+  const isSent = hasSentRequest;
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.heading}>Request a role</h1>
+        <h1 className={styles.heading}>
+          {isSent ? "Request sent" : "Request a role"}
+        </h1>
         <p className={styles.subtitle}>
-          Campus Marketplace · {requester.name} · {requestRole.title}
+          {project.title} · {selectedRole.title} · {roleHours}
+          {project.durationWeeks != null && ` · ${project.durationWeeks} weeks`}
         </p>
       </header>
-      <div className={styles.cards}>
-        <ProjectSummaryCard project={project} variant="short" />
-        <RoleContributionCard role={requestRole} project={project} />
-        <MilestonesCard
-          milestones={project.milestones}
-          taskDeadlines={requestRole.taskDeadlines}
-        />
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>Before you send</h2>
-          <p className={styles.body}>
-            Stated requirements met: Frontend development, React, 8 h / week
-            for 6 weeks.
-          </p>
-          <p className={styles.body}>
-            Ada reviews your request. Joining requires approval and saved
-            commitment acceptance.
-          </p>
+
+      {isSent ? (
+        <>
+          <Alert variant="success" title="Request sent">
+            Your request is pending{" "}
+            {project.owner?.name
+              ? `${project.owner.name}'s`
+              : "the project owner's"}{" "}
+            review. You have not joined the project.
+          </Alert>
+          <ProjectSummaryCard project={projectSummary} variant="short" />
           <Button
             fullWidth
-            disabled={actionStatus === "saving"}
-            onClick={sendRequest}
+            onClick={() =>
+              sentRequestId
+                ? navigate(`/role-requests/${sentRequestId}`)
+                : navigate(projectDetailsPath)
+            }
           >
-            Send request
+            {sentRequestId ? "View request status" : "Back to project details"}
           </Button>
-        </section>
-      </div>
+        </>
+      ) : (
+        <>
+          {submitError && (
+            <Alert variant="error" title="Request could not send">
+              {submitError}
+            </Alert>
+          )}
+          {isSubmitting && (
+            <Alert variant="info" title="Sending request…">
+              Sending your request. Please wait.
+            </Alert>
+          )}
+          <div className={styles.cards}>
+            <ProjectSummaryCard project={projectSummary} variant="short" />
+            <section className={styles.card}>
+              <h2 className={styles.cardTitle}>Your role and requirements</h2>
+              {!requestedRoleId && (
+                <Select
+                  label="Open role"
+                  value={String(roleId)}
+                  disabled={isSubmitting}
+                  onChange={(event) => {
+                    setSelectedRoleId(event.target.value);
+                    setSubmitError("");
+                  }}
+                  options={openRoles.map((role) => ({
+                    value: String(role.id),
+                    label: role.title,
+                  }))}
+                />
+              )}
+              <h3 className={styles.cardTitle}>{selectedRole.title}</h3>
+              {selectedRole.description && (
+                <p className={styles.body}>{selectedRole.description}</p>
+              )}
+              <p className={styles.body}>
+                Required skills:{" "}
+                {requiredSkills.length > 0
+                  ? requiredSkills.join(" · ")
+                  : "No required skills listed"}
+              </p>
+              <p className={styles.body}>
+                Project skills:{" "}
+                {projectSkills.length > 0
+                  ? projectSkills.join(" · ")
+                  : "No project skills listed"}
+              </p>
+              <p className={styles.body}>
+                {roleHours}
+                {project.durationWeeks != null &&
+                  ` · ${project.durationWeeks} weeks`}
+              </p>
+              {selectedRole.requiredMembers != null && (
+                <p className={styles.body}>
+                  Required members: {selectedRole.requiredMembers}
+                </p>
+              )}
+            </section>
+            <section className={styles.card}>
+              <h2 className={styles.cardTitle}>Before you send</h2>
+              <p className={styles.body}>
+                The project owner will review your request. You join only after
+                approval and confirmation.
+              </p>
+              <Button
+                fullWidth
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+              >
+                {isSubmitting ? "Sending request…" : "Send request"}
+              </Button>
+              {submitError && (
+                <Button
+                  fullWidth
+                  disabled={isSubmitting}
+                  onClick={handleSubmit}
+                >
+                  Retry
+                </Button>
+              )}
+            </section>
+          </div>
+        </>
+      )}
+
       <div className={styles.backBar}>
-        <AltLink to={projectDetailsPath}>
-          Back to project details
-        </AltLink>
+        <AltLink to={projectDetailsPath}>Back to project details</AltLink>
       </div>
     </main>
   );
+}
+
+function RequestRole() {
+  const { projectId } = useParams();
+  return <RequestRoleContent key={projectId} projectId={projectId} />;
 }
 
 export default RequestRole;
