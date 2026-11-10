@@ -9,6 +9,7 @@ import {
   tasks,
   workspaceProject,
 } from "../../data/workspaceData";
+import StatusTag from "./shared/StatusTag";
 import styles from "./ProjectWorkspace.module.css";
 import "./shared/workspaceVisuals.css";
 
@@ -17,6 +18,7 @@ const sectionOptions = [
   { value: "tasks", label: "Tasks" },
   { value: "updates", label: "Updates" },
   { value: "team", label: "Team" },
+  { value: "team-health", label: "Team health" },
   { value: "milestones", label: "Milestones" },
   { value: "contributions", label: "Contributions" },
   { value: "completion", label: "Project completion" },
@@ -44,15 +46,17 @@ function ProjectWorkspace() {
       ? "updates"
       : location.pathname.startsWith(`${workspacePath}/sharing-privacy`)
         ? "sharing-privacy"
-        : location.pathname.startsWith(`${workspacePath}/team`)
-          ? "team"
-          : location.pathname.startsWith(`${workspacePath}/milestones`)
-            ? "milestones"
-            : location.pathname.startsWith(`${workspacePath}/contributions`)
-              ? "contributions"
-              : location.pathname.startsWith(`${workspacePath}/completion`)
-                ? "completion"
-                : "overview";
+        : location.pathname.startsWith(`${workspacePath}/team-health`)
+          ? "team-health"
+          : location.pathname.startsWith(`${workspacePath}/team`)
+            ? "team"
+            : location.pathname.startsWith(`${workspacePath}/milestones`)
+              ? "milestones"
+              : location.pathname.startsWith(`${workspacePath}/contributions`)
+                ? "contributions"
+                : location.pathname.startsWith(`${workspacePath}/completion`)
+                  ? "completion"
+                  : "overview";
   const workspaceContext = {
     project: workspaceProject,
     members,
@@ -81,8 +85,10 @@ function ProjectWorkspace() {
       <header className={styles.projectHeader}>
         <h1 className={styles.title}>{workspaceProject.name}</h1>
         <p className={styles.meta}>
-          {workspaceProject.status} · {currentUser.name} ·{" "}
-          {isOwner ? "Owner" : "Member"}
+          <StatusTag status={workspaceProject.status} />
+          <span>
+            {currentUser.name} · {isOwner ? "Owner" : "Member"}
+          </span>
         </p>
       </header>
 
@@ -118,6 +124,12 @@ function ProjectWorkspace() {
             className={navClassName}
           >
             {currentSection === "team" ? "Tasks" : "Team"}
+          </NavLink>
+          <NavLink
+            to={navigationTarget(`${workspacePath}/team-health`)}
+            className={navClassName}
+          >
+            Team health
           </NavLink>
           <NavLink
             to={navigationTarget(`${workspacePath}/milestones`)}

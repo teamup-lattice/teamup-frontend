@@ -1,0 +1,23 @@
+.avatars {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.avatar {
+  position: relative;
+  display: grid;
+  flex: 0 0 var(--space-6);
+  width: var(--space-6);
+  height: var(--space-6);
+  place-items: center;
+  border: 2px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+}
+
+.avatar + .avatar {
+  margin-left: calc(-1 * var(--space-2));
+}

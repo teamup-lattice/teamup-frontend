@@ -2,6 +2,7 @@ import {
   ArrowUpRightIcon,
   PaperclipIcon,
 } from "../../components/Icons";
+import AvatarGroup from "../../components/AvatarGroup";
 import styles from "./Workspace.module.css";
 import useReveal from "./useReveal";
 
@@ -68,11 +69,7 @@ function Workspace() {
                 <p className={styles.workspaceLabel}>Project workspace</p>
                 <h3>Campus Marketplace</h3>
               </div>
-              <div className={styles.avatars}>
-                <span>A</span>
-                <span>D</span>
-                <span>J</span>
-              </div>
+              <AvatarGroup hidden items={["A", "D", "J"]} />
             </div>
 
             <div className={styles.tabs}>

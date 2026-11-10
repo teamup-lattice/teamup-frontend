@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import AvatarGroup from "../../components/AvatarGroup";
 import { ArrowDownIcon, LightbulbIcon } from "../../components/Icons";
 import heroImage from "../../assets/landing-hero.png";
 import { GET_STARTED_PATH } from "./landingConfig";
@@ -49,11 +50,7 @@ function Hero() {
           </div>
           <div className={styles.bottomCard}>
             <div className={styles.cardContent}>
-              <div className={styles.avatars} aria-hidden="true">
-                <span>A</span>
-                <span>D</span>
-                <span>J</span>
-              </div>
+              <AvatarGroup hidden items={["A", "D", "J"]} />
               <div>
                 <p className={styles.cardTitle}>Different skills. One team.</p>
                 <p className={styles.cardText}>A place to learn by building.</p>
