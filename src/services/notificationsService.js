@@ -60,10 +60,10 @@ function getNotificationAction(notification) {
       }
       break;
     case "JOIN_REQUEST":
-      if (notification.entityType === "joinRequest" && projectId) {
+      if (notification.entityType === "joinRequest" && projectId && entityId) {
         return {
           actionLabel: "Review request",
-          to: `/projects/${encodeURIComponent(projectId)}/join-requests`,
+          to: `/role-requests/${encodeURIComponent(entityId)}?project=${encodeURIComponent(projectId)}`,
         };
       }
       break;
@@ -128,7 +128,9 @@ function mapNotification(notification) {
 export async function getNotifications() {
   const result = await api.get("/api/notifications?unreadOnly=false&limit=50");
   if (!Array.isArray(result.notifications)) {
-    throw new Error("Notifications response did not include a notifications array.");
+    throw new Error(
+      "Notifications response did not include a notifications array.",
+    );
   }
   lastSaved = result.notifications.map(mapNotification);
   return lastSaved;
