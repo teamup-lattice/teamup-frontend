@@ -34,3 +34,65 @@
   gap: var(--space-4);
   min-width: 0;
 }
+
+.card,
+.status {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.label {
+  margin: 0 0 var(--space-1);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.body {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+  white-space: pre-wrap;
+}
+
+.milestones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (max-width: 834px) {
+  .card,
+  .status {
+    padding: var(--space-5);
+  }
+}
