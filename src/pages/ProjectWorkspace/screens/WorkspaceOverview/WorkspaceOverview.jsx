@@ -1,6 +1,5 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
-import AvatarGroup from "../../../../components/AvatarGroup";
 import Button from "../../../../components/Button";
 import EmptyState from "../../../../components/EmptyState";
 import Skeleton from "../../../../components/Skeleton";
@@ -230,13 +229,18 @@ function WorkspaceOverview() {
                 {remainingTasks} tasks not Done · {overdueTasks.length} task
                 {overdueTasks.length === 1 ? "" : "s"} overdue
               </p>
-              <AvatarGroup
-                label="Project members"
-                items={members.map((member) => ({
-                  initial: member.name.charAt(0),
-                  label: member.name,
-                }))}
-              />
+              <div className={styles.memberRows} aria-label="Project members">
+                {members.map((member) => (
+                  <span
+                    className={styles.memberAvatar}
+                    key={member.name}
+                    role="img"
+                    aria-label={member.name}
+                  >
+                    {member.name.charAt(0)}
+                  </span>
+                ))}
+              </div>
               <p className={styles.summaryMeta}>
                 {members.filter((member) => member.status === "Accepted").length}{" "}
                 joined members · Ada, David and John

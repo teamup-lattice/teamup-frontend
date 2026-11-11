@@ -183,8 +183,8 @@
   flex-direction: column;
   justify-content: center;
   gap: var(--space-1);
-  width: 32px;
-  height: 32px;
+  width: var(--space-6);
+  height: var(--space-6);
   padding: var(--space-2);
   border-radius: var(--radius-card);
   background: var(--color-card);
@@ -192,8 +192,8 @@
 
 .emptyIconLine {
   display: block;
-  height: 2px;
-  border-radius: 999px;
+  height: calc(var(--space-1) / 2);
+  border-radius: var(--radius-chip);
   background: var(--color-text-secondary);
 }
 
