@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import AvatarGroup from "../../components/AvatarGroup";
 import Button from "../../components/Button";
 import styles from "./ActiveProjectCard.module.css";
 
@@ -37,13 +38,13 @@ function ActiveProjectCard({ activeProject }) {
       </div>
 
       <div className={styles.teammates}>
-        <div className={styles.avatars} aria-hidden="true">
-          {activeProject.teammates.map((name, index) => (
-            <span className={styles.avatar} key={`${name}-${index}`}>
-              {name.charAt(0)}
-            </span>
-          ))}
-        </div>
+        <AvatarGroup
+          hidden
+          items={activeProject.teammates.map((name) => ({
+            initial: name.charAt(0),
+            label: name,
+          }))}
+        />
         <p className={styles.teammateText}>
           {activeProject.teammates.length} accepted{" "}
           {activeProject.teammates.length === 1 ? "teammate" : "teammates"} ·{" "}

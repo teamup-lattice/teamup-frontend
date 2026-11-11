@@ -1,0 +1,104 @@
+.summaryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.outerCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.healthSummary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.statusChip,
+.statusChipSmall {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-chip);
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.statusChip {
+  padding: var(--space-2) var(--space-3);
+}
+
+.statusChipSmall {
+  padding: var(--space-1) var(--space-2);
+}
+
+.needsAttention {
+  background: var(--color-amber-light);
+  color: var(--color-amber);
+}
+
+.onTrack {
+  background: var(--color-green-light);
+  color: var(--color-green);
+}
+
+.atRisk {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.statusLevels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.helperText,
+.footerText,
+.label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.label {
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+@media (max-width: 599px) {
+  .statusLevels {
+    padding: 0;
+  }
+
+  .statusRow {
+    gap: var(--space-1);
+  }
+}

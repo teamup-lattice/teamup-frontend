@@ -22,6 +22,7 @@ import InvitationDetails from "./pages/InvitationDetails/InvitationDetails";
 import ReviewCommitment from "./pages/ReviewCommitment/ReviewCommitment";
 import ProjectWorkspace from "./pages/ProjectWorkspace/ProjectWorkspace";
 import WorkspaceOverview from "./pages/ProjectWorkspace/screens/WorkspaceOverview/WorkspaceOverview";
+import TeamHealth from "./pages/ProjectWorkspace/screens/TeamHealth/TeamHealth";
 import Tasks from "./pages/ProjectWorkspace/screens/Tasks/Tasks";
 import CreateTask from "./pages/ProjectWorkspace/screens/CreateTask/CreateTask";
 import TaskDetail from "./pages/ProjectWorkspace/screens/TaskDetail/TaskDetail";
@@ -94,6 +95,7 @@ function App() {
           element={<ProjectWorkspace />}
         >
           <Route index element={<WorkspaceOverview />} />
+          <Route path="team-health" element={<TeamHealth />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="tasks/new" element={<CreateTask />} />
           <Route path="tasks/:taskId" element={<TaskDetail />} />

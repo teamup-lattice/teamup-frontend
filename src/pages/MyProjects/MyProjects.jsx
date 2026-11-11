@@ -6,6 +6,7 @@ import Select from "../../components/Select";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getMyProjects } from "../../services/myProjectsService";
 import ProjectCard from "./ProjectCard";
+import TeamHealthSummary from "./TeamHealthSummary";
 import { STATUS_OPTIONS } from "./statusConfig";
 import styles from "./MyProjects.module.css";
 
@@ -165,7 +166,13 @@ function MyProjects() {
         <ul className={styles.grid}>
           {visibleRecords.map((project) => (
             <li className={styles.item} key={project.id}>
-              <ProjectCard project={project} />
+              {project.id === "campus-marketplace" ? (
+                <TeamHealthSummary>
+                  <ProjectCard project={project} />
+                </TeamHealthSummary>
+              ) : (
+                <ProjectCard project={project} />
+              )}
             </li>
           ))}
         </ul>
