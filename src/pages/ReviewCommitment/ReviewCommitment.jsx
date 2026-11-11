@@ -4,28 +4,19 @@ import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Checkbox from "../../components/Checkbox";
-import MilestonesCard from "../../components/collab/MilestonesCard";
-import RoleContributionCard from "../../components/collab/RoleContributionCard";
-import TeamAgreementsCard from "../../components/collab/TeamAgreementsCard";
-import {
-  joinRequest,
-  people,
-  project,
-  projectId,
-  requestId,
-  roles,
-  teamAgreements,
-} from "../../data/collaborationData";
 import { formatDate } from "../CreateProject/formatDate";
-import useSimulatedAction from "../../hooks/useSimulatedAction";
 import {
   acceptInvitation,
   declineInvitation,
   getInvitationById,
 } from "../../services/invitationsService";
+import {
+  confirmJoinRequest,
+  getJoinRequest,
+  getJoinRequestStatusLabel,
+  withdrawJoinRequest,
+} from "../../services/joinRequestsService";
 import styles from "./ReviewCommitment.module.css";
-
-const supportedStates = ["unchecked", "saving", "error", "accepted"];
 
 const NOT_PENDING_MESSAGE =
   "This invitation is no longer pending. It may already have been answered, or it has expired.";
@@ -414,140 +405,186 @@ function InvitationCommitment() {
 }
 
 function JoinRequestCommitment() {
+  const { invitationId: requestId } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { status: actionStatus, run } = useSimulatedAction();
-  const requestedState = searchParams.get("state");
-  const isFrozenPreview = supportedStates.includes(requestedState);
-  const participant = people[joinRequest.from];
-  const role = roles[joinRequest.roleKey];
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get("project");
+  const [request, setRequest] = useState(null);
+  const [loadState, setLoadState] = useState(
+    projectId && requestId ? "loading" : "missing",
+  );
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [isAccepted, setIsAccepted] = useState(false);
-  const [pendingAction, setPendingAction] = useState("accept");
-  const [acceptedAt, setAcceptedAt] = useState(null);
-  const state = isFrozenPreview
-    ? requestedState
-    : actionStatus === "saving"
-      ? "saving"
-      : actionStatus === "failed"
-        ? "error"
-        : actionStatus === "done"
-          ? pendingAction === "decline"
-            ? "saving"
-            : acceptedAt
-              ? "accepted"
-              : "saving"
-          : "unchecked";
-  const isLocked = state === "saving";
-  const isChecked = isLocked || state === "error" || isAccepted;
+  const [action, setAction] = useState({
+    status: "idle",
+    error: "",
+    pendingAction: "",
+  });
+  const actionInFlight = useRef(false);
 
   useEffect(() => {
-    if (!isFrozenPreview && actionStatus === "done") {
-      const timer = window.setTimeout(() => {
-        setAcceptedAt(new Date());
-      }, 0);
-      return () => window.clearTimeout(timer);
-    }
-  }, [actionStatus, isFrozenPreview]);
+    if (!projectId || !requestId) return undefined;
+    let isCurrent = true;
 
-  const clearStateAndFailure = () => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete("state");
-    nextParams.delete("fail");
-    setSearchParams(nextParams, { replace: true });
-  };
-  const startAcceptance = () => {
-    if (isChecked && !isFrozenPreview) {
-      setAcceptedAt(null);
-      setPendingAction("accept");
-      run();
-    }
-  };
-  const retryAcceptance = () => {
-    setIsAccepted(true);
-    setAcceptedAt(null);
-    setPendingAction("accept");
-    clearStateAndFailure();
-    run({ ignoreFailure: true });
+    getJoinRequest(projectId, requestId)
+      .then((result) => {
+        if (isCurrent) {
+          setRequest(result);
+          setLoadState("ready");
+          setLoadError("");
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load requester join request:", error);
+        if (isCurrent) {
+          setLoadError(requestErrorMessage(error, "load"));
+          setLoadState(error.status === 404 ? "not-found" : "error");
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [projectId, requestId, retryCount]);
+
+  const retryLoad = () => {
+    setLoadError("");
+    setLoadState("loading");
+    setRetryCount((count) => count + 1);
   };
 
-  const acceptedDate = acceptedAt
-    ? formatDate(
-        `${acceptedAt.getFullYear()}-${String(
-          acceptedAt.getMonth() + 1,
-        ).padStart(2, "0")}-${String(acceptedAt.getDate()).padStart(2, "0")}`,
-      )
-    : "";
-  const acceptedTime = acceptedAt
-    ? new Intl.DateTimeFormat("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
-      }).format(acceptedAt)
-    : "";
-  if (state === "accepted") {
+  const actOnRequest = async (actionName) => {
+    if (!request || actionInFlight.current) return;
+
+    actionInFlight.current = true;
+    setAction({ status: "saving", error: "", pendingAction: actionName });
+
+    try {
+      if (actionName === "confirm") {
+        await confirmJoinRequest(requestId);
+        navigate(`/projects/${encodeURIComponent(projectId)}/workspace`);
+        return;
+      }
+
+      await withdrawJoinRequest(requestId);
+      setRequest((current) => ({
+        ...current,
+        status: "WITHDRAWN",
+        statusLabel: getJoinRequestStatusLabel("WITHDRAWN"),
+      }));
+      setAction({ status: "success", error: "", pendingAction: "" });
+    } catch (error) {
+      setAction({
+        status: "error",
+        error: requestErrorMessage(error, actionName),
+        pendingAction: actionName,
+      });
+
+      if (error.status === 409) {
+        try {
+          setRequest(await getJoinRequest(projectId, requestId));
+        } catch (reloadError) {
+          console.error(
+            "Failed to refresh requester join request after a conflict:",
+            reloadError,
+          );
+          setAction((current) => ({
+            ...current,
+            error: `${current.error} Current status could not be refreshed: ${requestErrorMessage(reloadError, "load")}`,
+          }));
+        }
+      }
+    } finally {
+      actionInFlight.current = false;
+    }
+  };
+
+  if (loadState === "loading") {
     return (
       <main className={styles.page}>
-        <section className={styles.recordCard}>
-          <div className={styles.recordHeading}>
-            <h1 className={styles.cardTitle}>
-              {project.name} · {participant.name}
-            </h1>
-            <p className={styles.body}>
-              {role.title} · {role.hours} h / week · {role.weeks} weeks
-            </p>
-          </div>
-          <Alert variant="success" title="Dated commitment saved">
-            You joined {project.name}. Your explicit acceptance and membership
-            are confirmed.
-          </Alert>
-          <p className={styles.emphasis}>
-            Accepted{" "}
-            {isFrozenPreview
-              ? "19 Oct 2026 · 09:40"
-              : `${acceptedDate} · ${acceptedTime}`}
-          </p>
-          <p className={styles.body}>
-            Accepted by {participant.name} · {role.title}
-          </p>
-          <p className={styles.helper}>
-            Joined. Other roles may remain open; the project has not
-            necessarily started.
-          </p>
-          <Button
-            fullWidth
-            onClick={() => navigate(`/projects/${projectId}/workspace`)}
-          >
-            Open workspace
-          </Button>
-        </section>
+        <h1 className={styles.heading}>Review your commitment</h1>
+        <p role="status">Loading request…</p>
       </main>
     );
   }
 
-  const subtitle = `${project.name} · ${participant.name} / Approved request`;
+  if (loadState === "missing" || loadState === "not-found") {
+    return (
+      <main className={styles.page}>
+        <h1 className={styles.heading}>Review your commitment</h1>
+        <Alert variant="info" title="Request not found">
+          {loadError ||
+            "We couldn't open this request because its project information is missing."}
+        </Alert>
+        <Button fullWidth onClick={() => navigate("/discover")}>
+          Back to discovery
+        </Button>
+      </main>
+    );
+  }
+
+  if (loadState === "error") {
+    return (
+      <main className={styles.page}>
+        <h1 className={styles.heading}>Review your commitment</h1>
+        <Alert variant="error" title="Couldn't load this request">
+          {loadError}
+        </Alert>
+        <Button fullWidth onClick={retryLoad}>
+          Retry
+        </Button>
+        <Button variant="secondary" fullWidth onClick={() => navigate("/discover")}>
+          Back to discovery
+        </Button>
+      </main>
+    );
+  }
+
+  const project = request.project;
+  const role = request.role;
+  const isPending = request.status === "PENDING";
+  const isAcceptedStatus = request.status === "ACCEPTED";
+  const canWithdraw = isPending || isAcceptedStatus;
+  const isLocked = action.status === "saving";
+  const statusLabel =
+    request.statusLabel || getJoinRequestStatusLabel(request.status);
+  const statusMessage = {
+    PENDING: "Your request is waiting for the project owner's decision.",
+    ACCEPTED:
+      "Your request is approved, but you have not joined yet. Confirm to create your membership.",
+    DECLINED: "The project owner declined your request.",
+    WITHDRAWN: "You withdrew this request.",
+  }[request.status] || `Your request is ${statusLabel.toLowerCase()}.`;
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.heading}>Review your commitment</h1>
-        <p className={styles.subtitle}>{subtitle}</p>
+        <p className={styles.subtitle}>
+          {project.name} · {role.title}
+        </p>
       </header>
 
-      {state === "unchecked" && (
-        <Alert variant="info" title="Review before joining">
-          Membership begins only after dated acceptance is saved.
+      <Alert
+        variant={request.status === "ACCEPTED" ? "success" : "info"}
+        title={`Request ${statusLabel.toLowerCase()}`}
+      >
+        {statusMessage}
+      </Alert>
+      {isLocked && (
+        <Alert variant="info" title="Saving request action…">
+          Please wait while your request is updated.
         </Alert>
       )}
-      {state === "saving" && (
-        <Alert variant="info" title="Saving dated acceptance…">
-          Saving acceptance. Not joined; workspace locked. Save temporarily
-          disabled.
+      {action.status === "success" && (
+        <Alert variant="success" title="Request withdrawn">
+          Your request has been withdrawn.
         </Alert>
       )}
-      {state === "error" && (
-        <Alert variant="error" title="Acceptance could not save">
-          You have not joined. Your checkbox choice is retained; recheck current
-          role terms and eligibility before retrying.
+      {action.status === "error" && (
+        <Alert variant="error" title="Request action could not be completed">
+          {action.error}
         </Alert>
       )}
 
@@ -555,61 +592,120 @@ function JoinRequestCommitment() {
         <section className={styles.details}>
           <article className={styles.outcomeCard}>
             <h2 className={styles.cardTitle}>The shared outcome</h2>
-            <p className={styles.body}>{project.expectedOutcome}</p>
+            {project.expectedOutcome && (
+              <p className={styles.body}>{project.expectedOutcome}</p>
+            )}
             <p className={styles.helper}>
-              Owner: {project.ownerName} / {project.ownerRole} · {project.type}
+              {[project.ownerName && `Owner: ${project.ownerName}`, project.type, project.statusLabel]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </article>
-          <RoleContributionCard role={role} project={project} />
-          <MilestonesCard
-            milestones={project.milestones}
-            taskDeadlines={role.taskDeadlines}
-          />
-          <TeamAgreementsCard
-            agreements={teamAgreements}
-            variant="commitment"
-          />
+          <article className={styles.outcomeCard}>
+            <h2 className={styles.cardTitle}>Your role and requirements</h2>
+            {role.responsibilities && (
+              <p className={styles.body}>{role.responsibilities}</p>
+            )}
+            {role.requiredSkills.length > 0 && (
+              <p className={styles.body}>
+                Required skills: {role.requiredSkills.join(" · ")}
+              </p>
+            )}
+            <p className={styles.body}>
+              {[role.hours != null && `${role.hours} h / week`, role.weeks != null && `${role.weeks} weeks`]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {(project.startDate || project.endDate) && (
+              <p className={styles.body}>
+                {project.startDate ? `Start: ${project.startDate}` : ""}
+                {project.startDate && project.endDate ? " · " : ""}
+                {project.endDate ? `End: ${project.endDate}` : ""}
+              </p>
+            )}
+          </article>
+          {project.milestones.length > 0 && (
+            <article className={styles.outcomeCard}>
+              <h2 className={styles.cardTitle}>Planned milestones</h2>
+              {project.milestones.map((milestone) => (
+                <p className={styles.body} key={milestone.id}>
+                  {milestone.name}
+                  {milestone.date ? ` — ${milestone.date}` : ""}
+                </p>
+              ))}
+            </article>
+          )}
+          {(request.message ||
+            request.proposedHoursPerWeek != null ||
+            request.plannedTaskDeadlines) && (
+            <article className={styles.outcomeCard}>
+              <h2 className={styles.cardTitle}>Your request</h2>
+              {request.message && (
+                <p className={styles.body}>Message: {request.message}</p>
+              )}
+              {request.proposedHoursPerWeek != null && (
+                <p className={styles.body}>
+                  Proposed hours per week: {request.proposedHoursPerWeek}
+                </p>
+              )}
+              {request.plannedTaskDeadlines && (
+                <p className={styles.body}>
+                  Planned task deadlines: {request.plannedTaskDeadlines}
+                </p>
+              )}
+            </article>
+          )}
         </section>
 
         <section className={styles.actions}>
           <article className={styles.acceptanceCard}>
-            <h2 className={styles.cardTitle}>Your explicit acceptance</h2>
-            <Checkbox
-              label="I accept this commitment summary."
-              checked={isChecked}
-              disabled={isLocked}
-              onChange={(event) => setIsAccepted(event.target.checked)}
-            />
-            {isLocked && (
+            <h2 className={styles.cardTitle}>Request status</h2>
+            <p className={styles.emphasis}>{statusLabel}</p>
+            {isAcceptedStatus && (
               <>
-                <p className={styles.helper}>
-                  Temporarily locked while saving. No access yet.
-                </p>
-                <div className={styles.loadingBar} role="status">
-                  <span className={styles.spinner} aria-hidden="true" />
-                  Saving acceptance…
-                </div>
+                <Checkbox
+                  label="I accept this commitment summary."
+                  checked={isAccepted}
+                  disabled={isLocked}
+                  onChange={(event) => setIsAccepted(event.target.checked)}
+                />
+                {isLocked && (
+                  <div className={styles.loadingBar} role="status">
+                    <span className={styles.spinner} aria-hidden="true" />
+                    Confirming commitment…
+                  </div>
+                )}
+                <Button
+                  fullWidth
+                  disabled={!isAccepted || isLocked}
+                  loading={isLocked && action.pendingAction === "confirm"}
+                  loadingText="Confirming commitment…"
+                  onClick={() => actOnRequest("confirm")}
+                >
+                  Confirm commitment
+                </Button>
               </>
             )}
-            {state === "error" && (
+            {isPending && (
               <p className={styles.helper}>
-                Local choice retained · no membership created.
+                You can withdraw while the project owner is reviewing your request.
               </p>
             )}
-            <Button
-              fullWidth
-              disabled={!isChecked || isLocked}
-              onClick={state === "error" ? retryAcceptance : startAcceptance}
-            >
-              Accept and join team
-            </Button>
-            {state === "error" && (
-              <Button variant="secondary" fullWidth onClick={retryAcceptance}>
-                Recheck current project and terms
-              </Button>
+            {canWithdraw && (
+              <div className={styles.dangerButton}>
+                <Button
+                  fullWidth
+                  disabled={isLocked}
+                  loading={isLocked && action.pendingAction === "withdraw"}
+                  loadingText="Withdrawing request…"
+                  onClick={() => actOnRequest("withdraw")}
+                >
+                  Withdraw / back out
+                </Button>
+              </div>
             )}
-            <AltLink to={`/role-requests/${requestId}`}>
-              Back to request
+            <AltLink to={`/projects/${encodeURIComponent(projectId)}`}>
+              Back to project
             </AltLink>
           </article>
           <article className={styles.privacyCard}>
@@ -622,6 +718,27 @@ function JoinRequestCommitment() {
       </div>
     </main>
   );
+}
+
+function requestErrorMessage(error, actionName) {
+  const serverMessage =
+    error?.message && error.message !== "Something went wrong"
+      ? error.message
+      : "";
+
+  if (error?.status === 404) {
+    return serverMessage || "We couldn't find this request or project.";
+  }
+  if (error?.status === 409) {
+    return (
+      serverMessage ||
+      (actionName === "confirm"
+        ? "This request is not approved yet, the role may be full, or you may already be a member."
+        : "This request can no longer be withdrawn in its current state.")
+    );
+  }
+
+  return serverMessage || "Something went wrong. Try again.";
 }
 
 function ReviewCommitment() {

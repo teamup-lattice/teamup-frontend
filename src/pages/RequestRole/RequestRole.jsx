@@ -179,7 +179,9 @@ function RequestRoleContent({ projectId }) {
             fullWidth
             onClick={() =>
               sentRequestId
-                ? navigate(`/role-requests/${sentRequestId}`)
+                ? navigate(
+                    `/invitations/${encodeURIComponent(sentRequestId)}/commitment?variant=request&project=${encodeURIComponent(projectId)}`,
+                  )
                 : navigate(projectDetailsPath)
             }
           >

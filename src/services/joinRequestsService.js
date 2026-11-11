@@ -158,22 +158,42 @@ export function sendJoinRequest({
   plannedTaskDeadlines,
 }) {
   const body = { roleId: String(roleId) };
-  const trimmedMessage = message?.trim();
-  const trimmedTaskDeadlines = plannedTaskDeadlines?.trim();
+  const trimmedMessage =
+    message == null
+      ? ""
+      : typeof message === "string"
+        ? message.trim()
+        : null;
+  const trimmedTaskDeadlines =
+    plannedTaskDeadlines == null
+      ? ""
+      : typeof plannedTaskDeadlines === "string"
+        ? plannedTaskDeadlines.trim()
+        : null;
 
-  if (trimmedMessage?.length > 1000) {
+  if (trimmedMessage === null) {
+    throw new Error("Message must be a string.");
+  }
+  if (trimmedMessage.length > 1000) {
     throw new Error("Message must be 1000 characters or fewer.");
   }
-  if (trimmedTaskDeadlines?.length > 2000) {
+  if (trimmedTaskDeadlines === null) {
+    throw new Error("Planned task deadlines must be a string.");
+  }
+  if (trimmedTaskDeadlines.length > 2000) {
     throw new Error("Planned task deadlines must be 2000 characters or fewer.");
+  }
+  if (
+    proposedHoursPerWeek != null &&
+    (!Number.isInteger(proposedHoursPerWeek) ||
+      proposedHoursPerWeek < 1 ||
+      proposedHoursPerWeek > 168)
+  ) {
+    throw new Error("Proposed hours per week must be an integer from 1 to 168.");
   }
 
   if (trimmedMessage) body.message = trimmedMessage;
-  if (
-    Number.isInteger(proposedHoursPerWeek) &&
-    proposedHoursPerWeek >= 1 &&
-    proposedHoursPerWeek <= 168
-  ) {
+  if (proposedHoursPerWeek != null) {
     body.proposedHoursPerWeek = proposedHoursPerWeek;
   }
   if (trimmedTaskDeadlines) body.plannedTaskDeadlines = trimmedTaskDeadlines;
@@ -182,6 +202,20 @@ export function sendJoinRequest({
     `/api/projects/${encodeURIComponent(projectId)}/join-requests`,
     body,
   );
+}
+
+export function getMyJoinRequests({
+  status,
+  page = 1,
+  limit = 20,
+} = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(Math.min(limit, 50)),
+  });
+  if (status) params.set("status", status);
+
+  return api.get(`/api/join-requests?${params.toString()}`);
 }
 
 export async function getJoinRequests(
@@ -221,8 +255,16 @@ export async function getJoinRequest(projectId, requestId) {
 }
 
 function decisionBody(decisionNote) {
-  const trimmedNote = decisionNote?.trim();
-  if (trimmedNote?.length > 500) {
+  const trimmedNote =
+    decisionNote == null
+      ? ""
+      : typeof decisionNote === "string"
+        ? decisionNote.trim()
+        : null;
+  if (trimmedNote === null) {
+    throw new Error("Decision note must be a string.");
+  }
+  if (trimmedNote.length > 500) {
     throw new Error("Decision note must be 500 characters or fewer.");
   }
   return trimmedNote ? { decisionNote: trimmedNote } : undefined;
@@ -238,6 +280,16 @@ export const declineJoinRequest = (projectId, requestId, decisionNote) =>
   api.post(
     `/api/projects/${encodeURIComponent(projectId)}/join-requests/${encodeURIComponent(requestId)}/decline`,
     decisionBody(decisionNote),
+  );
+
+export const withdrawJoinRequest = (requestId) =>
+  api.post(
+    `/api/join-requests/${encodeURIComponent(requestId)}/withdraw`,
+  );
+
+export const confirmJoinRequest = (requestId) =>
+  api.post(
+    `/api/join-requests/${encodeURIComponent(requestId)}/confirm`,
   );
 
 export function getJoinRequestStatusLabel(status) {
