@@ -6,7 +6,6 @@ import Select from "../../components/Select";
 import {
   projectUpdates,
   taskComments,
-  tasks,
 } from "../../data/workspaceData";
 import { getProjectMilestones } from "../../services/milestonesService";
 import {
@@ -14,9 +13,13 @@ import {
   getWorkspaceMembers,
   getWorkspaceProject,
 } from "../../services/workspaceMembersService";
+import { getAllProjectTasks } from "../../services/tasksService";
 import StatusTag from "./shared/StatusTag";
 import styles from "./ProjectWorkspace.module.css";
 import "./shared/workspaceVisuals.css";
+
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 
 const sectionOptions = [
   { value: "overview", label: "Overview" },
@@ -48,6 +51,7 @@ function ProjectWorkspace() {
   const [milestonesRetryCount, setMilestonesRetryCount] = useState(0);
   const [workspaceRetryCount, setWorkspaceRetryCount] = useState(0);
   const [membersRetryCount, setMembersRetryCount] = useState(0);
+  const [tasksRetryCount, setTasksRetryCount] = useState(0);
   const [workspaceState, setWorkspaceState] = useState({
     projectId: null,
     retryCount: 0,
@@ -63,10 +67,20 @@ function ProjectWorkspace() {
     error: "",
     data: [],
   });
+  const [tasksState, setTasksState] = useState({
+    projectId: null,
+    retryCount: 0,
+    loading: true,
+    error: "",
+    tasks: [],
+    summary: null,
+  });
   const isMilestonesRequestCurrent =
     milestonesState.projectId === projectId &&
     milestonesState.retryCount === milestonesRetryCount;
-  const milestones = isMilestonesRequestCurrent ? milestonesState.data : [];
+  const milestones = isMilestonesRequestCurrent
+    ? milestonesState.data
+    : EMPTY_ARRAY;
   const milestonesLoading =
     !isMilestonesRequestCurrent || milestonesState.loading;
   const milestonesError = isMilestonesRequestCurrent
@@ -87,17 +101,19 @@ function ProjectWorkspace() {
   const isMembersRequestCurrent =
     membersState.projectId === projectId &&
     membersState.retryCount === membersRetryCount;
-  const members = isMembersRequestCurrent ? membersState.data : [];
+  const members = isMembersRequestCurrent ? membersState.data : EMPTY_ARRAY;
   const membersLoading = !isMembersRequestCurrent || membersState.loading;
   const membersError = isMembersRequestCurrent ? membersState.error : "";
+  const projectMemberships = project?.memberships ?? EMPTY_ARRAY;
   const currentUserMembership = currentUserProfile
-    ? members.find(
+    ? [...members, ...projectMemberships].find(
         (member) => String(member.userId) === String(currentUserProfile.id),
       )
     : null;
   const currentUser = {
     ...(currentUserMembership ?? {}),
     id: currentUserProfile?.id ?? "",
+    projectMemberId: currentUserMembership?.id ?? "",
     name: currentUserMembership?.name ?? currentUserProfile?.name ?? "",
     role: currentUserMembership?.role ?? "",
     accessLevel: currentUserMembership?.accessLevel ?? "",
@@ -108,7 +124,26 @@ function ProjectWorkspace() {
       project?.ownerId != null &&
       String(project.ownerId) === String(currentUser.id));
   const canManageMembers =
-    isOwner || currentUser.accessLevel === "MANAGER";
+    isOwner ||
+    currentUser.accessLevel === "MANAGER" ||
+    projectMemberships.some(
+      (member) =>
+        String(member.userId) === String(currentUser.id) &&
+        member.accessLevel === "MANAGER",
+    );
+  const isTasksRequestCurrent =
+    tasksState.projectId === projectId &&
+    tasksState.retryCount === tasksRetryCount;
+  const tasks = isTasksRequestCurrent ? tasksState.tasks : EMPTY_ARRAY;
+  const taskSummary = isTasksRequestCurrent ? tasksState.summary : null;
+  const tasksLoading =
+    !workspaceError &&
+    (!isTasksRequestCurrent || tasksState.loading || workspaceLoading);
+  const tasksError = workspaceError
+    ? workspaceError
+    : isTasksRequestCurrent
+      ? tasksState.error
+      : "";
 
   useEffect(() => {
     let isCurrent = true;
@@ -211,6 +246,45 @@ function ProjectWorkspace() {
     };
   }, [projectId, milestonesRetryCount]);
 
+  useEffect(() => {
+    if (workspaceLoading || !project) return undefined;
+    let isCurrent = true;
+
+    getAllProjectTasks(
+      projectId,
+      {},
+      { memberships: project.memberships, milestones },
+    )
+      .then((result) => {
+        if (isCurrent) {
+          setTasksState({
+            projectId,
+            retryCount: tasksRetryCount,
+            loading: false,
+            error: "",
+            tasks: result.tasks,
+            summary: result.summary,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load workspace tasks:", error);
+        if (!isCurrent) return;
+        setTasksState({
+          projectId,
+          retryCount: tasksRetryCount,
+          loading: false,
+          error: error.message || "Something went wrong. Try again.",
+          tasks: [],
+          summary: null,
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [projectId, project, workspaceLoading, tasksRetryCount, milestones]);
+
   const retryMilestones = () => {
     setMilestonesRetryCount((count) => count + 1);
   };
@@ -218,6 +292,48 @@ function ProjectWorkspace() {
   const retryWorkspace = () => {
     setWorkspaceRetryCount((count) => count + 1);
     setMembersRetryCount((count) => count + 1);
+  };
+
+  const retryTasks = () => {
+    setTasksRetryCount((count) => count + 1);
+  };
+
+  const refreshTasks = async () => {
+    if (!project) {
+      throw new Error("Project details must load before refreshing tasks.");
+    }
+    setTasksState((current) => ({
+      ...current,
+      projectId,
+      retryCount: tasksRetryCount,
+      loading: true,
+      error: "",
+    }));
+    try {
+      const result = await getAllProjectTasks(
+        projectId,
+        {},
+        { memberships: project.memberships, milestones },
+      );
+      setTasksState({
+        projectId,
+        retryCount: tasksRetryCount,
+        loading: false,
+        error: "",
+        tasks: result.tasks,
+        summary: result.summary,
+      });
+      return result;
+    } catch (error) {
+      setTasksState((current) => ({
+        ...current,
+        projectId,
+        retryCount: tasksRetryCount,
+        loading: false,
+        error: error.message || "Something went wrong. Try again.",
+      }));
+      throw error;
+    }
   };
 
   const refreshMembers = async () => {
@@ -279,10 +395,15 @@ function ProjectWorkspace() {
                   ? "completion"
                   : "overview";
   const workspaceContext = {
-    project: project ?? {},
+    project: project ?? EMPTY_OBJECT,
     members,
     milestones,
     tasks,
+    tasksLoading,
+    tasksError,
+    retryTasks,
+    taskSummary,
+    refreshTasks,
     comments: taskComments,
     updates: projectUpdates,
     currentUser,

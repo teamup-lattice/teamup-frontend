@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
+import { createProjectTask, getTaskApiStatus } from "../../../../services/tasksService";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import styles from "./CreateTask.module.css";
 
 const defaultForm = {
   title: "Check responsive layouts",
-  owner: "",
+  assigneeMemberId: "",
   dueDate: "2026-11-16",
-  milestone: "M2",
+  milestoneId: "",
   status: "To do",
   description: "Review phone and tablet layouts before the next prototype review.",
 };
@@ -20,60 +22,66 @@ const defaultForm = {
 function CreateTask() {
   const { projectId } = useParams();
   const {
-    isOwner,
-    members,
+    canManageMembers,
+    project,
+    milestones,
+    milestonesLoading,
+    milestonesError,
+    retryMilestones,
+    refreshTasks,
     workspaceLoading,
     workspaceError,
-    membersLoading,
-    membersError,
     retryWorkspace,
   } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
-  const previewState = searchParams.get("state");
-  const asParam = searchParams.get("as");
+  const asParam = new URLSearchParams(location.search).get("as");
 
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const workspacePath = `/projects/${projectId}/workspace`;
   const tasksPath = `${workspacePath}/tasks`;
   const taskRoute = `${tasksPath}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
 
-  const ownerOptions = members.map((member) => ({
-    value: member.name,
-    label: `${member.name} · ${member.role}`,
+  const assigneeOptions = (project.memberships ?? [])
+    .filter((member) => !member.status || member.status === "ACTIVE")
+    .map((member) => ({
+    value: String(member.id),
+    label: `${member.name || "Project member"}${member.role ? ` · ${member.role}` : ""}`,
   }));
 
   const handleFieldChange = (field, value) => {
     setForm((previous) => ({ ...previous, [field]: value }));
     setErrors((previous) => ({ ...previous, [field]: undefined }));
+    setSubmitError("");
   };
 
   const resetDraft = () => {
     setForm(defaultForm);
     setErrors({});
-    setSavedSuccess(false);
     navigate(taskRoute);
   };
 
-  const submitTask = (event) => {
+  const submitTask = async (event) => {
     event.preventDefault();
     const nextErrors = {};
 
     if (!form.title.trim()) {
       nextErrors.title = "Enter a task title.";
+    } else if (form.title.trim().length > 200) {
+      nextErrors.title = "Task titles must be 200 characters or fewer.";
     }
-    if (!form.owner.trim()) {
-      nextErrors.owner = "Choose one accepted member.";
+    if (!assigneeOptions.some((member) => member.value === form.assigneeMemberId)) {
+      nextErrors.assigneeMemberId = "Choose an active project member.";
     }
     if (!form.dueDate.trim()) {
       nextErrors.dueDate = "Enter a due date.";
     }
-    if (!form.milestone.trim()) {
-      nextErrors.milestone = "Choose a milestone.";
+    if (!form.milestoneId || !milestones.some((milestone) => String(milestone.id) === form.milestoneId)) {
+      nextErrors.milestoneId = "Choose a project milestone.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -82,120 +90,66 @@ function CreateTask() {
     }
 
     setErrors({});
-    setSavedSuccess(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+    const body = {
+      title: form.title.trim(),
+      assigneeMemberId: form.assigneeMemberId,
+      dueDate: new Date(`${form.dueDate}T00:00:00.000Z`).toISOString(),
+      milestoneId: form.milestoneId,
+      status: getTaskApiStatus(form.status),
+    };
+    const description = form.description.trim();
+    if (description) body.description = description;
+
+    try {
+      await createProjectTask(projectId, body);
+      try {
+        await refreshTasks();
+      } catch {
+        // The task list retries its own load when it mounts.
+      }
+      navigate(taskRoute);
+    } catch (error) {
+      setSubmitError(error.message || "Task could not be created.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (workspaceLoading || membersLoading) {
+  if (workspaceLoading || milestonesLoading) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Create task</h2>
-        <p role="status">Loading project members…</p>
+        <p role="status">Loading project details…</p>
         <Skeleton />
       </section>
     );
   }
 
-  if (workspaceError || membersError) {
+  if (workspaceError || milestonesError) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Create task</h2>
         <StateNotice
           variant="error"
-          title="Couldn't load project members"
-          text={workspaceError || membersError}
+          title="Couldn't load task options"
+          text={workspaceError || milestonesError}
           buttonLabel="Retry"
-          onButtonClick={retryWorkspace}
+          onButtonClick={workspaceError ? retryWorkspace : retryMilestones}
         />
       </section>
     );
   }
 
-  if (!isOwner) {
+  if (!canManageMembers) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Create task</h2>
         <StateNotice
           variant="info"
-          title="Members cannot create tasks. Pending invitations do not appear as task owners."
+          title="Only an owner or manager can create tasks."
           buttonLabel="View tasks"
-          onButtonClick={() => navigate(taskRoute)}
-        />
-      </section>
-    );
-  }
-
-  if (previewState === "blank") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Create task</h2>
-        <StateNotice
-          variant="info"
-          title="Start a task"
-          text="Required: title, accepted owner, due date and milestone. Default status: To do. Description optional."
-          buttonLabel="Enter task details"
-          onButtonClick={() => navigate(`${tasksPath}/new${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`)}
-        />
-      </section>
-    );
-  }
-
-  if (previewState === "creating") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Create task</h2>
-        <StateNotice
-          variant="info"
-          title="Creating task…"
-          text="Creating task. Draft retained; controls locked. Six saved tasks until confirmed."
-        />
-        <div className={styles.skeletonGroup}>
-          <Skeleton />
-          <Skeleton />
-          <Skeleton />
-        </div>
-      </section>
-    );
-  }
-
-  if (previewState === "error") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Create task</h2>
-        <StateNotice
-          variant="error"
-          title="Task was not created"
-          text="Task not created. Draft and selections retained; six saved tasks unchanged. Retry."
-          buttonLabel="Retry create"
-          onButtonClick={() => navigate(`${tasksPath}/new${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`)}
-        />
-      </section>
-    );
-  }
-
-  if (previewState === "success") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Create task</h2>
-        <StateNotice
-          variant="success"
-          title="Task created"
-          text="Check responsive layouts · David · 16 Nov · M2 · To do. Now 7 total, 2 Done, 5 not Done; M2 is 0/4."
-          buttonLabel="View task"
-          onButtonClick={() => navigate(`${tasksPath}/task-7${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`)}
-        />
-      </section>
-    );
-  }
-
-  if (savedSuccess) {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Create task</h2>
-        <StateNotice
-          variant="success"
-          title="Task created"
-          text="Local draft has been created successfully and is ready for review."
-          buttonLabel="View task"
           onButtonClick={() => navigate(taskRoute)}
         />
       </section>
@@ -207,10 +161,17 @@ function CreateTask() {
       <h2 className={styles.pageTitle}>Create task</h2>
       <p className={styles.helperText}>Choose one active member. Required fields are marked *.</p>
 
+      {submitError && (
+        <Alert variant="error" title="Task could not be created">
+          {submitError}
+        </Alert>
+      )}
+
       <form className={styles.formCard} onSubmit={submitTask}>
         <Input
           label="Task title"
           required
+          maxLength={200}
           value={form.title}
           placeholder={errors.title ? "Not entered" : "Task title"}
           onChange={(event) => handleFieldChange("title", event.target.value)}
@@ -220,11 +181,13 @@ function CreateTask() {
         <Select
           label="Task owner"
           required
-          value={form.owner}
-          options={ownerOptions}
-          placeholder={errors.owner ? "Not selected" : "Select a task owner"}
-          onChange={(event) => handleFieldChange("owner", event.target.value)}
-          error={errors.owner}
+          value={form.assigneeMemberId}
+          options={assigneeOptions}
+          placeholder={
+            errors.assigneeMemberId ? "Not selected" : "Select a task owner"
+          }
+          onChange={(event) => handleFieldChange("assigneeMemberId", event.target.value)}
+          error={errors.assigneeMemberId}
         />
 
         <Input
@@ -240,15 +203,14 @@ function CreateTask() {
         <Select
           label="Milestone"
           required
-          value={form.milestone}
-          options={[
-            { value: "M1", label: "M1 Requirements" },
-            { value: "M2", label: "M2 Working prototype" },
-            { value: "M3", label: "M3 Final demo" },
-          ]}
-          placeholder={errors.milestone ? "Not selected" : "Select a milestone"}
-          onChange={(event) => handleFieldChange("milestone", event.target.value)}
-          error={errors.milestone}
+          value={form.milestoneId}
+          options={milestones.map((milestone) => ({
+            value: String(milestone.id),
+            label: milestone.name,
+          }))}
+          placeholder={errors.milestoneId ? "Not selected" : "Select a milestone"}
+          onChange={(event) => handleFieldChange("milestoneId", event.target.value)}
+          error={errors.milestoneId}
         />
 
         <Select
@@ -272,12 +234,14 @@ function CreateTask() {
           onChange={(event) => handleFieldChange("description", event.target.value)}
         />
 
-        <p className={styles.draftHelper}>Local draft · Not saved. The project still has 6 tasks.</p>
-        <Button type="submit" fullWidth>Create task</Button>
+        <p className={styles.draftHelper}>Task details will be saved to the project.</p>
+        <Button type="submit" fullWidth loading={isSubmitting} loadingText="Creating task…">
+          Create task
+        </Button>
         <button type="button" className={styles.cancelLink} onClick={resetDraft}>
           Cancel local draft
         </button>
-        <p className={styles.footerText}>No task created. Title and description stay in the local draft.</p>
+        <p className={styles.footerText}>Cancel leaves the task list unchanged.</p>
       </form>
     </section>
   );

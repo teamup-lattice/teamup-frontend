@@ -86,6 +86,31 @@ export async function getWorkspaceProject(projectId) {
       typeof project.targetEndDate === "string" ? project.targetEndDate : "",
     durationWeeks:
       typeof project.durationWeeks === "number" ? project.durationWeeks : null,
+    memberships: (Array.isArray(project.memberships) ? project.memberships : [])
+      .filter(
+        (membership) =>
+          membership &&
+          (typeof membership.id === "string" ||
+            typeof membership.id === "number"),
+      )
+      .map((membership) => ({
+        id: membership.id,
+        userId: membership.userId ?? "",
+        name:
+          typeof membership.user?.name === "string"
+            ? membership.user.name
+            : "",
+        role:
+          typeof membership.role?.title === "string"
+            ? membership.role.title
+            : "",
+        accessLevel:
+          typeof membership.accessRole === "string"
+            ? membership.accessRole
+            : "",
+        status:
+          typeof membership.status === "string" ? membership.status : "",
+      })),
   };
 }
 

@@ -22,6 +22,9 @@ function Milestones() {
     project,
     milestones,
     tasks,
+    tasksLoading,
+    tasksError,
+    retryTasks,
     isOwner,
     setMilestones,
     milestonesLoading,
@@ -120,7 +123,13 @@ function Milestones() {
         ),
       );
       setSavedNote(
-        `${updatedName} milestone saved. Task due dates unchanged; ${doneFor(current)}/${tasksFor(current).length} Done.`,
+        `${updatedName} milestone saved. Task due dates unchanged; ${
+          tasksLoading
+            ? "task counts are loading."
+            : tasksError
+              ? "task counts are unavailable."
+              : `${doneFor(current)}/${tasksFor(current).length} Done.`
+        }`,
       );
       setEditingId(null);
       setStatus("saved");
@@ -254,13 +263,27 @@ function Milestones() {
                 {milestone.name}
               </h3>
               <p className={styles.progress}>
-                {done} / {linked.length} Done
+                {tasksLoading
+                  ? "Loading task counts…"
+                  : tasksError
+                    ? "Task counts unavailable"
+                    : `${done} / ${linked.length} Done`}
               </p>
               <p className={shared.small}>
                 Target: {milestone.targetDate ? formatDate(milestone.targetDate) : "Not set"}
               </p>
+              {tasksError && (
+                <Alert variant="error" title="Couldn't load linked tasks">
+                  {tasksError}
+                </Alert>
+              )}
+              {tasksError && (
+                <Button variant="secondary" onClick={retryTasks}>
+                  Retry task counts
+                </Button>
+              )}
               <ul className={shared.list}>
-                {linked.map((task) => (
+                {!tasksLoading && !tasksError && linked.map((task) => (
                   <li key={task.id} className={shared.text}>
                     {task.title}
                     {isOwner ? `${SEP}${task.assignee}` : ""}

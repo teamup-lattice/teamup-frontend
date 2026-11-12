@@ -1,85 +1,176 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import EmptyState from "../../../../components/EmptyState";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
-import { statuses, tasks as projectTasks } from "../../../../data/workspaceData";
+import {
+  getAllProjectTasks,
+  taskStatusOptions,
+} from "../../../../services/tasksService";
 import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
 import StatusTag from "../../shared/StatusTag";
 import styles from "./Tasks.module.css";
 
-const TODAY = "2026-11-12";
-
-function getDaysOverdue(task) {
-  if (!task.dueDate || task.status === "Done") {
-    return 0;
-  }
-
-  const dueDate = new Date(`${task.dueDate}T00:00:00Z`);
-  const today = new Date(`${TODAY}T00:00:00Z`);
-  return Math.max(0, Math.floor((today - dueDate) / 86400000));
-}
-
 function Tasks() {
   const { projectId } = useParams();
   const {
     currentUser,
-    isOwner,
-    members,
-    membersError,
+    canManageMembers,
+    project,
+    milestones,
+    tasks: allProjectTasks,
+    workspaceLoading,
+    workspaceError,
     retryWorkspace,
   } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
-  const previewState = searchParams.get("state");
   const asParam = searchParams.get("as");
-
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [milestoneFilter, setMilestoneFilter] = useState("all");
+  const statusFilter = searchParams.get("status") || "all";
+  const milestoneFilter = searchParams.get("milestoneId") || "all";
+  const assigneeFilter = searchParams.get("assigneeMemberId") || "all";
+  const selectedView = searchParams.get("my") === "true" ? "my" : "all";
+  const [retryCount, setRetryCount] = useState(0);
+  const [taskResult, setTaskResult] = useState({
+    projectId: null,
+    search: "",
+    retryCount: 0,
+    loading: true,
+    error: "",
+    data: null,
+  });
+  const isCurrentResult =
+    taskResult.projectId === projectId &&
+    taskResult.search === location.search &&
+    taskResult.retryCount === retryCount;
+  const isLoading = workspaceLoading || !isCurrentResult || taskResult.loading;
+  const loadError = isCurrentResult ? taskResult.error : "";
+  const result = isCurrentResult ? taskResult.data : null;
+  const taskList = result?.tasks ?? [];
+  const summary = result?.summary;
+  const doneCount = summary?.done ?? 0;
+  const totalCount = summary?.total ?? 0;
+  const overdueCount = summary?.overdue ?? 0;
+  const mineCount = allProjectTasks.filter(
+    (task) =>
+      String(task.assigneeMemberId) === String(currentUser.projectMemberId),
+  ).length;
 
   const workspacePath = `/projects/${projectId}/workspace`;
   const taskPath = `${workspacePath}/tasks`;
-  const taskList = projectTasks.map((task) => ({ ...task, overdueDays: getDaysOverdue(task) }));
-  const doneCount = taskList.filter((task) => task.status === "Done").length;
-  const overdueTasks = taskList.filter((task) => task.overdueDays > 0);
-  const myTaskCount = taskList.filter((task) => task.assignee === currentUser.name).length;
-
-  const filteredTasks = taskList.filter((task) => {
-    const assigneeMatch = assigneeFilter === "all" || task.assignee === assigneeFilter;
-    const statusMatch = statusFilter === "all" || task.status === statusFilter;
-    const milestoneMatch = milestoneFilter === "all" || task.milestoneId === milestoneFilter;
-    return assigneeMatch && statusMatch && milestoneMatch;
-  });
-
-  const resetFilters = () => {
-    setAssigneeFilter("all");
-    setStatusFilter("all");
-    setMilestoneFilter("all");
-    if (previewState === "filtered") {
-      searchParams.delete("state");
-      navigate(
-        `${location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
-        { replace: true },
-      );
-    }
-  };
-
   const createTaskRoute = `${taskPath}/new${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
   const buildTaskLink = (taskId) => `${taskPath}/${taskId}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
-  const selectedView = searchParams.get("my") === "true" ? "my" : "all";
-  const viewTasks = selectedView === "my"
-    ? filteredTasks.filter((task) => task.assignee === currentUser.name)
-    : filteredTasks;
 
-  if (previewState === "loading") {
+  useEffect(() => {
+    if (workspaceLoading || workspaceError) return undefined;
+    let isCurrent = true;
+    const filters = {
+      status: statusFilter !== "all" ? statusFilter : undefined,
+      milestoneId: milestoneFilter !== "all" ? milestoneFilter : undefined,
+      assigneeMemberId:
+        assigneeFilter !== "all" ? assigneeFilter : undefined,
+      mine: selectedView === "my",
+    };
+
+    getAllProjectTasks(
+      projectId,
+      filters,
+      {
+        memberships: project.memberships ?? [],
+        milestones,
+      },
+    )
+      .then((data) => {
+        if (isCurrent) {
+          setTaskResult({
+            projectId,
+            search: location.search,
+            retryCount,
+            loading: false,
+            error: "",
+            data,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load project tasks:", error);
+        if (!isCurrent) return;
+        const errorMessage =
+          error.status === 404 && /^Cannot GET\s+/i.test(error.message)
+            ? `The task endpoint is not deployed: ${error.message}`
+            : error.message || "Something went wrong. Try again.";
+        setTaskResult({
+          projectId,
+          search: location.search,
+          retryCount,
+          loading: false,
+          error: errorMessage,
+          data: null,
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [
+    projectId,
+    location.search,
+    retryCount,
+    workspaceLoading,
+    workspaceError,
+    project.memberships,
+    milestones,
+    statusFilter,
+    milestoneFilter,
+    assigneeFilter,
+    selectedView,
+  ]);
+
+  const setFilter = (name, value) => {
+    const params = new URLSearchParams(location.search);
+    if (value === "all" || !value) params.delete(name);
+    else params.set(name, value);
+    params.delete("state");
+    navigate(`${location.pathname}${params.toString() ? `?${params}` : ""}`);
+  };
+
+  const resetFilters = () => {
+    const params = new URLSearchParams(location.search);
+    params.delete("status");
+    params.delete("assigneeMemberId");
+    params.delete("milestoneId");
+    params.delete("my");
+    params.delete("state");
+    navigate(`${location.pathname}${params.toString() ? `?${params}` : ""}`);
+  };
+
+  if (workspaceError) {
+    return (
+      <section className={styles.page}>
+        <h2 className={styles.pageTitle}>Tasks</h2>
+        <Alert variant="error" title="Couldn't load project details">
+          {workspaceError}
+        </Alert>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={retryWorkspace}
+        >
+          Retry
+        </Button>
+      </section>
+    );
+  }
+
+  if (isLoading) {
     return (
       <section className={styles.page} aria-live="polite">
         <h2 className={styles.pageTitle}>Tasks</h2>
+        <p role="status">Loading tasks…</p>
         <div className={styles.loadingList}>
           <Skeleton />
           <Skeleton />
@@ -89,46 +180,56 @@ function Tasks() {
     );
   }
 
-  if (previewState === "error") {
+  if (loadError) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Tasks</h2>
-        <Alert variant="error" title="Tasks could not refresh">
-          Refresh failed. Showing last saved list: 6 tasks, 2 Done. Filters retained.
+        <Alert variant="error" title="Couldn't load tasks">
+          {loadError}
         </Alert>
         <Button
           variant="secondary"
           fullWidth
-          onClick={() => navigate(`${taskPath}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`)}
+          onClick={() => setRetryCount((count) => count + 1)}
         >
-          Retry refresh
+          Retry
         </Button>
       </section>
     );
   }
 
-  if (previewState === "empty") {
+  if (
+    taskList.length === 0 &&
+    statusFilter === "all" &&
+    assigneeFilter === "all" &&
+    milestoneFilter === "all" &&
+    selectedView === "all"
+  ) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Tasks</h2>
         <EmptyState
           title="No tasks yet."
-          text="No tasks yet. Owner can create one; members can post an update."
+          text="No tasks yet. Owners and managers can create one; members can post an update."
         >
-          {isOwner && <Button onClick={() => navigate(createTaskRoute)}>Create task</Button>}
+          {canManageMembers && <Button onClick={() => navigate(createTaskRoute)}>Create task</Button>}
         </EmptyState>
       </section>
     );
   }
 
-  if ((viewTasks.length === 0 && (statusFilter !== "all" || assigneeFilter !== "all" || milestoneFilter !== "all")) || previewState === "filtered") {
-    const emptyTitle = statusFilter === "all" ? "No matching tasks" : `No tasks in ${statusFilter.toLowerCase()} yet`;
+  if (taskList.length === 0) {
+    const statusLabel =
+      taskStatusOptions.find((option) => option.value === statusFilter)?.label;
+    const emptyTitle = statusLabel
+      ? `No tasks in ${statusLabel.toLowerCase()} yet`
+      : "No matching tasks";
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Tasks</h2>
         <EmptyState
           title={emptyTitle}
-          text="No matching tasks. Six saved tasks retained. Reset filters to see all."
+          text="No matching tasks. Reset filters to see all."
         >
           <Button onClick={resetFilters}>Clear filter</Button>
         </EmptyState>
@@ -146,6 +247,8 @@ function Tasks() {
       {label}
     </button>
   );
+  const taskOverdue = taskList.filter((task) => task.overdueDays > 0);
+  const displayDate = (date) => (date ? formatDate(date) : "Not set");
 
   return (
     <section className={styles.page}>
@@ -153,78 +256,72 @@ function Tasks() {
 
       <div className={styles.summaryRow}>
         <span>Overall tasks</span>
-        <span>{doneCount} of {taskList.length} Done</span>
+        <span>{doneCount} of {totalCount} Done</span>
       </div>
       <div className={styles.progressTrack} aria-label="Completion progress">
-        <span style={{ width: `${(doneCount / taskList.length) * 100}%` }} />
+        <span style={{ width: `${(doneCount / (totalCount || 1)) * 100}%` }} />
       </div>
       <p className={styles.summaryText}>
-        {taskList.length} tasks · {doneCount} Done · {taskList.length - doneCount} not Done · {overdueTasks.length} overdue
+        {totalCount} tasks · {doneCount} Done · {summary.notDone} not Done · {overdueCount} overdue
       </p>
 
       <div className={styles.toggleRow}>
-        {toggleButton(selectedView === "all", `All tasks · ${taskList.length}`, () => {
-          searchParams.delete("my");
-          navigate(`${location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`);
-        })}
-        {toggleButton(selectedView === "my", `My tasks · ${myTaskCount}`, () => {
-          searchParams.set("my", "true");
-          navigate(`${location.pathname}?${searchParams.toString()}`);
-        })}
+        {toggleButton(
+          selectedView === "all",
+          `All tasks · ${totalCount}`,
+          () => setFilter("my", ""),
+        )}
+        {toggleButton(
+          selectedView === "my",
+          `My tasks · ${selectedView === "my" ? totalCount : mineCount}`,
+          () => setFilter("my", "true"),
+        )}
       </div>
 
       <div className={styles.filterRow}>
-        {membersError && (
-          <Alert variant="error" title="Couldn't load project members">
-            {membersError}
-            <Button variant="secondary" onClick={retryWorkspace}>
-              Retry
-            </Button>
-          </Alert>
-        )}
         <Select
           label="Assignee"
           options={[
             { value: "all", label: "All members" },
-            ...members.map((member) => ({ value: member.name, label: member.name })),
+            ...(project.memberships ?? []).map((member) => ({
+              value: String(member.id),
+              label: member.name || member.role || "Project member",
+            })),
           ]}
           value={assigneeFilter}
-          onChange={(event) => setAssigneeFilter(event.target.value)}
+          onChange={(event) =>
+            setFilter("assigneeMemberId", event.target.value)
+          }
         />
         <Select
           label="Status"
           options={[
             { value: "all", label: "All statuses" },
-            ...statuses.map((status) => ({ value: status, label: status })),
+            ...taskStatusOptions,
           ]}
           value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
+          onChange={(event) => setFilter("status", event.target.value)}
         />
         <Select
           label="Milestone"
           options={[
             { value: "all", label: "All milestones" },
-            { value: "M1", label: "M1 Requirements" },
-            { value: "M2", label: "M2 Working prototype" },
-            { value: "M3", label: "M3 Final demo" },
+            ...milestones.map((milestone) => ({
+              value: String(milestone.id),
+              label: milestone.name,
+            })),
           ]}
           value={milestoneFilter}
-          onChange={(event) => setMilestoneFilter(event.target.value)}
+          onChange={(event) => setFilter("milestoneId", event.target.value)}
         />
       </div>
 
-      {isOwner && (
+      {canManageMembers && (
         <div className={styles.primaryAction}>
           <Button variant="secondary" fullWidth onClick={() => navigate(createTaskRoute)}>
             Create task
           </Button>
         </div>
-      )}
-
-      {previewState === "refreshed" && (
-        <Alert variant="success" title="Tasks refreshed">
-          Six saved tasks loaded. Design onboarding is Blocked and overdue 2 days; 2 of 6 are Done.
-        </Alert>
       )}
 
       <div className={styles.desktopTableWrap}>
@@ -240,18 +337,10 @@ function Tasks() {
             </tr>
           </thead>
           <tbody>
-            {viewTasks.map((task) => {
-              const milestone = task.milestoneId
-                ? {
-                    id: task.milestoneId,
-                    name:
-                      task.milestoneId === "M2"
-                        ? "Working prototype"
-                        : task.milestoneId === "M1"
-                          ? "Requirements"
-                          : "Final demo",
-                  }
-                : null;
+            {taskList.map((task) => {
+              const milestone = milestones.find(
+                (item) => String(item.id) === String(task.milestoneId),
+              );
 
               return (
                 <tr key={task.id}>
@@ -263,7 +352,7 @@ function Tasks() {
                   <td>{task.assignee}</td>
                   <td>
                     <div className={styles.dueCell}>
-                      <span>{formatDate(task.dueDate)}</span>
+                      <span>{displayDate(task.dueDate)}</span>
                       {task.overdueDays > 0 && (
                       <span className={styles.overdueText}>
                         Overdue {task.overdueDays} {task.overdueDays === 1 ? "day" : "days"}
@@ -271,7 +360,7 @@ function Tasks() {
                       )}
                     </div>
                   </td>
-                  <td>{milestone ? `${milestone.id} ${milestone.name}` : "—"}</td>
+                  <td>{milestone?.name || task.milestoneName || "—"}</td>
                   <td>
                     <StatusTag status={task.status} />
                   </td>
@@ -284,18 +373,10 @@ function Tasks() {
       </div>
 
       <div className={styles.mobileGrid}>
-        {viewTasks.map((task) => {
-          const milestone = task.milestoneId
-            ? {
-                id: task.milestoneId,
-                name:
-                  task.milestoneId === "M2"
-                    ? "Working prototype"
-                    : task.milestoneId === "M1"
-                      ? "Requirements"
-                      : "Final demo",
-              }
-            : null;
+        {taskList.map((task) => {
+          const milestone = milestones.find(
+            (item) => String(item.id) === String(task.milestoneId),
+          );
 
           return (
             <div className={styles.mobileCard} key={task.id}>
@@ -308,7 +389,7 @@ function Tasks() {
               </Link>
               <p className={styles.mobileMeta}>Owner: {task.assignee}</p>
               <p className={styles.mobileMeta}>
-                Due: {formatDate(task.dueDate)} · Milestone: {milestone ? `${milestone.id} ${milestone.name}` : "—"}
+                Due: {displayDate(task.dueDate)} · Milestone: {milestone?.name || task.milestoneName || "—"}
               </p>
               <p className={styles.mobileNote}>{task.blockerNote || task.note}</p>
               <Link className={styles.openLink} to={buildTaskLink(task.id)}>
@@ -320,7 +401,7 @@ function Tasks() {
       </div>
 
       <p className={styles.footerNote}>
-        Overdue: {overdueTasks.length > 0 ? `${overdueTasks[0].title} only.` : "None."}
+        Overdue: {taskOverdue.length > 0 ? `${taskOverdue[0].title} only.` : "None."}
       </p>
     </section>
   );

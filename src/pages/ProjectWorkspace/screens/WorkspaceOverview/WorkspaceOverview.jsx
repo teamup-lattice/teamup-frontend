@@ -46,9 +46,14 @@ function WorkspaceOverview() {
     updates,
     currentUser,
     isOwner,
+    canManageMembers,
     workspaceLoading,
     workspaceError,
     retryWorkspace,
+    tasksLoading,
+    tasksError,
+    retryTasks,
+    taskSummary,
     milestonesLoading,
     milestonesError,
     retryMilestones,
@@ -59,10 +64,10 @@ function WorkspaceOverview() {
   const workspacePath = `/projects/${projectId}/workspace`;
   const workspaceHref = (path) =>
     `${workspacePath}${path}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
-  const completedTasks = tasks.filter((task) => task.status === "Done").length;
-  const totalTasks = tasks.length;
-  const overdueTasks = tasks.filter((task) => getDaysOverdue(task) > 0);
-  const remainingTasks = totalTasks - completedTasks;
+  const completedTasks = taskSummary?.done ?? 0;
+  const totalTasks = taskSummary?.total ?? tasks.length;
+  const overdueTasks = taskSummary?.overdue ?? tasks.filter((task) => getDaysOverdue(task) > 0).length;
+  const remainingTasks = taskSummary?.notDone ?? totalTasks - completedTasks;
   const attentionTasks = tasks.filter(
     (task) => task.status === "Blocked" || getDaysOverdue(task) > 0,
   );
@@ -158,7 +163,7 @@ function WorkspaceOverview() {
           title="No tasks yet."
           text="Ada can create one; members can request work in Updates."
         >
-          {isOwner && (
+          {canManageMembers && (
             <Button onClick={() => navigateTo("/tasks/new")}>
               Create task
             </Button>
@@ -206,7 +211,7 @@ function WorkspaceOverview() {
               </p>
             )}
           </article>
-          {isOwner && (
+          {canManageMembers && (
             <Button
               variant="secondary"
               fullWidth
@@ -258,19 +263,36 @@ function WorkspaceOverview() {
               <div className={styles.progressHeading}>
                 <span>Overall tasks</span>
                 <span>
-                  {completedTasks} of {totalTasks} Done
+                  {tasksLoading
+                    ? "Loading task counts…"
+                    : tasksError
+                      ? "Task counts unavailable"
+                      : `${completedTasks} of ${totalTasks} Done`}
                 </span>
               </div>
               <progress
                 className={styles.progressBar}
-                value={completedTasks}
+                value={tasksLoading || tasksError ? 0 : completedTasks}
                 max={totalTasks || 1}
                 aria-label={`${completedTasks} of ${totalTasks} tasks done`}
               />
               <p className={styles.summaryMeta}>
-                {remainingTasks} tasks not Done · {overdueTasks.length} task
-                {overdueTasks.length === 1 ? "" : "s"} overdue
+                {tasksLoading
+                  ? "Loading task counts…"
+                  : tasksError
+                    ? "Task counts unavailable"
+                    : `${remainingTasks} tasks not Done · ${overdueTasks} task${overdueTasks === 1 ? "" : "s"} overdue`}
               </p>
+              {tasksError && (
+                <>
+                  <Alert variant="error" title="Couldn't load project tasks">
+                    {tasksError}
+                  </Alert>
+                  <Button variant="secondary" onClick={retryTasks}>
+                    Retry task counts
+                  </Button>
+                </>
+              )}
               <div className={styles.memberRows} aria-label="Project members">
                 {membersLoading ? (
                   <p role="status">Loading members…</p>
@@ -357,7 +379,11 @@ function WorkspaceOverview() {
                         ? formatDate(milestone.targetDate)
                         : "Not set"}{" "}
                       ·{" "}
-                      {milestone.completedTasks} / {milestone.totalTasks} Done
+                      {tasksLoading
+                        ? "Loading task counts…"
+                        : tasksError
+                          ? "Task counts unavailable"
+                          : `${milestone.completedTasks} / ${milestone.totalTasks} Done`}
                     </p>
                   </li>
                 ))}
