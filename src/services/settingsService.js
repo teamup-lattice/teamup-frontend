@@ -53,3 +53,8 @@ export async function uploadAvatar(file) {
   window.dispatchEvent(new Event("profile:changed"));
   return fileUrl;
 }
+
+export async function removeAvatar() {
+  await api.patch("/api/profile/users/me", { avatarUrl: null });
+  window.dispatchEvent(new Event("profile:changed"));
+}
