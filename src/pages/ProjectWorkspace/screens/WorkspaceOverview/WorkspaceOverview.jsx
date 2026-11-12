@@ -36,8 +36,18 @@ function WorkspaceOverview() {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { project, members, milestones, tasks, updates, currentUser, isOwner } =
-    useWorkspace();
+  const {
+    project,
+    members,
+    milestones,
+    tasks,
+    updates,
+    currentUser,
+    isOwner,
+    milestonesLoading,
+    milestonesError,
+    retryMilestones,
+  } = useWorkspace();
   const searchParams = new URLSearchParams(location.search);
   const previewState = searchParams.get("state");
   const asParam = searchParams.get("as");
@@ -269,19 +279,41 @@ function WorkspaceOverview() {
             <h2 className={`${styles.cardTitle} ${styles.dividedTitle}`}>
               Milestones
             </h2>
-            <ul className={styles.milestoneList}>
-              {milestoneProgress.map((milestone) => (
-                <li className={styles.milestone} key={milestone.id}>
-                  <h3 className={styles.taskTitle}>
-                    {milestone.id} {milestone.name}
-                  </h3>
-                  <p className={styles.taskMeta}>
-                    Target {formatDate(milestone.targetDate)} ·{" "}
-                    {milestone.completedTasks} / {milestone.totalTasks} Done
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {milestonesLoading ? (
+              <p role="status">Loading milestones…</p>
+            ) : milestonesError ? (
+              <>
+                <Alert variant="error" title="Couldn't load milestones">
+                  {milestonesError}
+                </Alert>
+                <Button variant="secondary" onClick={retryMilestones}>
+                  Retry
+                </Button>
+              </>
+            ) : milestones.length === 0 ? (
+              <EmptyState
+                title="No milestones yet"
+                text="No milestones have been added to this project."
+              />
+            ) : (
+              <ul className={styles.milestoneList}>
+                {milestoneProgress.map((milestone) => (
+                  <li className={styles.milestone} key={milestone.id}>
+                    <h3 className={styles.taskTitle}>
+                      {milestone.name}
+                    </h3>
+                    <p className={styles.taskMeta}>
+                      Target{" "}
+                      {milestone.targetDate
+                        ? formatDate(milestone.targetDate)
+                        : "Not set"}{" "}
+                      ·{" "}
+                      {milestone.completedTasks} / {milestone.totalTasks} Done
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
             <a
               className={styles.textLink}
               href={workspaceHref("/milestones")}
