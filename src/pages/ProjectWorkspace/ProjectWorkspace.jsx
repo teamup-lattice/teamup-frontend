@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import Select from "../../components/Select";
 import {
   members,
-  milestones,
   projectUpdates,
   taskComments,
   tasks,
   workspaceProject,
 } from "../../data/workspaceData";
+import { getProjectMilestones } from "../../services/milestonesService";
 import StatusTag from "./shared/StatusTag";
 import styles from "./ProjectWorkspace.module.css";
 import "./shared/workspaceVisuals.css";
@@ -33,12 +33,76 @@ function ProjectWorkspace() {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const [milestonesState, setMilestonesState] = useState({
+    projectId: null,
+    retryCount: 0,
+    loading: true,
+    error: "",
+    data: [],
+  });
+  const [milestonesRetryCount, setMilestonesRetryCount] = useState(0);
+  const isMilestonesRequestCurrent =
+    milestonesState.projectId === projectId &&
+    milestonesState.retryCount === milestonesRetryCount;
+  const milestones = isMilestonesRequestCurrent ? milestonesState.data : [];
+  const milestonesLoading =
+    !isMilestonesRequestCurrent || milestonesState.loading;
+  const milestonesError = isMilestonesRequestCurrent
+    ? milestonesState.error
+    : "";
   const [currentUserName] = useState(() =>
     new URLSearchParams(location.search).get("as") === "david" ? "David" : "Ada",
   );
   const currentUser =
     members.find((member) => member.name === currentUserName) ?? members[0];
   const isOwner = currentUser.name === workspaceProject.ownerName;
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    getProjectMilestones(projectId)
+      .then((projectMilestones) => {
+        if (isCurrent) {
+          setMilestonesState({
+            projectId,
+            retryCount: milestonesRetryCount,
+            loading: false,
+            error: "",
+            data: projectMilestones,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load project milestones:", error);
+        if (!isCurrent) return;
+        setMilestonesState({
+          projectId,
+          retryCount: milestonesRetryCount,
+          loading: false,
+          error: error.message || "Something went wrong. Try again.",
+          data: [],
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [projectId, milestonesRetryCount]);
+
+  const retryMilestones = () => {
+    setMilestonesRetryCount((count) => count + 1);
+  };
+
+  const setWorkspaceMilestones = (update) => {
+    setMilestonesState((current) => {
+      const currentMilestones =
+        current.projectId === projectId ? current.data : [];
+      const data =
+        typeof update === "function" ? update(currentMilestones) : update;
+      return { ...current, data };
+    });
+  };
+
   const workspacePath = `/projects/${projectId}/workspace`;
   const currentSection = location.pathname.startsWith(`${workspacePath}/tasks`)
     ? "tasks"
@@ -66,6 +130,10 @@ function ProjectWorkspace() {
     updates: projectUpdates,
     currentUser,
     isOwner,
+    setMilestones: setWorkspaceMilestones,
+    milestonesLoading,
+    milestonesError,
+    retryMilestones,
   };
 
   const sectionPath = (section) =>

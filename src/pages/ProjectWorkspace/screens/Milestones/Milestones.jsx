@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
-import { saveMilestone } from "../../../../services/workspaceService";
-import { useSimulate } from "../../useSimulate";
+import Skeleton from "../../../../components/Skeleton";
+import { patchProjectMilestone } from "../../../../services/milestonesService";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP, formatDate, shortDate } from "../../workspaceFormat";
 import shared from "../shared.module.css";
@@ -17,17 +18,25 @@ function statusMark(status) {
 }
 
 function Milestones() {
-  const { project, milestones, tasks, isOwner } = useWorkspace();
+  const {
+    project,
+    milestones,
+    tasks,
+    isOwner,
+    setMilestones,
+    milestonesLoading,
+    milestonesError,
+    retryMilestones,
+  } = useWorkspace();
   const { projectId } = useParams();
   const { search } = useLocation();
   const navigate = useNavigate();
-  const simulate = useSimulate();
 
-  const [items, setItems] = useState(() => (simulate === "empty" ? [] : milestones));
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({ name: "", targetDate: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | saving | error | saved
+  const [saveError, setSaveError] = useState("");
   const [savedNote, setSavedNote] = useState("");
   const errorRef = useRef(null);
 
@@ -43,12 +52,14 @@ function Milestones() {
     setEditingId(milestone.id);
     setDraft({ name: milestone.name, targetDate: milestone.targetDate });
     setErrors({});
+    setSaveError("");
     setStatus("idle");
   }
 
   function cancelEdit() {
     setEditingId(null);
     setErrors({});
+    setSaveError("");
     setStatus("idle");
   }
 
@@ -60,9 +71,12 @@ function Milestones() {
 
   async function handleSave(event) {
     event.preventDefault();
+    const current = milestones.find((milestone) => milestone.id === editingId);
     const found = {};
     if (!draft.name.trim()) found.name = "Enter a milestone name.";
-    if (!draft.targetDate) found.targetDate = "Choose a target date.";
+    if (!draft.targetDate && current?.targetDate) {
+      found.targetDate = "Choose a target date.";
+    }
     setErrors(found);
 
     const firstInvalid = ["name", "targetDate"].find((field) => found[field]);
@@ -71,33 +85,72 @@ function Milestones() {
       return;
     }
 
-    const current = items.find((m) => m.id === editingId);
+    if (!current) {
+      setSaveError("Milestone is no longer available. Reload the page and try again.");
+      setStatus("error");
+      return;
+    }
+    const updatedName = draft.name.trim();
+    const changes = {};
+    if (updatedName !== current.name) changes.title = updatedName;
+    if (draft.targetDate !== current.targetDate) {
+      changes.dueDate = new Date(`${draft.targetDate}T00:00:00.000Z`).toISOString();
+    }
+
+    if (Object.keys(changes).length === 0) {
+      setSavedNote(`${current.name} has no changes to save.`);
+      setEditingId(null);
+      setStatus("saved");
+      return;
+    }
+
     setStatus("saving");
+    setSaveError("");
     try {
-      await saveMilestone(draft, { simulateFail: simulate === "fail" });
-      setItems((list) =>
-        list.map((m) => (m.id === editingId ? { ...m, ...draft, name: draft.name.trim() } : m)),
+      await patchProjectMilestone(projectId, editingId, changes);
+      setMilestones((list) =>
+        list.map((milestone) =>
+          milestone.id === editingId
+            ? {
+                ...milestone,
+                name: updatedName,
+                targetDate: draft.targetDate,
+              }
+            : milestone,
+        ),
       );
       setSavedNote(
-        `${current.id} target saved: ${shortDate(draft.targetDate)}. Task due dates unchanged; ${doneFor(current)}/${tasksFor(current).length} Done.`,
+        `${updatedName} milestone saved. Task due dates unchanged; ${doneFor(current)}/${tasksFor(current).length} Done.`,
       );
       setEditingId(null);
       setStatus("saved");
-    } catch {
+    } catch (error) {
+      setSaveError(error.message || "Something went wrong. Try again.");
       setStatus("error");
     }
   }
 
-  if (simulate === "loading") {
+  if (milestonesLoading) {
     return (
       <div>
         <h2 className={shared.title}>Milestones</h2>
-        <Alert variant="info" title="Loading milestones...">
-          Loading saved dates and task counts...
+        <p role="status">Loading milestones…</p>
+        <Skeleton />
+        <Skeleton />
+      </div>
+    );
+  }
+
+  if (milestonesError) {
+    return (
+      <div>
+        <h2 className={shared.title}>Milestones</h2>
+        <Alert variant="error" title="Couldn't load milestones">
+          {milestonesError}
         </Alert>
-        <div className={shared.skeleton} />
-        <div className={shared.skeleton} />
-        <Button fullWidth loading loadingText="Loading milestones..." />
+        <Button fullWidth onClick={retryMilestones}>
+          Retry
+        </Button>
       </div>
     );
   }
@@ -115,15 +168,15 @@ function Milestones() {
         </Alert>
       )}
 
-      {items.length === 0 && (
-        <Alert variant="info" title="No milestones yet">
-          Owner can create a milestone before linking project tasks. Members have
-          read-only access.
-        </Alert>
+      {milestones.length === 0 && (
+        <EmptyState
+          title="No milestones yet"
+          text="No milestones have been added to this project."
+        />
       )}
 
       <div className={shared.cards}>
-        {items.map((milestone) => {
+        {milestones.map((milestone) => {
           const linked = tasksFor(milestone);
           const done = doneFor(milestone);
 
@@ -137,8 +190,8 @@ function Milestones() {
               >
                 {status === "error" && (
                   <div ref={errorRef} tabIndex={-1} className={shared.errorWrap}>
-                    <Alert variant="error" title="Target date did not save">
-                      {`${milestone.id} stays ${formatDate(milestone.targetDate)} with ${done}/${linked.length} Done. Your proposed ${shortDate(draft.targetDate)} is retained locally.`}
+                    <Alert variant="error" title="Milestone did not save">
+                      {`${saveError} ${milestone.id} stays ${milestone.targetDate ? formatDate(milestone.targetDate) : "without a target date"} with ${done}/${linked.length} Done. Your proposed ${draft.targetDate ? shortDate(draft.targetDate) : "no target date"} is retained locally.`}
                     </Alert>
                   </div>
                 )}
@@ -157,14 +210,13 @@ function Milestones() {
                   name="targetDate"
                   type="date"
                   label="Target date"
-                  required
                   value={draft.targetDate}
                   onChange={handleChange}
                   error={errors.targetDate}
                   disabled={status === "saving"}
                 />
                 <p className={shared.small}>
-                  Stored target: {formatDate(milestone.targetDate)}
+                  Stored target: {milestone.targetDate ? formatDate(milestone.targetDate) : "Not set"}
                   <br />
                   Proposed target: {draft.targetDate ? formatDate(draft.targetDate) : "Not chosen"}
                   <br />
@@ -199,12 +251,14 @@ function Milestones() {
               aria-labelledby={`milestone-${milestone.id}`}
             >
               <h3 id={`milestone-${milestone.id}`} className={shared.cardTitle}>
-                {milestone.id} {milestone.name}
+                {milestone.name}
               </h3>
               <p className={styles.progress}>
                 {done} / {linked.length} Done
               </p>
-              <p className={shared.small}>Target: {formatDate(milestone.targetDate)}</p>
+              <p className={shared.small}>
+                Target: {milestone.targetDate ? formatDate(milestone.targetDate) : "Not set"}
+              </p>
               <ul className={shared.list}>
                 {linked.map((task) => (
                   <li key={task.id} className={shared.text}>
