@@ -159,7 +159,7 @@ function mapContribution(contribution) {
   };
 }
 
-function mapComment(comment) {
+export function mapComment(comment) {
   if (!comment || typeof comment !== "object" || Array.isArray(comment)) {
     throw new Error("Comments response contains invalid comment data.");
   }

@@ -10,13 +10,35 @@ import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import styles from "./CreateTask.module.css";
 
+function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
+  if (!error) return fallback;
+  if (Array.isArray(error.errors) && error.errors.length > 0) {
+    const messages = error.errors
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  if (error.errors && typeof error.errors === "object") {
+    const messages = Object.values(error.errors)
+      .flat()
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return error.message || fallback;
+}
+
 const defaultForm = {
-  title: "Check responsive layouts",
+  title: "",
   assigneeMemberId: "",
-  dueDate: "2026-11-16",
+  dueDate: "",
   milestoneId: "",
   status: "To do",
-  description: "Review phone and tablet layouts before the next prototype review.",
+  description: "",
 };
 
 function CreateTask() {
@@ -24,6 +46,7 @@ function CreateTask() {
   const {
     canManageMembers,
     project,
+    members = [],
     milestones,
     milestonesLoading,
     milestonesError,
@@ -46,12 +69,17 @@ function CreateTask() {
   const tasksPath = `${workspacePath}/tasks`;
   const taskRoute = `${tasksPath}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
 
-  const assigneeOptions = (project.memberships ?? [])
+  const availableMemberships =
+    (project?.memberships && project.memberships.length > 0)
+      ? project.memberships
+      : members;
+
+  const assigneeOptions = availableMemberships
     .filter((member) => !member.status || member.status === "ACTIVE")
     .map((member) => ({
-    value: String(member.id),
-    label: `${member.name || "Project member"}${member.role ? ` · ${member.role}` : ""}`,
-  }));
+      value: String(member.id),
+      label: `${member.name || "Project member"}${member.role ? ` · ${member.role}` : ""}`,
+    }));
 
   const handleFieldChange = (field, value) => {
     setForm((previous) => ({ ...previous, [field]: value }));
@@ -111,7 +139,7 @@ function CreateTask() {
       }
       navigate(taskRoute);
     } catch (error) {
-      setSubmitError(error.message || "Task could not be created.");
+      setSubmitError(formatErrorMessage(error, "Task could not be created."));
     } finally {
       setIsSubmitting(false);
     }
