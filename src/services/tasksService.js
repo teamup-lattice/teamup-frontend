@@ -58,6 +58,12 @@ function mapTask(task, memberships, milestones) {
   const member = memberships.find(
     (item) => String(item.id) === String(assigneeMemberId),
   );
+  const assigneeUserId =
+    member?.userId ??
+    assigneeRelation?.userId ??
+    assigneeRelation?.user?.id ??
+    task.assigneeUserId ??
+    "";
   const milestoneRelation =
     task.milestone && typeof task.milestone === "object"
       ? task.milestone
@@ -92,6 +98,11 @@ function mapTask(task, memberships, milestones) {
       typeof assigneeMemberId === "string" ||
       typeof assigneeMemberId === "number"
         ? assigneeMemberId
+        : "",
+    assigneeUserId:
+      typeof assigneeUserId === "string" ||
+      typeof assigneeUserId === "number"
+        ? assigneeUserId
         : "",
     dueDate,
     milestoneId,
@@ -157,26 +168,68 @@ function mapComment(comment) {
     typeof comment.createdAt === "string" ? comment.createdAt : "";
   const timestamp = Date.parse(createdAt);
 
+  const authorName =
+    typeof comment.author?.name === "string"
+      ? comment.author.name
+      : typeof comment.author?.user?.name === "string"
+        ? comment.author.user.name
+        : typeof comment.author === "string"
+          ? comment.author
+          : "";
+
+  const authorId =
+    typeof comment.authorId === "string" || typeof comment.authorId === "number"
+      ? comment.authorId
+      : typeof comment.author?.id === "string" ||
+          typeof comment.author?.id === "number"
+        ? comment.author.id
+        : typeof comment.author?.userId === "string" ||
+            typeof comment.author?.userId === "number"
+          ? comment.author.userId
+          : typeof comment.author?.user?.id === "string" ||
+              typeof comment.author?.user?.id === "number"
+            ? comment.author.user.id
+            : typeof comment.userId === "string" ||
+                typeof comment.userId === "number"
+              ? comment.userId
+              : "";
+
+  const authorMemberId =
+    typeof comment.authorMemberId === "string" ||
+    typeof comment.authorMemberId === "number"
+      ? comment.authorMemberId
+      : typeof comment.memberId === "string" ||
+          typeof comment.memberId === "number"
+        ? comment.memberId
+        : typeof comment.author?.projectMemberId === "string" ||
+            typeof comment.author?.projectMemberId === "number"
+          ? comment.author.projectMemberId
+          : "";
+
   return {
     id:
       typeof comment.id === "string" || typeof comment.id === "number"
         ? comment.id
         : "",
-    author:
-      typeof comment.author?.name === "string"
-        ? comment.author.name
-        : typeof comment.author?.user?.name === "string"
-          ? comment.author.user.name
-          : "",
+    author: authorName || "Project member",
+    authorId,
+    authorMemberId,
     date: Number.isNaN(timestamp)
-      ? ""
+      ? typeof comment.date === "string"
+        ? comment.date
+        : ""
       : new Intl.DateTimeFormat("en-GB", {
           day: "numeric",
           month: "short",
           year: "numeric",
           timeZone: "UTC",
         }).format(timestamp),
-    message: typeof comment.content === "string" ? comment.content : "",
+    message:
+      typeof comment.content === "string"
+        ? comment.content
+        : typeof comment.message === "string"
+          ? comment.message
+          : "",
   };
 }
 
@@ -308,10 +361,23 @@ export async function getProjectTask(projectId, taskId, options = {}) {
       ? task.createdBy.name
       : typeof task.createdBy?.user?.name === "string"
         ? task.createdBy.user.name
+        : typeof task.createdBy === "string"
+          ? task.createdBy
+          : "";
+  mapped.createdById =
+    typeof task.createdBy?.id === "string" ||
+    typeof task.createdBy?.id === "number"
+      ? task.createdBy.id
+      : typeof task.createdById === "string" ||
+          typeof task.createdById === "number"
+        ? task.createdById
         : "";
-  mapped.contributions = Array.isArray(task.contributions)
-    ? task.contributions.map(mapContribution)
-    : [];
+  const rawContributions = Array.isArray(task.contributions)
+    ? task.contributions
+    : task.contribution && typeof task.contribution === "object"
+      ? [task.contribution]
+      : [];
+  mapped.contributions = rawContributions.map(mapContribution);
   return mapped;
 }
 

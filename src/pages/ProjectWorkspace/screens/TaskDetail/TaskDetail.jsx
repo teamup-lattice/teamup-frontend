@@ -26,10 +26,33 @@ const taskStatusOptions = [
   { value: "Blocked", label: "Blocked" },
 ];
 
+function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
+  if (!error) return fallback;
+  if (Array.isArray(error.errors) && error.errors.length > 0) {
+    const messages = error.errors
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  if (error.errors && typeof error.errors === "object") {
+    const messages = Object.values(error.errors)
+      .flat()
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return error.message || fallback;
+}
+
 function TaskDetail() {
   const { projectId, taskId } = useParams();
   const {
     currentUser,
+    isOwner,
     canManageMembers,
     project,
     milestones,
@@ -122,7 +145,7 @@ function TaskDetail() {
           taskId,
           retryCount: detailRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: formatErrorMessage(error, "Something went wrong. Try again."),
           task: null,
         });
       });
@@ -164,7 +187,7 @@ function TaskDetail() {
           taskId,
           retryCount: detailRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: formatErrorMessage(error, "Something went wrong. Try again."),
           comments: [],
         });
       });
@@ -187,10 +210,27 @@ function TaskDetail() {
   const reassignRoute =
     `/projects/${projectId}/workspace/tasks/${taskId}/reassign` +
     (asParam ? `?as=${encodeURIComponent(asParam)}` : "");
-  const isAssignee =
+  const isAssignee = Boolean(
     task &&
-    String(currentUser.projectMemberId) === String(task.assigneeMemberId);
+      ((currentUser.projectMemberId &&
+        task.assigneeMemberId &&
+        String(currentUser.projectMemberId) === String(task.assigneeMemberId)) ||
+        (currentUser.id &&
+          task.assigneeUserId &&
+          String(currentUser.id) === String(task.assigneeUserId)) ||
+        (currentUser.name &&
+          task.assignee &&
+          task.assignee !== "Unassigned" &&
+          currentUser.name === task.assignee)),
+  );
   const canChangeStatus = canManageMembers || isAssignee;
+  const canComment =
+    isOwner ||
+    canManageMembers ||
+    Boolean(
+      currentUser.projectMemberId &&
+        (!currentUser.status || currentUser.status === "ACTIVE"),
+    );
   const milestone = task
     ? milestones.find((item) => String(item.id) === String(task.milestoneId))
     : null;
@@ -206,30 +246,42 @@ function TaskDetail() {
 
   const saveStatus = async () => {
     if (!canChangeStatus || statusSaving) return;
-    if (status === "Blocked" && !blockerNote.trim()) {
-      setStatusError("Add a short blocker note before saving.");
-      return;
+    if (status === "Blocked") {
+      if (!blockerNote.trim()) {
+        setStatusError("Add a short blocker note before saving.");
+        return;
+      }
+      if (blockerNote.trim().length > 1000) {
+        setStatusError("Blocker note must be 1000 characters or fewer.");
+        return;
+      }
+    }
+    if (status === "Done") {
+      if (completionNote.trim().length > 2000) {
+        setStatusError("Completion note must be 2000 characters or fewer.");
+        return;
+      }
     }
 
     const changes = {};
-    if (status !== task.status) changes.status = getTaskApiStatus(status);
-    if (
-      status === "Blocked" &&
-      blockerNote.trim() !== task.blockerNote
-    ) {
-      changes.blockerNote = blockerNote.trim();
+    if (status !== task.status) {
+      changes.status = getTaskApiStatus(status);
+    }
+    if (status === "Blocked") {
+      if (changes.status === "BLOCKED" || blockerNote.trim() !== task.blockerNote) {
+        changes.blockerNote = blockerNote.trim();
+      }
     }
     if (status === "Done") {
       const contribution = {};
       if (completionNote.trim()) {
-        contribution.title = task.title;
         contribution.completionNote = completionNote.trim();
       }
       if (artifactUrl.trim()) {
-        contribution.title = task.title;
         contribution.artifactUrl = artifactUrl.trim();
       }
       if (Object.keys(contribution).length > 0) {
+        contribution.title = (task.title || "").slice(0, 200);
         changes.contribution = contribution;
       }
     }
@@ -245,23 +297,39 @@ function TaskDetail() {
     setSuccessMessage("");
     try {
       await updateProjectTask(projectId, taskId, changes);
-      setSuccessMessage(`${task.title} saved.`);
-      setDetailRetryCount((count) => count + 1);
+      const updatedTask = await getProjectTask(projectId, taskId, {
+        memberships: project.memberships,
+        milestones,
+      });
+      setStatus(updatedTask.status);
+      setBlockerNote(updatedTask.blockerNote);
+      setCompletionNote("");
+      setArtifactUrl("");
+      setTaskState({
+        projectId,
+        taskId,
+        retryCount: detailRetryCount,
+        loading: false,
+        error: "",
+        task: updatedTask,
+      });
+      setSuccessMessage(`${updatedTask.title} saved.`);
       try {
         await refreshTasks();
-      } catch (error) {
+      } catch (refreshErr) {
         setStatusError(
-          `Task saved, but the task list could not be refreshed: ${error.message}`,
+          `Task saved, but the task list could not be refreshed: ${formatErrorMessage(refreshErr)}`,
         );
       }
     } catch (error) {
-      setStatusError(error.message || "Task status did not save.");
+      setStatusError(formatErrorMessage(error, "Task status did not save."));
     } finally {
       setStatusSaving(false);
     }
   };
 
   const postComment = async () => {
+    if (!canComment || commentSaving) return;
     const content = draftComment.trim();
     if (!content) {
       setCommentError("Enter a comment before posting.");
@@ -278,7 +346,7 @@ function TaskDetail() {
       await createProjectTaskComment(projectId, taskId, content);
       setDraftComment("");
     } catch (error) {
-      setCommentError(error.message || "Comment could not be posted.");
+      setCommentError(formatErrorMessage(error, "Comment could not be posted."));
       setCommentSaving(false);
       return;
     }
@@ -297,10 +365,10 @@ function TaskDetail() {
       setCommentsState((current) => ({
         ...current,
         loading: false,
-        error: error.message || "Comments could not be refreshed.",
+        error: formatErrorMessage(error, "Comments could not be refreshed."),
       }));
       setCommentError(
-        `Comment posted, but comments could not be refreshed: ${error.message}`,
+        `Comment posted, but comments could not be refreshed: ${formatErrorMessage(error)}`,
       );
     } finally {
       setCommentSaving(false);
@@ -548,26 +616,34 @@ function TaskDetail() {
             {commentError}
           </Alert>
         )}
-        <Input
-          id="commentInput"
-          label="Comment"
-          maxLength={3000}
-          value={draftComment}
-          onChange={(event) => {
-            setDraftComment(event.target.value);
-            setCommentError("");
-          }}
-          placeholder="Add a comment to this task."
-        />
-        <Button
-          type="button"
-          fullWidth
-          loading={commentSaving}
-          loadingText="Posting comment…"
-          onClick={postComment}
-        >
-          Post comment
-        </Button>
+        {canComment ? (
+          <>
+            <Input
+              id="commentInput"
+              label="Comment"
+              maxLength={3000}
+              value={draftComment}
+              onChange={(event) => {
+                setDraftComment(event.target.value);
+                setCommentError("");
+              }}
+              placeholder="Add a comment to this task."
+            />
+            <Button
+              type="button"
+              fullWidth
+              loading={commentSaving}
+              loadingText="Posting comment…"
+              onClick={postComment}
+            >
+              Post comment
+            </Button>
+          </>
+        ) : (
+          <p className={styles.metaLine}>
+            Only active project members can post comments.
+          </p>
+        )}
         <p className={styles.metaLine}>Task comments stay with this task.</p>
       </div>
 

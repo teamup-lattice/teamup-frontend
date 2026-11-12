@@ -1,15 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
 import Select from "../../../../components/Select";
-import { updateProjectTask } from "../../../../services/tasksService";
+import { getProjectTask, updateProjectTask } from "../../../../services/tasksService";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import TaskSummaryCard from "../../shared/TaskSummaryCard";
 import styles from "./ReassignTask.module.css";
+
+function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
+  if (!error) return fallback;
+  if (Array.isArray(error.errors) && error.errors.length > 0) {
+    const messages = error.errors
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  if (error.errors && typeof error.errors === "object") {
+    const messages = Object.values(error.errors)
+      .flat()
+      .map((entry) =>
+        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
+      )
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return error.message || fallback;
+}
 
 function ReassignTask() {
   const { projectId, taskId } = useParams();
@@ -35,15 +57,85 @@ function ReassignTask() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [retryFetchCount, setRetryFetchCount] = useState(0);
+  const [fetchedTaskState, setFetchedTaskState] = useState({
+    projectId: null,
+    taskId: null,
+    retryCount: -1,
+    loading: true,
+    error: "",
+    task: null,
+  });
 
-  const task = tasks.find((item) => String(item.id) === String(taskId));
+  const taskFromContext = tasks.find((item) => String(item.id) === String(taskId));
+
+  useEffect(() => {
+    if (taskFromContext || workspaceLoading || tasksLoading || !project) return undefined;
+    let isCurrent = true;
+
+    getProjectTask(projectId, taskId, {
+      memberships: project.memberships,
+      milestones,
+    })
+      .then((loadedTask) => {
+        if (!isCurrent) return;
+        setFetchedTaskState({
+          projectId,
+          taskId,
+          retryCount: retryFetchCount,
+          loading: false,
+          error: "",
+          task: loadedTask,
+        });
+      })
+      .catch((requestError) => {
+        if (!isCurrent) return;
+        setFetchedTaskState({
+          projectId,
+          taskId,
+          retryCount: retryFetchCount,
+          loading: false,
+          error: formatErrorMessage(requestError, "Failed to load task."),
+          task: null,
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [
+    taskFromContext,
+    projectId,
+    taskId,
+    project,
+    milestones,
+    workspaceLoading,
+    tasksLoading,
+    retryFetchCount,
+  ]);
+
+  const isFetchedTaskCurrent =
+    fetchedTaskState.projectId === projectId &&
+    fetchedTaskState.taskId === taskId &&
+    fetchedTaskState.retryCount === retryFetchCount;
+  const fetchingTask =
+    !taskFromContext &&
+    !workspaceLoading &&
+    !tasksLoading &&
+    (!isFetchedTaskCurrent || fetchedTaskState.loading);
+  const fetchError =
+    !taskFromContext && isFetchedTaskCurrent ? fetchedTaskState.error : "";
+  const task =
+    taskFromContext ??
+    (isFetchedTaskCurrent ? fetchedTaskState.task : null);
   const taskRoute =
     `/projects/${projectId}/workspace/tasks/${taskId}` +
     (asParam ? `?as=${encodeURIComponent(asParam)}` : "");
   const availableMembers = (project.memberships ?? []).filter(
     (member) =>
       (!member.status || member.status === "ACTIVE") &&
-      String(member.id) !== String(task?.assigneeMemberId),
+      String(member.id) !== String(task?.assigneeMemberId) &&
+      (!task?.assignee || member.name !== task.assignee),
   );
   const selectedMember = availableMembers.find(
     (member) => String(member.id) === newOwnerId,
@@ -54,7 +146,7 @@ function ReassignTask() {
 
   const goBack = () => navigate(taskRoute);
 
-  if (workspaceLoading || tasksLoading) {
+  if (workspaceLoading || tasksLoading || fetchingTask) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Reassign task</h2>
@@ -63,8 +155,8 @@ function ReassignTask() {
     );
   }
 
-  if (workspaceError || tasksError) {
-    const message = workspaceError || tasksError;
+  if (workspaceError || tasksError || fetchError) {
+    const message = workspaceError || tasksError || fetchError;
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Reassign task</h2>
@@ -73,7 +165,13 @@ function ReassignTask() {
           title="Couldn't load task or project members"
           text={message}
           buttonLabel="Retry"
-          onButtonClick={workspaceError ? retryWorkspace : retryTasks}
+          onButtonClick={
+            workspaceError
+              ? retryWorkspace
+              : fetchError
+                ? () => setRetryFetchCount((c) => c + 1)
+                : retryTasks
+          }
         />
       </section>
     );
@@ -145,11 +243,13 @@ function ReassignTask() {
         await refreshTasks();
       } catch (refreshError) {
         setError(
-          `The task was reassigned, but the task list could not be refreshed: ${refreshError.message}`,
+          `The task was reassigned, but the task list could not be refreshed: ${formatErrorMessage(refreshError)}`,
         );
       }
     } catch (requestError) {
-      setError(requestError.message || "Task could not be reassigned.");
+      setError(
+        formatErrorMessage(requestError, "Task could not be reassigned."),
+      );
     } finally {
       setIsSaving(false);
     }
