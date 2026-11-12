@@ -4,7 +4,7 @@ import Button from "../../../../components/Button";
 import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
 import Select from "../../../../components/Select";
-import { getTaskById, members, workspaceProject } from "../../../../data/workspaceData";
+import { getTaskById } from "../../../../data/workspaceData";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import TaskSummaryCard from "../../shared/TaskSummaryCard";
@@ -12,7 +12,16 @@ import styles from "./ReassignTask.module.css";
 
 function ReassignTask() {
   const { taskId } = useParams();
-  const { currentUser, milestones } = useWorkspace();
+  const {
+    isOwner,
+    members,
+    milestones,
+    workspaceLoading,
+    workspaceError,
+    membersLoading,
+    membersError,
+    retryWorkspace,
+  } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -38,21 +47,44 @@ function ReassignTask() {
     );
   }
 
-  const isCurrentOwner = currentUser.name === workspaceProject.ownerName;
   const milestone = milestones.find((item) => item.id === task.milestoneId);
   const availableMembers = members.filter(
-    (member) => member.status === "Accepted" && member.name !== task.assignee,
+    (member) => member.name !== task.assignee,
   );
 
   const goBack = () => navigate(`/projects/${location.pathname.split("/")[2]}/workspace/tasks/${task.id}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`);
 
-  if (!isCurrentOwner) {
+  if (workspaceLoading || membersLoading) {
+    return (
+      <section className={styles.page}>
+        <h2 className={styles.pageTitle}>Reassign task</h2>
+        <StateNotice variant="info" title="Loading project members…" />
+      </section>
+    );
+  }
+
+  if (workspaceError || membersError) {
+    return (
+      <section className={styles.page}>
+        <h2 className={styles.pageTitle}>Reassign task</h2>
+        <StateNotice
+          variant="error"
+          title="Couldn't load project members"
+          text={workspaceError || membersError}
+          buttonLabel="Retry"
+          onButtonClick={retryWorkspace}
+        />
+      </section>
+    );
+  }
+
+  if (!isOwner) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Reassign task</h2>
         <StateNotice
           variant="info"
-          title="Only Ada, the Owner, can reassign tasks."
+          title="Only the project owner can reassign tasks."
           buttonLabel="View task"
           onButtonClick={goBack}
         />
@@ -67,7 +99,7 @@ function ReassignTask() {
         <StateNotice
           variant="info"
           title="Choose a new task owner"
-          text="Select one other accepted member. David remains owner until reassignment is confirmed."
+          text="Select one other active member. The current assignee remains unchanged until reassignment is confirmed."
           buttonLabel="Choose owner"
           onButtonClick={() => navigate(location.pathname + (asParam ? `?as=${encodeURIComponent(asParam)}` : ""))}
         />
@@ -178,7 +210,7 @@ function ReassignTask() {
           value={newOwner}
           options={availableMembers.map((member) => ({
             value: member.name,
-            label: `${member.name} · ${member.role} · Accepted ${member.acceptedDate ? new Date(`${member.acceptedDate}T00:00:00Z`).getDate() : ""} ${member.acceptedDate ? new Intl.DateTimeFormat("en-US", { month: "short" }).format(new Date(`${member.acceptedDate}T00:00:00Z`)) : ""}`,
+            label: `${member.name} · ${member.role} · Joined ${member.acceptedDate || "date not provided"}`,
           }))}
           placeholder={error ? "Not selected" : "Select a new owner"}
           onChange={(event) => setNewOwner(event.target.value)}
@@ -189,7 +221,7 @@ function ReassignTask() {
           value={handoverNote}
           onChange={(event) => setHandoverNote(event.target.value)}
         />
-        <p className={styles.helper}>Owner: Ada. John is an accepted member. Selection unsaved; David still owns the task.</p>
+        <p className={styles.helper}>Selection unsaved; {task.assignee} remains assigned to the task.</p>
         <div className={styles.buttonRow}>
           <Button type="button" variant="secondary" onClick={goBack}>Cancel</Button>
           <Button type="submit">Review reassignment</Button>

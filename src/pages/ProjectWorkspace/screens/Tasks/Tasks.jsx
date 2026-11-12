@@ -5,7 +5,7 @@ import Button from "../../../../components/Button";
 import EmptyState from "../../../../components/EmptyState";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
-import { statuses, tasks as projectTasks, members } from "../../../../data/workspaceData";
+import { statuses, tasks as projectTasks } from "../../../../data/workspaceData";
 import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
 import StatusTag from "../../shared/StatusTag";
@@ -25,7 +25,13 @@ function getDaysOverdue(task) {
 
 function Tasks() {
   const { projectId } = useParams();
-  const { currentUser, isOwner } = useWorkspace();
+  const {
+    currentUser,
+    isOwner,
+    members,
+    membersError,
+    retryWorkspace,
+  } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -168,6 +174,14 @@ function Tasks() {
       </div>
 
       <div className={styles.filterRow}>
+        {membersError && (
+          <Alert variant="error" title="Couldn't load project members">
+            {membersError}
+            <Button variant="secondary" onClick={retryWorkspace}>
+              Retry
+            </Button>
+          </Alert>
+        )}
         <Select
           label="Assignee"
           options={[

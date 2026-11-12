@@ -1,25 +1,25 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
 import Skeleton from "../../../../components/Skeleton";
-import { members } from "../../../../data/workspaceData";
 import { useWorkspace } from "../../useWorkspace";
-import StateNotice from "../../shared/StateNotice";
 import styles from "./Team.module.css";
 
-const memberResponsibilities = {
-  Ada: "User stories and prototype review",
-  David: "Design onboarding and UI handoff",
-  John: "Auth screens, discovery and prototype build",
-};
-
 function Team() {
-  const { currentUser, isOwner } = useWorkspace();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
-  const previewState = searchParams.get("state");
+  const {
+    isOwner,
+    canManageMembers,
+    members,
+    project,
+    workspaceLoading,
+    workspaceError,
+    membersLoading,
+    membersError,
+    retryWorkspace,
+  } = useWorkspace();
 
   const [editingMember, setEditingMember] = useState(null);
   const [draftRole, setDraftRole] = useState("");
@@ -32,20 +32,20 @@ function Team() {
   };
 
   const openEdit = (member) => {
-    setEditingMember(member.name);
+    setEditingMember(String(member.id));
     setDraftRole(member.role);
-    setDraftResponsibilities(memberResponsibilities[member.name] || "");
+    setDraftResponsibilities("");
   };
 
   const confirmRoleSave = () => {
     setEditingMember(null);
   };
 
-  if (previewState === "loading") {
+  if (workspaceLoading || membersLoading) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Team</h2>
-        <p className={styles.subtitle}>3 joined members · Saved acceptance: 19 Oct 2026</p>
+        <p role="status">Loading team members…</p>
         <div className={styles.loadingList}>
           <Skeleton />
           <Skeleton />
@@ -54,47 +54,16 @@ function Team() {
     );
   }
 
-  if (previewState === "roleopen") {
+  if (workspaceError || membersError) {
     return (
       <section className={styles.page}>
         <h2 className={styles.pageTitle}>Team</h2>
-        <StateNotice
-          variant="info"
-          title="UI/UX Designer · Open"
-          text="No accepted member fills this role. Existing work is preserved."
-          buttonLabel="View team"
-          onButtonClick={() => navigate(location.pathname + (location.search ? "" : ""))}
-        />
-      </section>
-    );
-  }
-
-  if (previewState === "error") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Team</h2>
-        <StateNotice
-          variant="error"
-          title="Role changes did not save"
-          text="David remains UI/UX Designer. Responsibilities and 6 h/week are unchanged. Your local edit is retained."
-          buttonLabel="Retry save"
-          onButtonClick={() => navigate(location.pathname)}
-        />
-      </section>
-    );
-  }
-
-  if (previewState === "saved") {
-    return (
-      <section className={styles.page}>
-        <h2 className={styles.pageTitle}>Team</h2>
-        <StateNotice
-          variant="success"
-          title="Role changes saved"
-          text="David's responsibilities now include responsive layout review. Tasks and counts are unchanged."
-          buttonLabel="View team"
-          onButtonClick={() => navigate(location.pathname)}
-        />
+        <Alert variant="error" title="Couldn't load team members">
+          {workspaceError || membersError}
+        </Alert>
+        <Button fullWidth onClick={retryWorkspace}>
+          Retry
+        </Button>
       </section>
     );
   }
@@ -102,14 +71,21 @@ function Team() {
   return (
     <section className={styles.page}>
       <h2 className={styles.pageTitle}>Team</h2>
-      <p className={styles.subtitle}>3 joined members · Saved acceptance: 19 Oct 2026</p>
+      <p className={styles.subtitle}>{members.length} joined members</p>
+
+      {members.length === 0 && (
+        <EmptyState title="No active members" text="There are no active members to show." />
+      )}
 
       {members.map((member) => {
-        const isEditing = editingMember === member.name;
-
+        const isEditing = editingMember === String(member.id);
+        const isMemberOwner =
+          member.accessLevel === "OWNER" ||
+          (project.ownerId != null &&
+            String(member.userId) === String(project.ownerId));
         if (isEditing) {
           return (
-            <div key={member.name} className={styles.memberCard}>
+            <div key={member.id} className={styles.memberCard}>
               <div className={styles.memberHeader}>
                 <div className={styles.avatar}>{member.name.charAt(0)}</div>
                 <div>
@@ -132,7 +108,7 @@ function Team() {
                 onChange={(event) => setDraftResponsibilities(event.target.value)}
               />
               <p className={styles.metaLine}>
-                Unsaved role changes for {member.name}. Commitment unchanged: {member.hoursPerWeek} h/week, 19 Oct–30 Nov.
+                Unsaved local role changes for {member.name}. Role editing is not connected to the backend.
               </p>
               <Button type="button" fullWidth onClick={confirmRoleSave}>Confirm role changes</Button>
               <Button type="button" variant="secondary" fullWidth onClick={resetEdit}>Cancel</Button>
@@ -141,21 +117,25 @@ function Team() {
         }
 
         return (
-          <div key={member.name} className={styles.memberCard}>
+          <div key={member.id} className={styles.memberCard}>
             <div className={styles.memberHeader}>
               <div className={styles.avatar}>{member.name.charAt(0)}</div>
               <p className={styles.memberName}>{member.name} · {member.role}</p>
             </div>
 
             <p className={styles.memberRole}>{member.role}</p>
-            <p className={styles.memberResponsibilities}>Responsibilities: {memberResponsibilities[member.name] || "Project work"}</p>
-            <p className={styles.metaLine} id={`commitment-${member.name}`}>
-              Commitment summary · {member.hoursPerWeek} h / week · 6 weeks
-              <br />
-              19 Oct–30 Nov 2026 · {member.commitmentType}
+            <p className={styles.memberResponsibilities}>
+              Access level: {member.accessLevel || "Not provided"}
             </p>
-            <a className={styles.linkButton} href={`#commitment-${member.name}`}>
-              View commitment summary
+            <p className={styles.metaLine} id={`commitment-${member.id}`}>
+              Joined {member.acceptedDate || "Date not provided"}
+              {member.hoursPerWeek != null &&
+                ` · ${member.hoursPerWeek} h / week`}
+              {member.openTaskCount != null &&
+                ` · ${member.openTaskCount} open tasks`}
+            </p>
+            <a className={styles.linkButton} href={`#commitment-${member.id}`}>
+              View member summary
             </a>
 
             {isOwner && (
@@ -168,20 +148,16 @@ function Team() {
                 >
                   Edit role
                 </Button>
-                {member.name === "David" && (
-                  <Link className={styles.linkButton} to="./release-role">
-                    Review release of David&apos;s role
-                  </Link>
-                )}
               </>
             )}
 
-            {currentUser.name === "David" && member.name === "David" && !isOwner && (
-              <StateNotice
-                variant="info"
-                title="Role details are read only"
-                text="Only Ada, the Owner, manages team roles. You can view saved commitments."
-              />
+            {canManageMembers && !isMemberOwner && (
+              <Link
+                className={styles.linkButton}
+                to={`./release-role?member=${encodeURIComponent(member.id)}`}
+              >
+                Review release of {member.name}&apos;s role
+              </Link>
             )}
           </div>
         );
