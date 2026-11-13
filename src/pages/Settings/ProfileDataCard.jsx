@@ -184,8 +184,11 @@ function ProfileDataCard({ values, disabled, onChange }) {
             label="Name"
             name="name"
             autoComplete="name"
-            value={values.name}
-            disabled
+            value={values.name ?? ""}
+            error={values.nameError}
+            maxLength={100}
+            disabled={disabled}
+            onChange={onChange}
           />
           <Input
             label="Goals"

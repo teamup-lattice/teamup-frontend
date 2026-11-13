@@ -71,3 +71,56 @@ export function saveProfile(values) {
     })),
   });
 }
+
+export async function updateProfileName(name) {
+  const trimmed = typeof name === "string" ? name.trim() : "";
+  if (!trimmed) {
+    const error = new Error("Invalid name");
+    error.status = 400;
+    throw error;
+  }
+  if (trimmed.length > 100) {
+    const error = new Error("Name cannot exceed 100 characters");
+    error.status = 400;
+    throw error;
+  }
+
+  try {
+    const response = await api.patch("/api/profile/users/me", { name: trimmed });
+    window.dispatchEvent(new Event("profile:changed"));
+    return response?.user?.name || response?.name || trimmed;
+  } catch (error) {
+    if (
+      error.status === 400 &&
+      (!error.message || error.message === "Something went wrong")
+    ) {
+      error.message = "Invalid name";
+    } else if (
+      error.status === 404 &&
+      (!error.message || error.message === "Something went wrong")
+    ) {
+      error.message = "User not found";
+    }
+    throw error;
+  }
+}
+
+export async function updateProfileDetails({ name, goals }) {
+  const body = {};
+  if (name !== undefined) body.name = name;
+  if (goals !== undefined) body.goals = goals;
+
+  try {
+    const response = await api.patch("/api/profile/users/me", body);
+    window.dispatchEvent(new Event("profile:changed"));
+    return response;
+  } catch (error) {
+    if (
+      error.status === 400 &&
+      (!error.message || error.message === "Something went wrong")
+    ) {
+      error.message = "Invalid profile details";
+    }
+    throw error;
+  }
+}

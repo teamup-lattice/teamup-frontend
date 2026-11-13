@@ -9,6 +9,9 @@
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -128,16 +131,21 @@
 }
 
 .nav {
+  position: sticky;
+  top: 65px;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   flex: 0 0 240px;
   width: 240px;
+  height: calc(100vh - 65px);
   padding: var(--space-4);
   background: var(--color-card);
   border-right: 1px solid var(--color-border-subtle);
-  min-height: calc(100vh - 65px);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  align-self: flex-start;
   transition:
     width 200ms ease,
     flex-basis 200ms ease,
@@ -162,20 +170,20 @@
   text-decoration: none;
 }
 
-.navFooter {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-}
-
 .tagline {
-  margin: 0;
+  margin: var(--space-5) 0 0;
   padding: 0 var(--space-4);
   color: var(--color-text-secondary);
   font-size: var(--font-size-helper);
   line-height: var(--line-height-text);
+}
+
+.navFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding-top: var(--space-4);
 }
 
 .userChip {
@@ -190,6 +198,8 @@
   font-weight: 500;
   transition: background-color 150ms ease;
   min-width: 0;
+  height: auto;
+  flex-shrink: 0;
 }
 
 .userChip:hover {
@@ -262,7 +272,13 @@
 }
 
 @media (max-width: 599px) {
+  .shell {
+    --header-height: 61px;
+  }
+
   .header {
+    box-sizing: border-box;
+    height: var(--header-height);
     padding: var(--space-2) var(--space-3);
   }
 
@@ -301,14 +317,16 @@
     padding: 0 var(--space-2);
   }
 
+  /* Drawer: fixed to the screen under the header, scrolls on its own */
   .nav,
   .navClosed {
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: var(--header-height);
     bottom: 0;
     left: 0;
     width: min(240px, 80vw);
-    min-height: 100%;
+    height: calc(100vh - var(--header-height));
+    min-height: 0;
     flex-basis: min(240px, 80vw);
     border-right: 1px solid var(--color-border-subtle);
     transform: translateX(0);
@@ -321,8 +339,11 @@
   }
 
   .overlay {
-    position: absolute;
-    inset: 0;
+    position: fixed;
+    top: var(--header-height);
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: block;
     padding: 0;
     border: 0;
