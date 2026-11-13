@@ -199,8 +199,8 @@ function AppLayout() {
               {item.label}
             </NavLink>
           ))}
+          <p className={styles.tagline}>Make something together.</p>
           <div className={styles.navFooter}>
-            <p className={styles.tagline}>Make something together.</p>
             {currentUser && (
               <NavLink
                 to="/profile"
