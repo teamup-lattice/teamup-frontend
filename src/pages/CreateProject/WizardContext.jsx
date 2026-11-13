@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   createProjectDraft,
+  getProjectById,
   publishProject as publishProjectService,
   updateProjectDraft,
 } from "../../services/projectService";
@@ -187,6 +188,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [availableSkills, setAvailableSkills] = useState([]);
   const [skillsLoadStatus, setSkillsLoadStatus] = useState("loading");
   const [skillsLoadAttempt, setSkillsLoadAttempt] = useState(0);
+  const [isLoadingDraft, setIsLoadingDraft] = useState(Boolean(initialDraftId));
+  const [draftLoadError, setDraftLoadError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -223,6 +226,111 @@ export function WizardProvider({ children, initialDraftId = null }) {
       isMounted = false;
     };
   }, [skillsLoadAttempt]);
+
+  useEffect(() => {
+    if (!initialDraftId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getProjectById(initialDraftId)
+      .then((result) => {
+        const project = result?.project ?? result;
+        if (!project || !isMounted) {
+          return;
+        }
+
+        // Uncomment to inspect the real shape while wiring this up:
+        // console.log("Draft project response:", project);
+
+        const projectTypeReverseMap = {
+          WEB_APPLICATION: "web-application",
+        };
+
+        setBasics({
+          name: project.title ?? "",
+          problem: project.problem ?? "",
+          description: project.description ?? "",
+          projectType: projectTypeReverseMap[project.projectType] ?? "",
+          skills: (Array.isArray(project.skills) ? project.skills : [])
+            .map((entry) => entry?.skillId ?? entry?.skill?.id ?? entry?.id)
+            .filter(Boolean),
+          outcome: project.outcome ?? "",
+        });
+
+        const rawRoles = Array.isArray(project.roles) ? project.roles : [];
+        const hoursByRole = {};
+        const mappedRoles = rawRoles.map((role, index) => {
+          const roleId = role.id ?? `role-${index}`;
+          if (role.hoursPerWeek !== undefined && role.hoursPerWeek !== null) {
+            hoursByRole[roleId] = String(role.hoursPerWeek);
+          }
+          return {
+            id: roleId,
+            title: role.title ?? "",
+            responsibilities: role.description ?? "",
+            skills: (Array.isArray(role.skills) ? role.skills : [])
+              .map((entry) => entry?.skillId ?? entry?.skill?.id ?? entry?.id)
+              .filter(Boolean),
+            isOwner: Boolean(role.isOwner),
+          };
+        });
+
+        setRoles({
+          teamSize:
+            project.teamSize !== undefined && project.teamSize !== null
+              ? String(project.teamSize)
+              : "",
+          roles: mappedRoles.length > 0 ? mappedRoles : initialRoles.roles,
+        });
+
+        const toDateInputValue = (isoString) => {
+          if (!isoString) return "";
+          const date = new Date(isoString);
+          return Number.isNaN(date.getTime())
+            ? ""
+            : date.toISOString().slice(0, 10);
+        };
+
+        setCommitment({
+          duration:
+            project.durationWeeks !== undefined &&
+            project.durationWeeks !== null
+              ? String(project.durationWeeks)
+              : "",
+          startDate: toDateInputValue(project.startDate),
+          endDate: toDateInputValue(project.targetEndDate),
+          hoursByRole,
+          availability: project.availabilityExpectation ?? "",
+          responseExpectation: project.availabilityResponseExpectation ?? "",
+        });
+
+        const rawMilestones = Array.isArray(project.milestones)
+          ? project.milestones
+          : [];
+        setMilestones(
+          rawMilestones.map((milestone) => ({
+            name: milestone.title ?? "",
+            date: toDateInputValue(milestone.dueDate),
+          })),
+        );
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setDraftLoadError(error);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingDraft(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialDraftId]);
 
   const retrySkills = () => {
     setSkillsLoadStatus("loading");
@@ -306,7 +414,12 @@ export function WizardProvider({ children, initialDraftId = null }) {
     saveInFlightRef.current = true;
     setSaveStatus("saving");
     try {
-      const data = buildProjectPayload({ basics, roles, commitment, milestones });
+      const data = buildProjectPayload({
+        basics,
+        roles,
+        commitment,
+        milestones,
+      });
       if (draftId) {
         await updateProjectDraft(draftId, data);
       } else {
@@ -339,7 +452,12 @@ export function WizardProvider({ children, initialDraftId = null }) {
     setSaveStatus("saving");
     let payloadSaved = false;
     try {
-      const data = buildProjectPayload({ basics, roles, commitment, milestones });
+      const data = buildProjectPayload({
+        basics,
+        roles,
+        commitment,
+        milestones,
+      });
       let projectId = draftId;
 
       if (!projectId) {
@@ -401,6 +519,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
     skillGroups,
     retrySkills,
     ownerName,
+    isLoadingDraft,
+    draftLoadError,
     goNext,
     goBack,
     markStepIncomplete,
