@@ -124,6 +124,23 @@ function AppLayout() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
+  // Stop the page behind from scrolling while the mobile drawer is open
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const applyScrollLock = () => {
+      document.body.style.overflow =
+        isSidebarOpen && mql.matches ? "hidden" : "";
+    };
+
+    applyScrollLock();
+    mql.addEventListener("change", applyScrollLock);
+
+    return () => {
+      mql.removeEventListener("change", applyScrollLock);
+      document.body.style.overflow = "";
+    };
+  }, [isSidebarOpen]);
+
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
@@ -217,7 +234,10 @@ function AppLayout() {
                     className={styles.userAvatarImg}
                   />
                 ) : (
-                  <span className={styles.userAvatarFallback} aria-hidden="true">
+                  <span
+                    className={styles.userAvatarFallback}
+                    aria-hidden="true"
+                  >
                     {(currentUser.name || "U").charAt(0).toUpperCase()}
                   </span>
                 )}
