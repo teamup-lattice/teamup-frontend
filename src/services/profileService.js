@@ -47,6 +47,7 @@ export async function getProfile() {
   return {
     name: user.name ?? "",
     role: user.headline ?? "",
+    avatarUrl: user.avatarUrl ?? "",
     skills: skillNames,
     skillLevel: mapSkillLevel(skills),
     goals: user.goals ?? "",

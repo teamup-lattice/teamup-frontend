@@ -193,7 +193,11 @@ function SettingsForm({ initialSettings }) {
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <div className={styles.columns}>
           <ProfileDataCard
-            values={{ name: initialSettings.name, ...draft }}
+            values={{
+              name: initialSettings.name,
+              avatarUrl: initialSettings.avatarUrl,
+              ...draft,
+            }}
             disabled={isSaving}
             onChange={handleFieldChange}
           />

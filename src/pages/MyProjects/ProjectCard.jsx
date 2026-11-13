@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Alert from "../../components/Alert";
 import Button from "../../components/Button";
+import { deleteProject } from "../../services/myProjectsService";
 import { formatDate } from "../CreateProject/formatDate";
 import { defaultStatusConfig, statusConfig } from "./statusConfig";
 import styles from "./ProjectCard.module.css";
@@ -28,8 +31,12 @@ function readableLabel(value) {
     .join(" ");
 }
 
-function ProjectCard({ project = {} }) {
+function ProjectCard({ project = {}, currentUserId, onDelete }) {
   const navigate = useNavigate();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
   const projectId = project.id;
   const title =
     typeof project.title === "string" && project.title.trim()
@@ -37,6 +44,37 @@ function ProjectCard({ project = {} }) {
       : "Untitled project";
   const statusLabel = readableLabel(project.status) || "Status unavailable";
   const config = statusConfig[statusLabel] ?? defaultStatusConfig;
+
+  const isDraft =
+    statusLabel === "Draft" ||
+    (typeof project.status === "string" &&
+      project.status.toUpperCase() === "DRAFT");
+
+  const isOwner =
+    project.isOwner === true ||
+    (currentUserId != null &&
+      project.ownerId != null &&
+      String(project.ownerId) === String(currentUserId)) ||
+    (currentUserId != null &&
+      project.owner?.id != null &&
+      String(project.owner.id) === String(currentUserId)) ||
+    (project.isOwner === undefined && project.ownerId == null);
+
+  const canDelete = isDraft && isOwner;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteProject(projectId);
+      onDelete?.(projectId);
+    } catch (error) {
+      console.error("Failed to delete project draft:", error);
+      setDeleteError(error.message || "Failed to delete draft");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const attention = project.attention;
   const attentionBadge =
     typeof attention?.badge === "string" ? attention.badge : "";
@@ -94,13 +132,59 @@ function ProjectCard({ project = {} }) {
         <p className={styles.meta}>{details.join(" · ")}</p>
       )}
 
-      <Button
-        aria-label={`${config.actionLabel}: ${title}`}
-        disabled={!projectId}
-        onClick={() => projectId && navigate(config.path(projectId))}
-      >
-        {config.actionLabel}
-      </Button>
+      <div className={styles.actions}>
+        <Button
+          aria-label={`${config.actionLabel}: ${title}`}
+          disabled={!projectId}
+          onClick={() => projectId && navigate(config.path(projectId))}
+        >
+          {config.actionLabel}
+        </Button>
+
+        {canDelete && !isConfirmingDelete && (
+          <Button
+            variant="secondary"
+            disabled={!projectId}
+            onClick={() => {
+              setDeleteError(null);
+              setIsConfirmingDelete(true);
+            }}
+          >
+            Delete draft
+          </Button>
+        )}
+      </div>
+
+      {canDelete && isConfirmingDelete && (
+        <div className={styles.deleteConfirm}>
+          <p className={styles.deletePrompt}>Delete this draft?</p>
+          <div className={styles.deleteActions}>
+            <Button
+              variant="secondary"
+              disabled={isDeleting}
+              onClick={() => {
+                setIsConfirmingDelete(false);
+                setDeleteError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              loading={isDeleting}
+              loadingText="Deleting..."
+              onClick={handleDelete}
+            >
+              Confirm delete
+            </Button>
+          </div>
+          {deleteError && (
+            <Alert variant="error">
+              {deleteError}
+            </Alert>
+          )}
+        </div>
+      )}
 
       {note && <p className={styles.note}>{note}</p>}
     </article>
