@@ -39,11 +39,16 @@ function WorkspaceOverview() {
   const {
     project,
     members,
+    membersLoading,
+    membersError,
     milestones,
     tasks,
     updates,
     currentUser,
     isOwner,
+    workspaceLoading,
+    workspaceError,
+    retryWorkspace,
     milestonesLoading,
     milestonesError,
     retryMilestones,
@@ -89,6 +94,31 @@ function WorkspaceOverview() {
     );
   };
   const navigateTo = (path) => navigate(workspaceHref(path));
+
+  if (workspaceLoading) {
+    return (
+      <section className={styles.statePanel} aria-live="polite">
+        <h1 className={styles.pageTitle}>Overview</h1>
+        <p role="status">Loading project details…</p>
+        <div className={styles.skeletons}>
+          <Skeleton />
+          <Skeleton />
+        </div>
+      </section>
+    );
+  }
+
+  if (workspaceError) {
+    return (
+      <section className={styles.statePanel}>
+        <h1 className={styles.pageTitle}>Overview</h1>
+        <Alert variant="error" title="Couldn't load project details">
+          {workspaceError}
+        </Alert>
+        <Button onClick={retryWorkspace}>Retry</Button>
+      </section>
+    );
+  }
 
   if (previewState === "loading") {
     return (
@@ -194,9 +224,11 @@ function WorkspaceOverview() {
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Overview</h1>
         <p className={styles.dateLine}>
-          {overviewDateLabel} ·{" "}
-          {formatShortDate(project.startDate)}–{formatShortDate(project.endDate)}{" "}
-          · {project.durationWeeks} weeks
+          {overviewDateLabel}
+          {project.startDate || project.endDate
+            ? ` · ${project.startDate ? formatShortDate(project.startDate) : "Start not set"}–${project.endDate ? formatShortDate(project.endDate) : "End not set"}`
+            : ""}
+          {project.durationWeeks != null && ` · ${project.durationWeeks} weeks`}
         </p>
       </header>
 
@@ -240,10 +272,16 @@ function WorkspaceOverview() {
                 {overdueTasks.length === 1 ? "" : "s"} overdue
               </p>
               <div className={styles.memberRows} aria-label="Project members">
-                {members.map((member) => (
+                {membersLoading ? (
+                  <p role="status">Loading members…</p>
+                ) : membersError ? (
+                  <Alert variant="error" title="Couldn't load members">
+                    {membersError}
+                  </Alert>
+                ) : members.map((member) => (
                   <span
                     className={styles.memberAvatar}
-                    key={member.name}
+                    key={member.id}
                     role="img"
                     aria-label={member.name}
                   >
@@ -251,12 +289,23 @@ function WorkspaceOverview() {
                   </span>
                 ))}
               </div>
+              {membersError && (
+                <Button
+                  variant="secondary"
+                  onClick={retryWorkspace}
+                >
+                  Retry loading members
+                </Button>
+              )}
               <p className={styles.summaryMeta}>
-                {members.filter((member) => member.status === "Accepted").length}{" "}
-                joined members · Ada, David and John
+                {membersLoading ? "Loading joined members…" : `${members.length} joined members`}
               </p>
               <p className={styles.acceptedDate}>
-                Accepted {formatDate(members[0]?.acceptedDate)}
+                {membersLoading
+                  ? ""
+                  : members[0]?.acceptedDate
+                    ? `Joined ${members[0].acceptedDate}`
+                    : ""}
               </p>
               <div className={styles.buttonRow}>
                 <Button fullWidth onClick={() => navigateTo("/tasks")}>

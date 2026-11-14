@@ -4,14 +4,13 @@ import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
-import { members } from "../../../../data/workspaceData";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import styles from "./CreateTask.module.css";
 
 const defaultForm = {
   title: "Check responsive layouts",
-  owner: "David",
+  owner: "",
   dueDate: "2026-11-16",
   milestone: "M2",
   status: "To do",
@@ -20,7 +19,15 @@ const defaultForm = {
 
 function CreateTask() {
   const { projectId } = useParams();
-  const { isOwner } = useWorkspace();
+  const {
+    isOwner,
+    members,
+    workspaceLoading,
+    workspaceError,
+    membersLoading,
+    membersError,
+    retryWorkspace,
+  } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
@@ -35,8 +42,7 @@ function CreateTask() {
   const tasksPath = `${workspacePath}/tasks`;
   const taskRoute = `${tasksPath}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
 
-  const acceptedMembers = members.filter((member) => member.status === "Accepted");
-  const ownerOptions = acceptedMembers.map((member) => ({
+  const ownerOptions = members.map((member) => ({
     value: member.name,
     label: `${member.name} · ${member.role}`,
   }));
@@ -78,6 +84,31 @@ function CreateTask() {
     setErrors({});
     setSavedSuccess(true);
   };
+
+  if (workspaceLoading || membersLoading) {
+    return (
+      <section className={styles.page}>
+        <h2 className={styles.pageTitle}>Create task</h2>
+        <p role="status">Loading project members…</p>
+        <Skeleton />
+      </section>
+    );
+  }
+
+  if (workspaceError || membersError) {
+    return (
+      <section className={styles.page}>
+        <h2 className={styles.pageTitle}>Create task</h2>
+        <StateNotice
+          variant="error"
+          title="Couldn't load project members"
+          text={workspaceError || membersError}
+          buttonLabel="Retry"
+          onButtonClick={retryWorkspace}
+        />
+      </section>
+    );
+  }
 
   if (!isOwner) {
     return (
@@ -174,7 +205,7 @@ function CreateTask() {
   return (
     <section className={styles.page}>
       <h2 className={styles.pageTitle}>Create task</h2>
-      <p className={styles.helperText}>Choose one accepted member. Required fields are marked *.</p>
+      <p className={styles.helperText}>Choose one active member. Required fields are marked *.</p>
 
       <form className={styles.formCard} onSubmit={submitTask}>
         <Input
