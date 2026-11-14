@@ -86,8 +86,90 @@
 }
 
 .commentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin-bottom: var(--space-2);
   color: var(--color-text-secondary);
+  flex-wrap: wrap;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.commentActionBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-purple);
+  font-family: inherit;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.commentActionBtn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.commentActionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.commentActionBtnDanger {
+  color: #c92a2a;
+}
+
+.commentConfirmRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.commentEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.deleteTaskSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.deleteConfirmCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.deleteButtonRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.deleteButtonRow > button {
+  flex: 1;
 }
 
 .comment p {

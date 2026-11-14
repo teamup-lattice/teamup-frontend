@@ -46,6 +46,7 @@ function CreateTask() {
   const {
     canManageMembers,
     project,
+    members = [],
     milestones,
     milestonesLoading,
     milestonesError,
@@ -68,12 +69,17 @@ function CreateTask() {
   const tasksPath = `${workspacePath}/tasks`;
   const taskRoute = `${tasksPath}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
 
-  const assigneeOptions = (project.memberships ?? [])
+  const availableMemberships =
+    (project?.memberships && project.memberships.length > 0)
+      ? project.memberships
+      : members;
+
+  const assigneeOptions = availableMemberships
     .filter((member) => !member.status || member.status === "ACTIVE")
     .map((member) => ({
-    value: String(member.id),
-    label: `${member.name || "Project member"}${member.role ? ` · ${member.role}` : ""}`,
-  }));
+      value: String(member.id),
+      label: `${member.name || "Project member"}${member.role ? ` · ${member.role}` : ""}`,
+    }));
 
   const handleFieldChange = (field, value) => {
     setForm((previous) => ({ ...previous, [field]: value }));

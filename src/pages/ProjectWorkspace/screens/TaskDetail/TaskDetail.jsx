@@ -8,10 +8,14 @@ import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
 import {
   createProjectTaskComment,
+  deleteProjectTask,
+  deleteProjectTaskComment,
   getProjectTask,
   getProjectTaskComments,
   getTaskApiStatus,
+  mapComment,
   updateProjectTask,
+  updateProjectTaskComment,
 } from "../../../../services/tasksService";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
@@ -91,6 +95,14 @@ function TaskDetail() {
   const [draftComment, setDraftComment] = useState("");
   const [commentError, setCommentError] = useState("");
   const [commentSaving, setCommentSaving] = useState(false);
+  const [isConfirmingDeleteTask, setIsConfirmingDeleteTask] = useState(false);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
+  const [deleteTaskError, setDeleteTaskError] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [commentActionLoadingId, setCommentActionLoadingId] = useState(null);
+  const [commentActionError, setCommentActionError] = useState("");
+  const [deletingCommentId, setDeletingCommentId] = useState(null);
 
   const isTaskCurrent =
     taskState.projectId === projectId &&
@@ -231,6 +243,33 @@ function TaskDetail() {
       currentUser.projectMemberId &&
         (!currentUser.status || currentUser.status === "ACTIVE"),
     );
+
+  const isCommentAuthor = (entry) => {
+    if (!currentUser) return false;
+    if (
+      currentUser.projectMemberId &&
+      entry.authorMemberId &&
+      String(currentUser.projectMemberId) === String(entry.authorMemberId)
+    ) {
+      return true;
+    }
+    if (
+      currentUser.id &&
+      entry.authorId &&
+      String(currentUser.id) === String(entry.authorId)
+    ) {
+      return true;
+    }
+    if (
+      currentUser.name &&
+      entry.author &&
+      entry.author !== "Project member" &&
+      currentUser.name === entry.author
+    ) {
+      return true;
+    }
+    return false;
+  };
   const milestone = task
     ? milestones.find((item) => String(item.id) === String(task.milestoneId))
     : null;
@@ -372,6 +411,149 @@ function TaskDetail() {
       );
     } finally {
       setCommentSaving(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!canManageMembers || isDeletingTask) return;
+    setIsDeletingTask(true);
+    setDeleteTaskError("");
+    try {
+      await deleteProjectTask(projectId, taskId);
+      try {
+        await refreshTasks();
+      } catch (refreshErr) {
+        console.warn("Could not refresh tasks list after deletion:", refreshErr);
+      }
+      navigate(taskRoute);
+    } catch (error) {
+      setDeleteTaskError(
+        formatErrorMessage(error, "Task could not be deleted."),
+      );
+      setIsDeletingTask(false);
+    }
+  };
+
+  const startEditComment = (entry) => {
+    setEditingCommentId(entry.id);
+    setEditingCommentText(entry.message || "");
+    setCommentActionError("");
+    setDeletingCommentId(null);
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+    setCommentActionError("");
+  };
+
+  const handleUpdateComment = async (commentId) => {
+    const content = editingCommentText.trim();
+    if (!content) {
+      setCommentActionError("Comment cannot be empty.");
+      return;
+    }
+    if (content.length > 3000) {
+      setCommentActionError("Comments must be 3000 characters or fewer.");
+      return;
+    }
+
+    setCommentActionLoadingId(commentId);
+    setCommentActionError("");
+    try {
+      const response = await updateProjectTaskComment(
+        projectId,
+        taskId,
+        commentId,
+        content,
+      );
+      if (Array.isArray(response?.comments)) {
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: response.comments.map(mapComment),
+        }));
+      } else if (Array.isArray(response)) {
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: response.map(mapComment),
+        }));
+      } else {
+        const updatedComment =
+          response?.comment ??
+          (response && typeof response === "object" && response.id
+            ? response
+            : null);
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: prev.comments.map((item) =>
+            String(item.id) === String(commentId)
+              ? {
+                  ...item,
+                  message:
+                    typeof updatedComment?.content === "string"
+                      ? updatedComment.content
+                      : content,
+                }
+              : item,
+          ),
+        }));
+      }
+      setEditingCommentId(null);
+      setEditingCommentText("");
+    } catch (error) {
+      setCommentActionError(
+        formatErrorMessage(error, "Comment could not be updated."),
+      );
+    } finally {
+      setCommentActionLoadingId(null);
+    }
+  };
+
+  const startDeleteComment = (commentId) => {
+    setDeletingCommentId(commentId);
+    setCommentActionError("");
+    setEditingCommentId(null);
+  };
+
+  const cancelDeleteComment = () => {
+    setDeletingCommentId(null);
+    setCommentActionError("");
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    setCommentActionLoadingId(commentId);
+    setCommentActionError("");
+    try {
+      const response = await deleteProjectTaskComment(
+        projectId,
+        taskId,
+        commentId,
+      );
+      if (Array.isArray(response?.comments)) {
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: response.comments.map(mapComment),
+        }));
+      } else if (Array.isArray(response)) {
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: response.map(mapComment),
+        }));
+      } else {
+        setCommentsState((prev) => ({
+          ...prev,
+          comments: prev.comments.filter(
+            (item) => String(item.id) !== String(commentId),
+          ),
+        }));
+      }
+      setDeletingCommentId(null);
+    } catch (error) {
+      setCommentActionError(
+        formatErrorMessage(error, "Comment could not be deleted."),
+      );
+    } finally {
+      setCommentActionLoadingId(null);
     }
   };
 
@@ -535,6 +717,55 @@ function TaskDetail() {
             Reassign task
           </Button>
         )}
+        {canManageMembers && (
+          <div className={styles.deleteTaskSection}>
+            {deleteTaskError && (
+              <Alert variant="error" title="Could not delete task">
+                {deleteTaskError}
+              </Alert>
+            )}
+            {isConfirmingDeleteTask ? (
+              <div className={styles.deleteConfirmCard}>
+                <p className={styles.metaLine}>
+                  Are you sure you want to delete <strong>{task.title}</strong>? This action cannot be undone.
+                </p>
+                <div className={styles.deleteButtonRow}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isDeletingTask}
+                    onClick={() => {
+                      setIsConfirmingDeleteTask(false);
+                      setDeleteTaskError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    loading={isDeletingTask}
+                    loadingText="Deleting task…"
+                    onClick={handleDeleteTask}
+                  >
+                    Confirm delete
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={() => {
+                  setIsConfirmingDeleteTask(true);
+                  setDeleteTaskError("");
+                }}
+              >
+                Delete task
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -600,15 +831,110 @@ function TaskDetail() {
           <p className={styles.metaLine}>No comments yet.</p>
         ) : (
           <div className={styles.commentList}>
-            {comments.map((entry) => (
-              <div key={entry.id} className={styles.comment}>
-                <div className={styles.commentHeader}>
-                  <strong>{entry.author || "Project member"}</strong>
-                  {entry.date && <span> · {entry.date}</span>}
+            {commentActionError && (
+              <Alert variant="error" title="Comment action failed">
+                {commentActionError}
+              </Alert>
+            )}
+            {comments.map((entry) => {
+              const isAuthor = isCommentAuthor(entry);
+              const canEdit = isAuthor;
+              const canDelete = isAuthor || canManageMembers;
+              const isEditing = editingCommentId === entry.id;
+              const isDeleting = deletingCommentId === entry.id;
+              const isActionLoading = commentActionLoadingId === entry.id;
+
+              return (
+                <div key={entry.id} className={styles.comment}>
+                  <div className={styles.commentHeader}>
+                    <div className={styles.commentMeta}>
+                      <strong>{entry.author || "Project member"}</strong>
+                      {entry.date && <span> · {entry.date}</span>}
+                    </div>
+                    {!isEditing && !isDeleting && (canEdit || canDelete) && (
+                      <div className={styles.commentActions}>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            className={styles.commentActionBtn}
+                            onClick={() => startEditComment(entry)}
+                            disabled={Boolean(commentActionLoadingId)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className={`${styles.commentActionBtn} ${styles.commentActionBtnDanger}`}
+                            onClick={() => startDeleteComment(entry.id)}
+                            disabled={Boolean(commentActionLoadingId)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {isEditing ? (
+                    <div className={styles.commentEditForm}>
+                      <Input
+                        label="Edit comment"
+                        maxLength={3000}
+                        value={editingCommentText}
+                        onChange={(event) =>
+                          setEditingCommentText(event.target.value)
+                        }
+                        placeholder="Edit your comment."
+                      />
+                      <div className={styles.commentConfirmRow}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={isActionLoading}
+                          onClick={cancelEditComment}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          loading={isActionLoading}
+                          loadingText="Saving…"
+                          onClick={() => handleUpdateComment(entry.id)}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : isDeleting ? (
+                    <div className={styles.commentConfirmRow}>
+                      <p className={styles.metaLine}>
+                        Delete this comment?
+                      </p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={isActionLoading}
+                        onClick={cancelDeleteComment}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        loading={isActionLoading}
+                        loadingText="Deleting…"
+                        onClick={() => handleDeleteComment(entry.id)}
+                      >
+                        Confirm delete
+                      </Button>
+                    </div>
+                  ) : (
+                    <p>{entry.message}</p>
+                  )}
                 </div>
-                <p>{entry.message}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {commentError && (
