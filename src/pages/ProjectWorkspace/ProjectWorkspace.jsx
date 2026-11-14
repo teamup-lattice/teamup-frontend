@@ -3,10 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-rout
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
-import {
-  projectUpdates,
-  taskComments,
-} from "../../data/workspaceData";
+import { projectUpdates } from "../../data/workspaceData";
 import { getProjectMilestones } from "../../services/milestonesService";
 import {
   getWorkspaceCurrentUser,
@@ -404,7 +401,6 @@ function ProjectWorkspace() {
     retryTasks,
     taskSummary,
     refreshTasks,
-    comments: taskComments,
     updates: projectUpdates,
     currentUser,
     isOwner,
