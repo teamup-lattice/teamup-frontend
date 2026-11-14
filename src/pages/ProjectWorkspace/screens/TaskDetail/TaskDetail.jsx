@@ -92,6 +92,7 @@ function TaskDetail() {
   const [statusError, setStatusError] = useState("");
   const [statusSaving, setStatusSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [noChangesNotice, setNoChangesNotice] = useState(false);
   const [draftComment, setDraftComment] = useState("");
   const [commentError, setCommentError] = useState("");
   const [commentSaving, setCommentSaving] = useState(false);
@@ -140,6 +141,8 @@ function TaskDetail() {
         setCompletionNote("");
         setArtifactUrl("");
         setStatusError("");
+        setSuccessMessage("");
+        setNoChangesNotice(false);
         setTaskState({
           projectId,
           taskId,
@@ -281,6 +284,7 @@ function TaskDetail() {
     setArtifactUrl("");
     setStatusError("");
     setSuccessMessage("");
+    setNoChangesNotice(false);
   };
 
   const saveStatus = async () => {
@@ -326,7 +330,8 @@ function TaskDetail() {
     }
 
     if (Object.keys(changes).length === 0) {
-      setSuccessMessage("No task changes to save.");
+      setSuccessMessage("");
+      setNoChangesNotice(true);
       setStatusError("");
       return;
     }
@@ -334,6 +339,7 @@ function TaskDetail() {
     setStatusSaving(true);
     setStatusError("");
     setSuccessMessage("");
+    setNoChangesNotice(false);
     try {
       await updateProjectTask(projectId, taskId, changes);
       const updatedTask = await getProjectTask(projectId, taskId, {
@@ -353,6 +359,7 @@ function TaskDetail() {
         task: updatedTask,
       });
       setSuccessMessage(`${updatedTask.title} saved.`);
+      setNoChangesNotice(false);
       try {
         await refreshTasks();
       } catch (refreshErr) {
@@ -615,7 +622,7 @@ function TaskDetail() {
             text={`${task.assignee} is the assignee. ${currentUser.name} can view and comment, but cannot change ${task.assignee}'s status.`}
           />
           <p className={styles.summaryText}>
-            Owner: {task.assignee} · Due {task.dueDate} · {milestone?.name || ""} · {task.status}
+            Owner: {task.assignee} · Due {task.dueDate} · {milestone?.name || task.milestoneTitle || task.milestoneName || ""} · {task.status}
           </p>
         </div>
       );
@@ -638,6 +645,11 @@ function TaskDetail() {
             {successMessage}
           </Alert>
         )}
+        {noChangesNotice && (
+          <Alert variant="info">
+            No task changes to save.
+          </Alert>
+        )}
         <div className={styles.statusCard}>
           <Select
             label="Task status"
@@ -647,6 +659,8 @@ function TaskDetail() {
             onChange={(event) => {
               setStatus(event.target.value);
               setStatusError("");
+              setSuccessMessage("");
+              setNoChangesNotice(false);
             }}
           />
           {status === "Blocked" && (
@@ -655,7 +669,11 @@ function TaskDetail() {
               required
               maxLength={1000}
               value={blockerNote}
-              onChange={(event) => setBlockerNote(event.target.value)}
+              onChange={(event) => {
+                setBlockerNote(event.target.value);
+                setSuccessMessage("");
+                setNoChangesNotice(false);
+              }}
               error={statusError && !blockerNote.trim() ? statusError : ""}
               placeholder="Describe what is blocking this task."
             />
@@ -666,7 +684,11 @@ function TaskDetail() {
                 label="Artifact link"
                 type="url"
                 value={artifactUrl}
-                onChange={(event) => setArtifactUrl(event.target.value)}
+                onChange={(event) => {
+                  setArtifactUrl(event.target.value);
+                  setSuccessMessage("");
+                  setNoChangesNotice(false);
+                }}
                 placeholder="https://example.org"
               />
               <Button type="button" variant="secondary" fullWidth disabled>
@@ -677,7 +699,11 @@ function TaskDetail() {
                 multiline
                 maxLength={2000}
                 value={completionNote}
-                onChange={(event) => setCompletionNote(event.target.value)}
+                onChange={(event) => {
+                  setCompletionNote(event.target.value);
+                  setSuccessMessage("");
+                  setNoChangesNotice(false);
+                }}
               />
               <p className={styles.metaLine}>
                 Completion notes and links are optional. Attachments are not
@@ -975,7 +1001,7 @@ function TaskDetail() {
 
       <p className={styles.footerNote}>
         Saved: {task.status} · Due {task.dueDate} · {task.assignee} ·{" "}
-        {milestone?.name || ""}
+        {milestone?.name || task.milestoneTitle || task.milestoneName || ""}
       </p>
     </section>
   );

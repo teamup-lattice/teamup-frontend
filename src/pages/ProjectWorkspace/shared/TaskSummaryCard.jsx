@@ -8,7 +8,8 @@ function TaskSummaryCard({ task, milestone }) {
   }
 
   const overdueDays = Number(task.overdueDays || 0);
-  const milestoneLabel = milestone ? `${milestone.id} ${milestone.name}` : "";
+  const milestoneLabel =
+    milestone?.name || task.milestoneTitle || task.milestoneName || "";
   const ownerInitial = (task.assignee || "").charAt(0).toUpperCase();
 
   return (

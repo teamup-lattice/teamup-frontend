@@ -44,34 +44,96 @@ function getOverdueDays(dueDate, status) {
   return Math.max(0, Math.floor((todayUtc - due.getTime()) / 86400000));
 }
 
-function mapTask(task, memberships, milestones) {
+function mapTask(taskData, memberships = [], milestones = []) {
+  const task =
+    taskData && typeof taskData === "object" && taskData.task
+      ? taskData.task
+      : taskData;
+
   if (!task || typeof task !== "object" || Array.isArray(task)) {
     throw new Error("Tasks response contains invalid task data.");
   }
 
-  const assigneeRelation =
-    task.assignee && typeof task.assignee === "object"
-      ? task.assignee
-      : null;
+  const assigneeObj =
+    task.assignee && typeof task.assignee === "object" ? task.assignee : null;
   const assigneeMemberId =
-    task.assigneeMemberId ?? assigneeRelation?.id ?? null;
-  const member = memberships.find(
-    (item) => String(item.id) === String(assigneeMemberId),
-  );
-  const assigneeUserId =
-    member?.userId ??
-    assigneeRelation?.userId ??
-    assigneeRelation?.user?.id ??
-    task.assigneeUserId ??
+    (typeof assigneeObj?.id === "string" || typeof assigneeObj?.id === "number"
+      ? String(assigneeObj.id)
+      : null) ??
+    (typeof task.assigneeMemberId === "string" ||
+    typeof task.assigneeMemberId === "number"
+      ? String(task.assigneeMemberId)
+      : "");
+
+  const member = Array.isArray(memberships)
+    ? memberships.find((item) => String(item.id) === String(assigneeMemberId))
+    : null;
+
+  const assigneeName =
+    (typeof assigneeObj?.user?.name === "string" && assigneeObj.user.name) ||
+    member?.name ||
+    (typeof assigneeObj?.name === "string" && assigneeObj.name) ||
+    (typeof task.assignee === "string" && task.assignee) ||
+    "Unassigned";
+
+  const assigneeRole =
+    (typeof assigneeObj?.role?.title === "string" && assigneeObj.role.title) ||
+    (typeof assigneeObj?.role === "string" && assigneeObj.role) ||
+    member?.role ||
     "";
-  const milestoneRelation =
+
+  const assigneeUserId =
+    (typeof assigneeObj?.user?.id === "string" ||
+    typeof assigneeObj?.user?.id === "number"
+      ? String(assigneeObj.user.id)
+      : "") ||
+    member?.userId ||
+    (typeof task.assigneeUserId === "string" ||
+    typeof task.assigneeUserId === "number"
+      ? String(task.assigneeUserId)
+      : "");
+
+  const milestoneObj =
     task.milestone && typeof task.milestone === "object"
       ? task.milestone
       : null;
-  const milestoneId = task.milestoneId ?? milestoneRelation?.id ?? "";
-  const milestone = milestones.find(
-    (item) => String(item.id) === String(milestoneId),
-  );
+  const milestoneId =
+    (typeof milestoneObj?.id === "string" ||
+    typeof milestoneObj?.id === "number"
+      ? String(milestoneObj.id)
+      : null) ??
+    (typeof task.milestoneId === "string" ||
+    typeof task.milestoneId === "number"
+      ? String(task.milestoneId)
+      : "");
+
+  const milestoneFound = Array.isArray(milestones)
+    ? milestones.find((item) => String(item.id) === String(milestoneId))
+    : null;
+
+  const milestoneTitle =
+    (typeof milestoneObj?.title === "string" && milestoneObj.title) ||
+    (typeof milestoneObj?.name === "string" && milestoneObj.name) ||
+    milestoneFound?.name ||
+    "";
+
+  const createdByName =
+    (typeof task.createdBy?.name === "string" && task.createdBy.name) ||
+    (typeof task.createdBy?.user?.name === "string" &&
+      task.createdBy.user.name) ||
+    (typeof task.createdBy === "string" && task.createdBy) ||
+    "";
+
+  const createdById =
+    (typeof task.createdBy?.id === "string" ||
+    typeof task.createdBy?.id === "number"
+      ? String(task.createdBy.id)
+      : "") ||
+    (typeof task.createdById === "string" ||
+    typeof task.createdById === "number"
+      ? String(task.createdById)
+      : "");
+
   const apiStatus =
     typeof task.status === "string" ? task.status.toUpperCase() : "";
   const status =
@@ -82,35 +144,19 @@ function mapTask(task, memberships, milestones) {
   return {
     id:
       typeof task.id === "string" || typeof task.id === "number"
-        ? task.id
+        ? String(task.id)
         : "",
     title: typeof task.title === "string" ? task.title : "",
-    assignee:
-      member?.name ??
-      (typeof assigneeRelation?.user?.name === "string"
-        ? assigneeRelation.user.name
-        : typeof assigneeRelation?.name === "string"
-          ? assigneeRelation.name
-          : typeof task.assignee === "string"
-            ? task.assignee
-            : "Unassigned"),
-    assigneeMemberId:
-      typeof assigneeMemberId === "string" ||
-      typeof assigneeMemberId === "number"
-        ? assigneeMemberId
-        : "",
-    assigneeUserId:
-      typeof assigneeUserId === "string" ||
-      typeof assigneeUserId === "number"
-        ? assigneeUserId
-        : "",
+    assignee: assigneeName,
+    assigneeRole,
+    assigneeMemberId,
+    assigneeUserId,
     dueDate,
     milestoneId,
-    milestoneName:
-      milestone?.name ??
-      (typeof milestoneRelation?.title === "string"
-        ? milestoneRelation.title
-        : ""),
+    milestoneTitle,
+    milestoneName: milestoneTitle,
+    createdBy: createdByName,
+    createdById,
     status,
     note: typeof task.description === "string" ? task.description : "",
     blockerNote: typeof task.blockerNote === "string" ? task.blockerNote : "",
