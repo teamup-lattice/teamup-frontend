@@ -65,7 +65,19 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
     throw new Error("Network error");
   }
 
-  const data = await response.json().catch(() => ({}));
+  const responseText = await response.text();
+  let data = {};
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      const missingRoute =
+        response.status === 404
+          ? responseText.match(/Cannot GET\s+([^<\r\n]+)/i)?.[1]?.trim()
+          : "";
+      if (missingRoute) data.message = `Cannot GET ${missingRoute}`;
+    }
+  }
 
   if (!response.ok) {
     if (
