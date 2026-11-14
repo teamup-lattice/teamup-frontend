@@ -46,8 +46,10 @@ function refreshToken() {
 async function request(method, path, body, isRetry = false, tokenOverride) {
   const headers = {};
   const token = tokenOverride ?? getToken();
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
 
-  if (body) headers["Content-Type"] = "application/json";
+  if (body && !isFormData) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
@@ -57,7 +59,7 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
       method,
       headers,
       credentials: "include",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : body ? JSON.stringify(body) : undefined,
     });
   } catch {
     throw new Error("Network error");
