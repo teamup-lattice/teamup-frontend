@@ -19,6 +19,15 @@
   font-weight: 600;
 }
 
+.avatarImg {
+  display: block;
+  flex-shrink: 0;
+  width: calc(var(--space-6) + var(--space-1));
+  height: calc(var(--space-6) + var(--space-1));
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .personText {
   color: var(--color-text-secondary);
   font-size: var(--font-size-label);
