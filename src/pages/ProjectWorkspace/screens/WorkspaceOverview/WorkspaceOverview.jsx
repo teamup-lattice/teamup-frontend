@@ -202,8 +202,8 @@ function WorkspaceOverview() {
               <span className={styles.taskMeta}>Owner: {task.assignee}</span>
             </div>
             <p className={styles.taskMeta}>
-              Due: {formatDate(task.dueDate)} · Milestone: {milestone?.id}{" "}
-              {milestone?.name}
+              Due: {formatDate(task.dueDate)} · Milestone:{" "}
+              {milestone?.name || task.milestoneTitle || task.milestoneName || "—"}
             </p>
             {task.blockerNote && (
               <p className={styles.blockerNote}>
@@ -243,7 +243,7 @@ function WorkspaceOverview() {
           {milestoneProgress
             .map(
               (milestone) =>
-                `${milestone.id}: ${milestone.completedTasks}/${milestone.totalTasks}`,
+                `${milestone.name || milestone.title || milestone.id}: ${milestone.completedTasks}/${milestone.totalTasks}`,
             )
             .join(" · ")}
           . Project is still {project.status}.

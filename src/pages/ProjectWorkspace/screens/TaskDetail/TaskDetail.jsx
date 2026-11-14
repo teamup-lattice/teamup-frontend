@@ -248,26 +248,12 @@ function TaskDetail() {
     );
 
   const isCommentAuthor = (entry) => {
-    if (!currentUser) return false;
-    if (
-      currentUser.projectMemberId &&
-      entry.authorMemberId &&
-      String(currentUser.projectMemberId) === String(entry.authorMemberId)
-    ) {
-      return true;
-    }
+    if (!currentUser || !entry) return false;
+    // author.id from the API is a user id — compare against currentUser.id only
     if (
       currentUser.id &&
       entry.authorId &&
       String(currentUser.id) === String(entry.authorId)
-    ) {
-      return true;
-    }
-    if (
-      currentUser.name &&
-      entry.author &&
-      entry.author !== "Project member" &&
-      currentUser.name === entry.author
     ) {
       return true;
     }
