@@ -6,6 +6,25 @@ import { formatDate } from "./formatDate";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./ReviewStep.module.css";
 
+function formatValidationErrors(errors, path = "") {
+  if (typeof errors === "string" || typeof errors === "number") {
+    const message = String(errors).trim();
+    return message ? [path ? `${path}: ${message}` : message] : [];
+  }
+
+  if (Array.isArray(errors)) {
+    return errors.flatMap((error) => formatValidationErrors(error, path));
+  }
+
+  if (errors && typeof errors === "object") {
+    return Object.entries(errors).flatMap(([key, value]) =>
+      formatValidationErrors(value, path ? `${path}.${key}` : key),
+    );
+  }
+
+  return [];
+}
+
 const defaultExpectations = [
   "Respond within the agreed response window.",
   "Keep task status up to date.",
@@ -56,6 +75,7 @@ function ReviewStep() {
     saveStatus,
     saveDraft,
     publishStatus,
+    publishError,
     publishProject,
     setCurrentStep,
     goBack,
@@ -65,6 +85,7 @@ function ReviewStep() {
   const isPublishing = publishStatus === "publishing";
   const isSaving = saveStatus === "saving";
   const isFailed = publishStatus === "failed";
+  const publishValidationErrors = formatValidationErrors(publishError?.errors);
   const skillsById = new Map(
     availableSkills.map((skill) => [String(skill.id), skill.name]),
   );
@@ -156,7 +177,9 @@ function ReviewStep() {
 
       {isFailed && (
         <Alert variant="error" title="Project did not publish">
-          Publication failed. Saved Draft unchanged; local entries retained.
+          {[publishError?.message || "Publication failed. Try again.", ...publishValidationErrors]
+            .filter(Boolean)
+            .join(" — ")}
         </Alert>
       )}
 
@@ -451,7 +474,7 @@ function ReviewStep() {
             variant="secondary"
             fullWidth
             onClick={publishProject}
-            disabled={isPublishing}
+            disabled={isSaving || isPublishing}
           >
             Retry Publish project
           </Button>
@@ -472,7 +495,7 @@ function ReviewStep() {
           <Button
             fullWidth
             onClick={publishProject}
-            disabled={hasBlockers || isPublishing}
+            disabled={hasBlockers || isSaving || isPublishing}
           >
             {isPublishing ? "Publishing..." : "Publish project"}
           </Button>

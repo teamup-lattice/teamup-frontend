@@ -16,7 +16,18 @@ function WizardContent() {
   if (!context) {
     throw new Error("WizardContent must be used within a WizardProvider.");
   }
-  const { currentStep, completedSteps, publishStatus } = context;
+  const { currentStep, completedSteps, publishStatus, isLoadingDraft } =
+    context;
+
+  if (isLoadingDraft) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.contentCard}>
+          <p>Loading your draft…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (publishStatus === "published") {
     return (
@@ -30,10 +41,7 @@ function WizardContent() {
 
   return (
     <div className={styles.page}>
-      <WizardSteps
-        currentStep={currentStep}
-        completedSteps={completedSteps}
-      />
+      <WizardSteps currentStep={currentStep} completedSteps={completedSteps} />
       <div className={styles.contentCard}>
         {currentStep === 1 && <BasicsStep />}
         {currentStep === 2 && <RolesStep />}
