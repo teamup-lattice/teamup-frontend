@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
+import { getMyProfile } from "../services/dashboardService";
 import { getUnreadCount } from "../services/notificationsService";
 import styles from "./AppLayout.module.css";
 
@@ -47,9 +48,36 @@ const MOBILE_QUERY = "(max-width: 599px)";
 function AppLayout() {
   const { pathname } = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     () => !window.matchMedia(MOBILE_QUERY).matches,
   );
+
+  useEffect(() => {
+    let isCurrent = true;
+    const loadUser = () => {
+      getMyProfile()
+        .then((data) => {
+          if (isCurrent && data?.user) {
+            setCurrentUser({
+              name: data.user.name ?? "",
+              avatarUrl: data.user.avatarUrl ?? "",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load user profile in sidebar:", error);
+        });
+    };
+
+    loadUser();
+    window.addEventListener("profile:changed", loadUser);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener("profile:changed", loadUser);
+    };
+  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -95,6 +123,23 @@ function AppLayout() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
+
+  // Stop the page behind from scrolling while the mobile drawer is open
+  useEffect(() => {
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const applyScrollLock = () => {
+      document.body.style.overflow =
+        isSidebarOpen && mql.matches ? "hidden" : "";
+    };
+
+    applyScrollLock();
+    mql.addEventListener("change", applyScrollLock);
+
+    return () => {
+      mql.removeEventListener("change", applyScrollLock);
+      document.body.style.overflow = "";
+    };
+  }, [isSidebarOpen]);
 
   return (
     <div className={styles.shell}>
@@ -172,6 +217,36 @@ function AppLayout() {
             </NavLink>
           ))}
           <p className={styles.tagline}>Make something together.</p>
+          <div className={styles.navFooter}>
+            {currentUser && (
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `${styles.userChip} ${isActive ? styles.userChipActive : ""}`
+                }
+                onClick={handleSidebarLinkClick}
+                aria-label={`Profile: ${currentUser.name || "User"}`}
+              >
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt=""
+                    className={styles.userAvatarImg}
+                  />
+                ) : (
+                  <span
+                    className={styles.userAvatarFallback}
+                    aria-hidden="true"
+                  >
+                    {(currentUser.name || "U").charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className={styles.userName}>
+                  {currentUser.name || "Profile"}
+                </span>
+              </NavLink>
+            )}
+          </div>
         </nav>
 
         <main className={styles.content}>

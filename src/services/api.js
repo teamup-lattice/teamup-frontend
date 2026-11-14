@@ -46,8 +46,10 @@ function refreshToken() {
 async function request(method, path, body, isRetry = false, tokenOverride) {
   const headers = {};
   const token = tokenOverride ?? getToken();
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
 
-  if (body) headers["Content-Type"] = "application/json";
+  if (body && !isFormData) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
@@ -57,13 +59,25 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
       method,
       headers,
       credentials: "include",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : body ? JSON.stringify(body) : undefined,
     });
   } catch {
     throw new Error("Network error");
   }
 
-  const data = await response.json().catch(() => ({}));
+  const responseText = await response.text();
+  let data = {};
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      const missingRoute =
+        response.status === 404
+          ? responseText.match(/Cannot GET\s+([^<\r\n]+)/i)?.[1]?.trim()
+          : "";
+      if (missingRoute) data.message = `Cannot GET ${missingRoute}`;
+    }
+  }
 
   if (!response.ok) {
     if (

@@ -4,6 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
 import listFilterIcon from "../../assets/list-filter.svg";
+import { getMyProfile } from "../../services/dashboardService";
 import { getMyProjects } from "../../services/myProjectsService";
 import ProjectCard from "./ProjectCard";
 import TeamHealthSummary from "./TeamHealthSummary";
@@ -28,6 +29,7 @@ function MyProjects() {
   const navigate = useNavigate();
   const filterRef = useRef(null);
   const [records, setRecords] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [status, setStatus] = useState("loading");
   const [statusFilter, setStatusFilter] = useState("");
   const [isRetrying, setIsRetrying] = useState(false);
@@ -48,6 +50,17 @@ function MyProjects() {
         if (!isMounted) return;
 
         setStatus("error");
+      });
+
+    getMyProfile()
+      .then((data) => {
+        if (!isMounted) return;
+        if (data?.user?.id != null) {
+          setCurrentUserId(data.user.id);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load user profile in MyProjects:", error);
       });
 
     return () => {
@@ -78,6 +91,10 @@ function MyProjects() {
   const handleResetFilter = () => {
     setStatusFilter("");
     filterRef.current?.focus();
+  };
+
+  const handleDeleteProject = (deletedId) => {
+    setRecords((prev) => prev.filter((project) => project.id !== deletedId));
   };
 
   const isLoading = status === "loading";
@@ -168,10 +185,18 @@ function MyProjects() {
             <li className={styles.item} key={project.id}>
               {project.id === "campus-marketplace" ? (
                 <TeamHealthSummary>
-                  <ProjectCard project={project} />
+                  <ProjectCard
+                    project={project}
+                    currentUserId={currentUserId}
+                    onDelete={handleDeleteProject}
+                  />
                 </TeamHealthSummary>
               ) : (
-                <ProjectCard project={project} />
+                <ProjectCard
+                  project={project}
+                  currentUserId={currentUserId}
+                  onDelete={handleDeleteProject}
+                />
               )}
             </li>
           ))}

@@ -36,18 +36,38 @@ function WorkspaceOverview() {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { project, members, milestones, tasks, updates, currentUser, isOwner } =
-    useWorkspace();
+  const {
+    project,
+    members,
+    membersLoading,
+    membersError,
+    milestones,
+    tasks,
+    updates,
+    currentUser,
+    isOwner,
+    canManageMembers,
+    workspaceLoading,
+    workspaceError,
+    retryWorkspace,
+    tasksLoading,
+    tasksError,
+    retryTasks,
+    taskSummary,
+    milestonesLoading,
+    milestonesError,
+    retryMilestones,
+  } = useWorkspace();
   const searchParams = new URLSearchParams(location.search);
   const previewState = searchParams.get("state");
   const asParam = searchParams.get("as");
   const workspacePath = `/projects/${projectId}/workspace`;
   const workspaceHref = (path) =>
     `${workspacePath}${path}${asParam ? `?as=${encodeURIComponent(asParam)}` : ""}`;
-  const completedTasks = tasks.filter((task) => task.status === "Done").length;
-  const totalTasks = tasks.length;
-  const overdueTasks = tasks.filter((task) => getDaysOverdue(task) > 0);
-  const remainingTasks = totalTasks - completedTasks;
+  const completedTasks = taskSummary?.done ?? 0;
+  const totalTasks = taskSummary?.total ?? tasks.length;
+  const overdueTasks = taskSummary?.overdue ?? tasks.filter((task) => getDaysOverdue(task) > 0).length;
+  const remainingTasks = taskSummary?.notDone ?? totalTasks - completedTasks;
   const attentionTasks = tasks.filter(
     (task) => task.status === "Blocked" || getDaysOverdue(task) > 0,
   );
@@ -79,6 +99,31 @@ function WorkspaceOverview() {
     );
   };
   const navigateTo = (path) => navigate(workspaceHref(path));
+
+  if (workspaceLoading) {
+    return (
+      <section className={styles.statePanel} aria-live="polite">
+        <h1 className={styles.pageTitle}>Overview</h1>
+        <p role="status">Loading project details…</p>
+        <div className={styles.skeletons}>
+          <Skeleton />
+          <Skeleton />
+        </div>
+      </section>
+    );
+  }
+
+  if (workspaceError) {
+    return (
+      <section className={styles.statePanel}>
+        <h1 className={styles.pageTitle}>Overview</h1>
+        <Alert variant="error" title="Couldn't load project details">
+          {workspaceError}
+        </Alert>
+        <Button onClick={retryWorkspace}>Retry</Button>
+      </section>
+    );
+  }
 
   if (previewState === "loading") {
     return (
@@ -118,7 +163,7 @@ function WorkspaceOverview() {
           title="No tasks yet."
           text="Ada can create one; members can request work in Updates."
         >
-          {isOwner && (
+          {canManageMembers && (
             <Button onClick={() => navigateTo("/tasks/new")}>
               Create task
             </Button>
@@ -157,8 +202,8 @@ function WorkspaceOverview() {
               <span className={styles.taskMeta}>Owner: {task.assignee}</span>
             </div>
             <p className={styles.taskMeta}>
-              Due: {formatDate(task.dueDate)} · Milestone: {milestone?.id}{" "}
-              {milestone?.name}
+              Due: {formatDate(task.dueDate)} · Milestone:{" "}
+              {milestone?.name || task.milestoneTitle || task.milestoneName || "—"}
             </p>
             {task.blockerNote && (
               <p className={styles.blockerNote}>
@@ -166,7 +211,7 @@ function WorkspaceOverview() {
               </p>
             )}
           </article>
-          {isOwner && (
+          {canManageMembers && (
             <Button
               variant="secondary"
               fullWidth
@@ -184,9 +229,11 @@ function WorkspaceOverview() {
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Overview</h1>
         <p className={styles.dateLine}>
-          {overviewDateLabel} ·{" "}
-          {formatShortDate(project.startDate)}–{formatShortDate(project.endDate)}{" "}
-          · {project.durationWeeks} weeks
+          {overviewDateLabel}
+          {project.startDate || project.endDate
+            ? ` · ${project.startDate ? formatShortDate(project.startDate) : "Start not set"}–${project.endDate ? formatShortDate(project.endDate) : "End not set"}`
+            : ""}
+          {project.durationWeeks != null && ` · ${project.durationWeeks} weeks`}
         </p>
       </header>
 
@@ -196,7 +243,7 @@ function WorkspaceOverview() {
           {milestoneProgress
             .map(
               (milestone) =>
-                `${milestone.id}: ${milestone.completedTasks}/${milestone.totalTasks}`,
+                `${milestone.name || milestone.title || milestone.id}: ${milestone.completedTasks}/${milestone.totalTasks}`,
             )
             .join(" · ")}
           . Project is still {project.status}.
@@ -216,24 +263,47 @@ function WorkspaceOverview() {
               <div className={styles.progressHeading}>
                 <span>Overall tasks</span>
                 <span>
-                  {completedTasks} of {totalTasks} Done
+                  {tasksLoading
+                    ? "Loading task counts…"
+                    : tasksError
+                      ? "Task counts unavailable"
+                      : `${completedTasks} of ${totalTasks} Done`}
                 </span>
               </div>
               <progress
                 className={styles.progressBar}
-                value={completedTasks}
+                value={tasksLoading || tasksError ? 0 : completedTasks}
                 max={totalTasks || 1}
                 aria-label={`${completedTasks} of ${totalTasks} tasks done`}
               />
               <p className={styles.summaryMeta}>
-                {remainingTasks} tasks not Done · {overdueTasks.length} task
-                {overdueTasks.length === 1 ? "" : "s"} overdue
+                {tasksLoading
+                  ? "Loading task counts…"
+                  : tasksError
+                    ? "Task counts unavailable"
+                    : `${remainingTasks} tasks not Done · ${overdueTasks} task${overdueTasks === 1 ? "" : "s"} overdue`}
               </p>
+              {tasksError && (
+                <>
+                  <Alert variant="error" title="Couldn't load project tasks">
+                    {tasksError}
+                  </Alert>
+                  <Button variant="secondary" onClick={retryTasks}>
+                    Retry task counts
+                  </Button>
+                </>
+              )}
               <div className={styles.memberRows} aria-label="Project members">
-                {members.map((member) => (
+                {membersLoading ? (
+                  <p role="status">Loading members…</p>
+                ) : membersError ? (
+                  <Alert variant="error" title="Couldn't load members">
+                    {membersError}
+                  </Alert>
+                ) : members.map((member) => (
                   <span
                     className={styles.memberAvatar}
-                    key={member.name}
+                    key={member.id}
                     role="img"
                     aria-label={member.name}
                   >
@@ -241,12 +311,23 @@ function WorkspaceOverview() {
                   </span>
                 ))}
               </div>
+              {membersError && (
+                <Button
+                  variant="secondary"
+                  onClick={retryWorkspace}
+                >
+                  Retry loading members
+                </Button>
+              )}
               <p className={styles.summaryMeta}>
-                {members.filter((member) => member.status === "Accepted").length}{" "}
-                joined members · Ada, David and John
+                {membersLoading ? "Loading joined members…" : `${members.length} joined members`}
               </p>
               <p className={styles.acceptedDate}>
-                Accepted {formatDate(members[0]?.acceptedDate)}
+                {membersLoading
+                  ? ""
+                  : members[0]?.acceptedDate
+                    ? `Joined ${members[0].acceptedDate}`
+                    : ""}
               </p>
               <div className={styles.buttonRow}>
                 <Button fullWidth onClick={() => navigateTo("/tasks")}>
@@ -269,19 +350,45 @@ function WorkspaceOverview() {
             <h2 className={`${styles.cardTitle} ${styles.dividedTitle}`}>
               Milestones
             </h2>
-            <ul className={styles.milestoneList}>
-              {milestoneProgress.map((milestone) => (
-                <li className={styles.milestone} key={milestone.id}>
-                  <h3 className={styles.taskTitle}>
-                    {milestone.id} {milestone.name}
-                  </h3>
-                  <p className={styles.taskMeta}>
-                    Target {formatDate(milestone.targetDate)} ·{" "}
-                    {milestone.completedTasks} / {milestone.totalTasks} Done
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {milestonesLoading ? (
+              <p role="status">Loading milestones…</p>
+            ) : milestonesError ? (
+              <>
+                <Alert variant="error" title="Couldn't load milestones">
+                  {milestonesError}
+                </Alert>
+                <Button variant="secondary" onClick={retryMilestones}>
+                  Retry
+                </Button>
+              </>
+            ) : milestones.length === 0 ? (
+              <EmptyState
+                title="No milestones yet"
+                text="No milestones have been added to this project."
+              />
+            ) : (
+              <ul className={styles.milestoneList}>
+                {milestoneProgress.map((milestone) => (
+                  <li className={styles.milestone} key={milestone.id}>
+                    <h3 className={styles.taskTitle}>
+                      {milestone.name}
+                    </h3>
+                    <p className={styles.taskMeta}>
+                      Target{" "}
+                      {milestone.targetDate
+                        ? formatDate(milestone.targetDate)
+                        : "Not set"}{" "}
+                      ·{" "}
+                      {tasksLoading
+                        ? "Loading task counts…"
+                        : tasksError
+                          ? "Task counts unavailable"
+                          : `${milestone.completedTasks} / ${milestone.totalTasks} Done`}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
             <a
               className={styles.textLink}
               href={workspaceHref("/milestones")}

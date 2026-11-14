@@ -28,8 +28,33 @@ export async function getSettings() {
     }
   }
 
-  return { name: user.name, profileFields };
+  return {
+    name: user.name,
+    avatarUrl: user.avatarUrl ?? "",
+    profileFields,
+  };
 }
 
 export const saveSettings = (settings) => api.put("/api/profile/users/me/onboarding", settings);
 export const requestAccountDeletion = () => api.delete("/api/profile/users/me");
+
+export async function uploadAvatar(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const data = await api.post("/api/uploads?context=avatar", formData);
+  const fileUrl = data?.fileUrl;
+
+  if (!fileUrl) {
+    throw new Error("Upload did not return a valid file URL.");
+  }
+
+  await api.patch("/api/profile/users/me", { avatarUrl: fileUrl });
+  window.dispatchEvent(new Event("profile:changed"));
+  return fileUrl;
+}
+
+export async function removeAvatar() {
+  await api.patch("/api/profile/users/me", { avatarUrl: null });
+  window.dispatchEvent(new Event("profile:changed"));
+}

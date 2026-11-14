@@ -25,21 +25,27 @@ function Profile() {
   useEffect(() => {
     let isMounted = true;
 
-    getProfile()
-      .then((result) => {
-        if (!isMounted) return;
-        const visibility = { ...NO_VISIBILITY, ...result.visibilitySettings };
-        setProfile(result);
-        setSaved(visibility);
-        setDraft(visibility);
-        setLoadStatus("ready");
-      })
-      .catch(() => {
-        if (isMounted) setLoadStatus("error");
-      });
+    const load = () => {
+      getProfile()
+        .then((result) => {
+          if (!isMounted) return;
+          const visibility = { ...NO_VISIBILITY, ...result.visibilitySettings };
+          setProfile(result);
+          setSaved(visibility);
+          setDraft(visibility);
+          setLoadStatus("ready");
+        })
+        .catch(() => {
+          if (isMounted) setLoadStatus("error");
+        });
+    };
+
+    load();
+    window.addEventListener("profile:changed", load);
 
     return () => {
       isMounted = false;
+      window.removeEventListener("profile:changed", load);
     };
   }, [loadAttempt]);
 

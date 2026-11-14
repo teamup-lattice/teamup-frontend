@@ -9,9 +9,17 @@ export function ProfileDetailsCard({ profile }) {
   return (
     <Card aria-labelledby="details-title">
       <div className={styles.person}>
-        <span className={styles.avatar} aria-hidden="true">
-          {name.charAt(0)}
-        </span>
+        {profile.avatarUrl ? (
+          <img
+            src={profile.avatarUrl}
+            alt=""
+            className={styles.avatarImg}
+          />
+        ) : (
+          <span className={styles.avatar} aria-hidden="true">
+            {name.charAt(0)}
+          </span>
+        )}
         <span className={styles.personText}>
           {[name, profile.role].filter(Boolean).join(" · ")}
         </span>
