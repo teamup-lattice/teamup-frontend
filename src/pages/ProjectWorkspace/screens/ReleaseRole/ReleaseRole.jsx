@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import Textarea from "../../../../components/Textarea";
 import { releaseWorkspaceMember } from "../../../../services/workspaceMembersService";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP } from "../../workspaceFormat";
@@ -27,6 +28,7 @@ function ReleaseRole() {
 
   const [status, setStatus] = useState("idle");
   const [actionError, setActionError] = useState("");
+  const [endReason, setEndReason] = useState("");
   const [releaseMessage, setReleaseMessage] = useState("");
   const [roleReopened, setRoleReopened] = useState(false);
   const [refreshError, setRefreshError] = useState("");
@@ -40,7 +42,10 @@ function ReleaseRole() {
     member?.accessLevel === "OWNER" ||
     (member && project.ownerId != null &&
       String(member.userId) === String(project.ownerId));
-  const roleShort = member?.role.split(" ").filter(Boolean).pop() || "role";
+  const roleShort =
+    (typeof member?.role === "string" && member.role.trim()
+      ? member.role.split(" ").filter(Boolean).pop()
+      : "") || "role";
 
   const teamPath = `/projects/${projectId}/workspace/team${search}`;
   const tasksPath = `/projects/${projectId}/workspace/tasks${search}`;
@@ -55,7 +60,9 @@ function ReleaseRole() {
     setActionError("");
     setRefreshError("");
     try {
-      const response = await releaseWorkspaceMember(projectId, member.id);
+      const response = await releaseWorkspaceMember(projectId, member.id, {
+        endReason,
+      });
       setReleasedMember(member);
       setReleaseMessage(response.message || "The member role was released.");
       setRoleReopened(response.roleReopened);
@@ -66,7 +73,15 @@ function ReleaseRole() {
         setRefreshError(error.message || "Members could not be refreshed.");
       }
     } catch (error) {
-      setActionError(error.message || "The member role could not be released.");
+      let message = error.message || "The member role could not be released.";
+      if (error.status === 403) {
+        message = "You don't have permission to release this member.";
+      } else if (error.status === 404) {
+        message = "Member not found. Please refresh the list.";
+      } else if (error.status === 409) {
+        message = "The project owner cannot be released.";
+      }
+      setActionError(message);
       setStatus("error");
     }
   }
@@ -213,8 +228,17 @@ function ReleaseRole() {
           {`Release ${member.name}'s ${roleShort} role?`}
         </h3>
         <p className={shared.text}>
-          {`${member.role} reopens. Project stays ${project.status}. The server will unassign active tasks without deleting them.`}
+          {`${member.role ? `${member.role} reopens. ` : ""}Project stays ${project.status}. The server will unassign active tasks without deleting them.`}
         </p>
+        <Textarea
+          label="Reason (optional)"
+          placeholder="Add an optional reason for releasing this role"
+          value={endReason}
+          maxLength={500}
+          helperText={`${500 - endReason.length} characters left`}
+          onChange={(event) => setEndReason(event.target.value)}
+          disabled={isReleasing}
+        />
         <div className={styles.actions}>
           <Button
             variant="secondary"

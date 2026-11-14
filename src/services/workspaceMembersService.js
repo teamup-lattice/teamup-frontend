@@ -31,24 +31,35 @@ function mapMember(member) {
 
   const id =
     typeof member.id === "string" || typeof member.id === "number"
-      ? member.id
+      ? String(member.id)
       : "";
   const userId =
-    typeof member.userId === "string" || typeof member.userId === "number"
-      ? member.userId
+    typeof member.user?.id === "string" || typeof member.user?.id === "number"
+      ? String(member.user.id)
       : "";
   if (id === "" || userId === "") {
     throw new Error("Members response is missing member or user identifiers.");
   }
-  const openTaskCount = Number.isInteger(member.openTaskCount)
-    ? member.openTaskCount
-    : null;
+
+  const role =
+    typeof member.role === "string"
+      ? member.role
+      : typeof member.role?.title === "string"
+        ? member.role.title
+        : "";
+
+  const openTaskCount =
+    typeof member._count?.assignedTasks === "number"
+      ? member._count.assignedTasks
+      : null;
 
   return {
     id,
     userId,
     name: typeof member.user?.name === "string" ? member.user.name : "",
-    role: typeof member.role?.title === "string" ? member.role.title : "",
+    avatarUrl: member.user?.avatarUrl ?? null,
+    headline: member.user?.headline ?? null,
+    role,
     accessLevel:
       typeof member.accessRole === "string" ? member.accessRole : "",
     acceptedDate: formatDate(member.joinedAt),
@@ -61,11 +72,11 @@ function mapMember(member) {
 }
 
 export async function getWorkspaceMembers(projectId) {
-  const response = await api.get(`/api/projects/${projectId}/members`);
-  if (!Array.isArray(response?.members)) {
+  const data = await api.get(`/api/projects/${projectId}/members`);
+  if (!Array.isArray(data?.members)) {
     throw new Error("Members response is missing members.");
   }
-  return response.members.map(mapMember);
+  return data.members.map(mapMember);
 }
 
 export async function getWorkspaceProject(projectId) {
@@ -101,9 +112,31 @@ export async function getWorkspaceCurrentUser() {
   };
 }
 
-export async function releaseWorkspaceMember(projectId, memberId, body) {
+export async function releaseWorkspaceMember(
+  projectId,
+  memberId,
+  { endReason } = {},
+) {
+  const trimmedEndReason =
+    typeof endReason === "string" ? endReason.trim().slice(0, 500) : "";
+  const body = trimmedEndReason ? { endReason: trimmedEndReason } : undefined;
   const response = await api.post(
     `/api/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}/release`,
+    body,
+  );
+  return {
+    message: typeof response?.message === "string" ? response.message : "",
+    memberId: response?.memberId ?? "",
+    roleReopened: response?.roleReopened === true,
+  };
+}
+
+export async function leaveWorkspaceProject(projectId, { reason } = {}) {
+  const trimmedReason =
+    typeof reason === "string" ? reason.trim().slice(0, 500) : "";
+  const body = trimmedReason ? { reason: trimmedReason } : undefined;
+  const response = await api.post(
+    `/api/projects/${encodeURIComponent(projectId)}/members/leave`,
     body,
   );
   return {
