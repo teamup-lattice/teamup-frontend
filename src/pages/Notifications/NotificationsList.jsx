@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import listFilterIcon from "../../assets/list-filter.svg";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
-import listFilterIcon from "../../assets/list-filter.svg";
-import { markAllNotificationsRead } from "../../services/notificationsService";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../../services/notificationsService";
 import NotificationItem from "./NotificationItem";
 import styles from "./Notifications.module.css";
 
@@ -36,6 +39,22 @@ function NotificationsList({ initialItems, refreshFailed, onRetry }) {
         console.error("Failed to mark notifications as read:", error);
         setMarkStatus("error");
       });
+  };
+
+  const handleMarkAsRead = (id) => {
+    setItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, read: true } : item)),
+    );
+
+    markNotificationRead(id).catch((error) => {
+      console.error("Failed to mark notification as read:", error);
+      setItems((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, read: false } : item,
+        ),
+      );
+      window.dispatchEvent(new Event("notifications:changed"));
+    });
   };
 
   return (
@@ -87,7 +106,11 @@ function NotificationsList({ initialItems, refreshFailed, onRetry }) {
       {hasItems && (
         <ul className={styles.list}>
           {items.map((item) => (
-            <NotificationItem key={item.id} notification={item} />
+            <NotificationItem
+              key={item.id}
+              notification={item}
+              onMarkAsRead={handleMarkAsRead}
+            />
           ))}
         </ul>
       )}
@@ -104,7 +127,9 @@ function NotificationsList({ initialItems, refreshFailed, onRetry }) {
           <p className={styles.emptyText}>
             Invitations and project updates will appear here.
           </p>
-          <Button onClick={() => navigate("/projects")}>Back to My Projects</Button>
+          <Button onClick={() => navigate("/projects")}>
+            Back to My Projects
+          </Button>
         </div>
       )}
     </>
