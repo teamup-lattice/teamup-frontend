@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import AltLink from "../../components/AltLink";
 import styles from "./UpcomingTasks.module.css";
 
-function UpcomingTasks({ tasks, projectId }) {
+function UpcomingTasks({ tasks }) {
   const navigate = useNavigate();
 
   return (
@@ -18,13 +18,13 @@ function UpcomingTasks({ tasks, projectId }) {
               </span>
             </div>
             <span className={styles.status}>{task.status}</span>
-            {projectId && task.id && (
+            {task.projectId && task.id && (
               <button
                 type="button"
                 className={styles.taskLink}
                 onClick={() =>
                   navigate(
-                    `/projects/${projectId}/workspace/tasks/${task.id}`,
+                    `/projects/${task.projectId}/workspace/tasks/${task.id}`,
                   )
                 }
               >

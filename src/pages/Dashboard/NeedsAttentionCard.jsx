@@ -52,14 +52,11 @@ function NeedsAttentionCard({ needsAttention, taskId, projectId }) {
         </p>
       )}
 
-      <Button
-        variant="secondary"
-        fullWidth
-        onClick={handleOpenTask}
-        disabled={!projectId || !taskId}
-      >
-        Open task details
-      </Button>
+      {projectId && taskId && (
+        <Button variant="secondary" fullWidth onClick={handleOpenTask}>
+          Open task details
+        </Button>
+      )}
 
       <div className={styles.links}>
         <AltLink to="/projects">Request new date</AltLink>

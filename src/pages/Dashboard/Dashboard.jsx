@@ -117,6 +117,7 @@ function buildNeedsAttention(task) {
 function buildUpcomingTask(task) {
   return {
     id: task.id,
+    projectId: task.projectId,
     title: task.title,
     owner: task.assignee?.user?.name ?? "Unassigned",
     due:
@@ -290,13 +291,13 @@ function Dashboard() {
                       key={task.id}
                       needsAttention={buildNeedsAttention(task)}
                       taskId={task.id}
-                      projectId={activeProject?.id}
+                      projectId={task.projectId}
                     />
                   ))}
                 </section>
               )}
               {upcomingTasks.length > 0 && (
-                <UpcomingTasks tasks={upcomingTasks.map(buildUpcomingTask)} projectId={activeProject?.id} />
+                <UpcomingTasks tasks={upcomingTasks.map(buildUpcomingTask)} />
               )}
             </div>
           </div>
