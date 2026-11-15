@@ -154,6 +154,13 @@ export async function markAllNotificationsRead() {
   return result;
 }
 
-export function markNotificationRead(id) {
-  return api.patch(`/api/notifications/${encodeURIComponent(id)}/read`);
+export async function markNotificationRead(id) {
+  const result = await api.patch(
+    `/api/notifications/${encodeURIComponent(id)}/read`,
+  );
+  lastSaved = lastSaved.map((item) =>
+    item.id === id ? { ...item, read: true } : item,
+  );
+  window.dispatchEvent(new Event("notifications:changed"));
+  return result;
 }
