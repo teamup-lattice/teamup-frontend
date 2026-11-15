@@ -10,12 +10,26 @@ const visibilityFields = {
   duration: "showPreferredDuration",
 };
 
-export const saveVisibility = (values) => {
-  const settings = Object.fromEntries(
-    Object.entries(visibilityFields).map(([key, apiKey]) => [
-      apiKey,
-      Boolean(values[key]),
-    ]),
-  );
-  return api.patch("/api/profile/users/me/visibility", settings);
+export const getVisibility = async () => {
+  const data = await api.get("/api/profile/users/me/visibility");
+  return data?.visibility;
+};
+
+export const saveVisibility = (values, savedValues) => {
+  const changes = {};
+  for (const [key, apiKey] of Object.entries(visibilityFields)) {
+    const val = Boolean(values[key]);
+    if (savedValues) {
+      const prev = Boolean(savedValues[key]);
+      if (val !== prev) {
+        changes[apiKey] = val;
+      }
+    } else {
+      changes[apiKey] = val;
+    }
+  }
+  if (savedValues && Object.keys(changes).length === 0) {
+    return Promise.resolve({ visibility: values });
+  }
+  return api.patch("/api/profile/users/me/visibility", changes);
 };
