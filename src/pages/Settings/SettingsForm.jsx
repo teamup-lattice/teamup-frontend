@@ -3,7 +3,12 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import { getSessions } from "../../services/authService";
 import { updateProfileDetails } from "../../services/profileService";
+import {
+  NOTIFICATION_TYPE_MAP,
+  updateNotificationPreferences,
+} from "../../services/settingsService";
 import AccountControls from "./AccountControls";
+import NotificationsCard from "./NotificationsCard";
 import ProfileDataCard from "./ProfileDataCard";
 import styles from "./Settings.module.css";
 
@@ -75,14 +80,43 @@ function getSaveErrorMessages(error) {
   ];
 }
 
+const defaultNotifications = {
+  invitations: true,
+  joinRequests: true,
+  repliesToMyInvitations: true,
+  decisionsOnMyJoinRequests: true,
+  someoneJoinsMyProject: true,
+  someoneLeavesMyProject: true,
+  teamUpdates: true,
+  tasksAssignedToMe: true,
+  commentsOnMyTasks: true,
+  deadlineReminders: true,
+  overduePrompts: true,
+  milestoneUpdates: true,
+  contributionReviews: true,
+  projectCompleted: true,
+  roleReleasedMessages: true,
+  weeklyCheckIns: true,
+  ownerInactivityPrompts: true,
+};
+
 function SettingsForm({ initialSettings }) {
   const [draft, setDraft] = useState({
     name: initialSettings.name ?? "",
-    goals: initialSettings.profileFields.goals ?? "",
+    goals: initialSettings.profileFields?.goals ?? "",
+    notifications: {
+      ...defaultNotifications,
+      ...(initialSettings.notifications ?? {}),
+    },
   });
   const [saved, setSaved] = useState({
     name: (initialSettings.name ?? "").trim(),
-    goals: (initialSettings.profileFields.goals ?? "").trim(),
+    goals: (initialSettings.profileFields?.goals ?? "").trim(),
+    notifications: {
+      ...defaultNotifications,
+      ...(initialSettings.notifications ?? {}),
+    },
+    hasSavedPreferences: initialSettings.hasSavedPreferences ?? true,
   });
   const [nameError, setNameError] = useState("");
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error | success
@@ -160,6 +194,14 @@ function SettingsForm({ initialSettings }) {
     markEdited();
   }
 
+  function handleNotificationToggle(key, checked) {
+    setDraft((current) => ({
+      ...current,
+      notifications: { ...current.notifications, [key]: checked },
+    }));
+    markEdited();
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     if (isSaving || saveStatus === "success") return;
@@ -181,14 +223,32 @@ function SettingsForm({ initialSettings }) {
       return;
     }
 
-    const changes = {};
-    if (trimmedName !== saved.name) changes.name = trimmedName;
-    if (trimmedGoals !== saved.goals) changes.goals = trimmedGoals || null;
+    const profileChanges = {};
+    if (trimmedName !== saved.name) profileChanges.name = trimmedName;
+    if (trimmedGoals !== saved.goals) profileChanges.goals = trimmedGoals || null;
+
+    const changedPreferences = [];
+    for (const [key, type] of Object.entries(NOTIFICATION_TYPE_MAP)) {
+      if (draft.notifications[key] !== saved.notifications[key]) {
+        changedPreferences.push({
+          type,
+          channel: "IN_APP",
+          enabled: Boolean(draft.notifications[key]),
+        });
+      }
+    }
+
+    const hasAnyDraftChanges =
+      Object.keys(profileChanges).length > 0 ||
+      changedPreferences.length > 0 ||
+      Object.keys(draft.notifications).some(
+        (key) => draft.notifications[key] !== saved.notifications[key],
+      );
 
     setNameError("");
     setSaveErrorMessages([]);
 
-    if (Object.keys(changes).length === 0) {
+    if (!hasAnyDraftChanges) {
       setSaveStatus("success");
       return;
     }
@@ -196,9 +256,26 @@ function SettingsForm({ initialSettings }) {
     setSaveStatus("saving");
 
     try {
-      await updateProfileDetails(changes);
-      setSaved({ name: trimmedName, goals: trimmedGoals });
-      setDraft({ name: trimmedName, goals: trimmedGoals });
+      const promises = [];
+      if (Object.keys(profileChanges).length > 0) {
+        promises.push(updateProfileDetails(profileChanges));
+      }
+      if (changedPreferences.length > 0) {
+        promises.push(updateNotificationPreferences(changedPreferences));
+      }
+      await Promise.all(promises);
+
+      setSaved({
+        name: trimmedName,
+        goals: trimmedGoals,
+        notifications: { ...draft.notifications },
+        hasSavedPreferences: true,
+      });
+      setDraft((current) => ({
+        ...current,
+        name: trimmedName,
+        goals: trimmedGoals,
+      }));
       setSaveStatus("success");
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -208,9 +285,22 @@ function SettingsForm({ initialSettings }) {
       if (nameFieldError?.message) setNameError(nameFieldError.message);
 
       const messages = getSaveErrorMessages(error);
-      setSaveErrorMessages(
-        messages.length ? messages : error.message ? [error.message] : [],
-      );
+      if (error.status === 401) {
+        setSaveErrorMessages(["You must be signed in to save changes."]);
+      } else if (error.status === 400) {
+        setSaveErrorMessages(
+          messages.length
+            ? messages
+            : [
+                error.message ||
+                  "Invalid settings data provided. Please check your inputs.",
+              ],
+        );
+      } else {
+        setSaveErrorMessages(
+          messages.length ? messages : error.message ? [error.message] : [],
+        );
+      }
       setSaveStatus("error");
     }
   }
@@ -219,20 +309,20 @@ function SettingsForm({ initialSettings }) {
   if (saveStatus === "saving") {
     statusAlert = (
       <Alert variant="info" title="Saving changes…">
-        Keep this page open. Your previous profile details are still active.
+        Keep this page open. Your previous saved preferences remain active.
       </Alert>
     );
   } else if (saveStatus === "error") {
     statusAlert = (
       <Alert variant="error" title="Changes didn't save">
-        Your edits are still here. Previous saved profile details remain active.
+        Your edits are still here. Previous saved preferences remain active.
         Please try again. {saveErrorMessages.join(" ")}
       </Alert>
     );
   } else if (saveStatus === "success") {
     statusAlert = (
       <Alert variant="success" title="Changes saved">
-        Your profile is up to date.
+        Your profile and preferences are up to date.
       </Alert>
     );
   }
@@ -253,6 +343,14 @@ function SettingsForm({ initialSettings }) {
             disabled={isSaving}
             onChange={handleFieldChange}
           />
+          <NotificationsCard
+            values={draft.notifications}
+            savedValues={saved.notifications}
+            hasSavedPreferences={saved.hasSavedPreferences}
+            saveStatus={saveStatus}
+            disabled={isSaving}
+            onToggle={handleNotificationToggle}
+          />
         </div>
 
         <div className={styles.saveRow}>
@@ -270,7 +368,9 @@ function SettingsForm({ initialSettings }) {
             </Button>
           )}
           <p className={styles.helper}>
-            {isSaving ? "Saving profile details" : "Saves profile details"}
+            {isSaving
+              ? "Saving profile and preferences"
+              : "Saves profile and notification choices"}
           </p>
         </div>
       </form>

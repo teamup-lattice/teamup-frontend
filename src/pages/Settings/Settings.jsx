@@ -7,18 +7,25 @@ import styles from "./Settings.module.css";
 
 function Settings() {
   const [attempt, setAttempt] = useState(0);
-  const [result, setResult] = useState({ key: null, status: "loading", data: null });
+  const [result, setResult] = useState({
+    key: null,
+    status: "loading",
+    data: null,
+    error: null,
+  });
 
   useEffect(() => {
     let isMounted = true;
 
     getSettings()
       .then((data) => {
-        if (isMounted) setResult({ key: attempt, status: "ready", data });
+        if (isMounted)
+          setResult({ key: attempt, status: "ready", data, error: null });
       })
       .catch((error) => {
         console.error("Failed to load settings:", error);
-        if (isMounted) setResult({ key: attempt, status: "error", data: null });
+        if (isMounted)
+          setResult({ key: attempt, status: "error", data: null, error });
       });
 
     return () => {
@@ -27,6 +34,7 @@ function Settings() {
   }, [attempt]);
 
   const status = result.key === attempt ? result.status : "loading";
+  const loadError = result.key === attempt ? result.error : null;
 
   return (
     <div className={styles.page}>
@@ -42,7 +50,9 @@ function Settings() {
           {[0, 1].map((index) => (
             <div className={styles.card} aria-hidden="true" key={index}>
               <span className={styles.skeletonLine} />
-              <span className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
+              <span
+                className={`${styles.skeletonLine} ${styles.skeletonShort}`}
+              />
               <span className={styles.skeletonBlock} />
               <span className={styles.skeletonBlock} />
             </div>
@@ -52,8 +62,22 @@ function Settings() {
 
       {status === "error" && (
         <div>
-          <Alert variant="error" title="Settings could not load">
-            Check your connection and try again.
+          <Alert
+            variant="error"
+            title={
+              loadError?.status === 401
+                ? "You must be signed in"
+                : loadError?.status === 400
+                  ? "Settings request failed"
+                  : "Settings could not load"
+            }
+          >
+            {loadError?.status === 401
+              ? "Please sign in to view and change your settings."
+              : loadError?.status === 400
+                ? loadError.message ||
+                  "Invalid settings request. Check your details and try again."
+                : "Check your connection and try again."}
           </Alert>
           <Button onClick={() => setAttempt((count) => count + 1)}>
             Try again
