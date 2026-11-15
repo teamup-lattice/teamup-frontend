@@ -4,12 +4,9 @@ import Button from "../../components/Button";
 import Input from "../../components/Input";
 import listFilterIcon from "../../assets/list-filter.svg";
 import heroImage from "../../assets/landing-cta.png";
-import {
-  availabilityProfile,
-  emptyFilters,
-  filterFields,
-} from "../../data/discoverData";
+import { emptyFilters, filterFields } from "../../data/discoverData";
 import { getOpenProjects } from "../../services/discoverService";
+import { getProfile } from "../../services/profileService";
 import FilterPanel from "./FilterPanel";
 import FilterSheet from "./FilterSheet";
 import ProjectResultCard from "./ProjectResultCard";
@@ -42,8 +39,6 @@ const projectWord = (count) => (count === 1 ? "project" : "projects");
 const eligibleProjects = (count) =>
   `${capitalize(countWord(count))} eligible Open ${projectWord(count)}`;
 
-const availabilitySummary = `${availabilityProfile.name} · ${availabilityProfile.role} · ${availabilityProfile.skills.join(" + ")} · ${availabilityProfile.hoursPerWeek} h / week for ${availabilityProfile.weeks} weeks. Results must meet required skills, hours and duration.`;
-
 function getSelectedFilters(filters) {
   return filterFields
     .filter((field) => filters[field.key])
@@ -72,50 +67,106 @@ function DiscoverProjects() {
   const [hasNotice, setHasNotice] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState("");
 
-  const fetchResults = useCallback((nextQuery, nextFilters, source) => {
-    const requestId = requestRef.current + 1;
-    requestRef.current = requestId;
+  const fetchResults = useCallback(
+    (nextQuery, nextFilters, source, page = 1, append = false) => {
+      const requestId = requestRef.current + 1;
+      requestRef.current = requestId;
 
-    getOpenProjects({
-      query: nextQuery,
-      filters: nextFilters,
-      isRetry: source === "retry",
-    })
-      .then(({ projects: results }) => {
-        // Ignore answers to older requests (for example while typing).
-        if (requestId !== requestRef.current) return;
-
-        const count = results.length;
-        const isUserUpdate = source !== "initial" && source !== "search";
-        const showNotice = isUserUpdate && count > 0;
-
-        setProjects(results);
-        setStatus("ready");
-        setHasNotice(showNotice);
-
-        if (showNotice) {
-          setAnnouncement("");
-        } else {
-          setAnnouncement(
-            count > 0 ? `${eligibleProjects(count)}.` : "No results.",
-          );
-        }
+      getOpenProjects({
+        query: nextQuery,
+        filters: nextFilters,
+        page,
       })
-      .catch((error) => {
-        console.error("Failed to load open projects:", error);
-        if (requestId === requestRef.current) setStatus("error");
-      });
-  }, []);
+        .then(({ projects: results, pagination }) => {
+          // Ignore answers to older requests (for example while typing).
+          if (requestId !== requestRef.current) return;
+
+          const count = results.length;
+          const pageNumber =
+            typeof pagination?.page === "number" ? pagination.page : page;
+          const pageCount =
+            typeof pagination?.totalPages === "number"
+              ? pagination.totalPages
+              : 1;
+
+          setProjects((current) =>
+            append ? [...current, ...results] : results,
+          );
+          setTotal((current) =>
+            typeof pagination?.total === "number"
+              ? pagination.total
+              : append
+                ? current
+                : count,
+          );
+          setCurrentPage(pageNumber);
+          setTotalPages(pageCount);
+          setStatus("ready");
+
+          if (append) {
+            setIsLoadingMore(false);
+            setLoadMoreError("");
+            return;
+          }
+
+          const isUserUpdate = source !== "initial" && source !== "search";
+          const showNotice = isUserUpdate && count > 0;
+          setHasNotice(showNotice);
+
+          if (showNotice) {
+            setAnnouncement("");
+          } else {
+            setAnnouncement(
+              count > 0 ? `${eligibleProjects(count)}.` : "No results.",
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load open projects:", error);
+          if (requestId !== requestRef.current) return;
+
+          if (append) {
+            setIsLoadingMore(false);
+            setLoadMoreError("Couldn't load more projects. Try again.");
+          } else {
+            setStatus("error");
+          }
+        });
+    },
+    [],
+  );
 
   useEffect(() => {
     fetchResults("", emptyFilters, "initial");
   }, [fetchResults]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    getProfile()
+      .then((data) => {
+        if (isMounted) setProfile(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const startFetch = (nextQuery, nextFilters, source) => {
     setStatus("loading");
     setHasNotice(false);
-    fetchResults(nextQuery, nextFilters, source);
+    setIsLoadingMore(false);
+    setLoadMoreError("");
+    fetchResults(nextQuery, nextFilters, source, 1, false);
   };
 
   // Search is not a filter: it updates results as you type, filters wait for Apply.
@@ -171,11 +222,37 @@ function DiscoverProjects() {
 
   const handleRetry = () => startFetch(query, applied, "retry");
 
+  const handleLoadMore = () => {
+    if (isLoadingMore || currentPage >= totalPages) return;
+    setIsLoadingMore(true);
+    setLoadMoreError("");
+    fetchResults(query, applied, "load-more", currentPage + 1, true);
+  };
+
   const appliedCount = Object.values(applied).filter(Boolean).length;
   const selectedFilters = getSelectedFilters(applied);
   const isLoading = status === "loading";
   const isError = status === "error";
   const isEmpty = status === "ready" && projects.length === 0;
+
+  const availabilityParts = [];
+  if (profile?.name) availabilityParts.push(profile.name);
+  if (Array.isArray(profile?.skills) && profile.skills.length > 0) {
+    availabilityParts.push(profile.skills.join(" + "));
+  }
+  if (
+    profile?.availabilityHours !== null &&
+    profile?.availabilityHours !== undefined
+  ) {
+    availabilityParts.push(`${profile.availabilityHours} h / week`);
+  }
+  if (
+    profile?.durationWeeks !== null &&
+    profile?.durationWeeks !== undefined
+  ) {
+    availabilityParts.push(`${profile.durationWeeks} weeks`);
+  }
+  const availabilitySummary = availabilityParts.join(" · ");
 
   let heading = "Project results";
   if (isLoading) {
@@ -236,11 +313,13 @@ function DiscoverProjects() {
         </section>
       )}
 
-      <div className={styles.fullWidth}>
-        <Alert variant="info" title="Your self-reported availability">
-          {availabilitySummary}
-        </Alert>
-      </div>
+      {availabilitySummary && (
+        <div className={styles.fullWidth}>
+          <Alert variant="info" title="Your self-reported availability">
+            {availabilitySummary}
+          </Alert>
+        </div>
+      )}
 
       <div className={styles.fullWidth}>
         <Input
@@ -294,7 +373,7 @@ function DiscoverProjects() {
 
           {hasNotice && (
             <Alert variant="success" title="Results updated">
-              {`${eligibleProjects(projects.length)}. Review role details before requesting.`}
+              {`${eligibleProjects(total)}. Review role details before requesting.`}
             </Alert>
           )}
 
@@ -337,6 +416,24 @@ function DiscoverProjects() {
             </ul>
           )}
 
+          {status === "ready" &&
+            projects.length > 0 &&
+            currentPage < totalPages && (
+              <div className={styles.fullWidth}>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  disabled={isLoadingMore}
+                  onClick={handleLoadMore}
+                >
+                  {isLoadingMore ? "Loading…" : "Load more"}
+                </Button>
+                {loadMoreError && (
+                  <Alert variant="error">{loadMoreError}</Alert>
+                )}
+              </div>
+            )}
+
           {isEmpty && (
             <div className={styles.emptyPanel}>
               <img
@@ -350,10 +447,7 @@ function DiscoverProjects() {
                   ? "No eligible Open projects"
                   : "No Open projects fit these filters"}
               </h3>
-              <p className={styles.emptyText}>
-                Adjust optional filters. Required skills, hours and duration
-                still apply.
-              </p>
+              <p className={styles.emptyText}>Adjust optional filters.</p>
               <Button onClick={handleEmptyReset}>Reset filters</Button>
             </div>
           )}
