@@ -289,12 +289,14 @@ function Dashboard() {
                     <NeedsAttentionCard
                       key={task.id}
                       needsAttention={buildNeedsAttention(task)}
+                      taskId={task.id}
+                      projectId={activeProject?.id}
                     />
                   ))}
                 </section>
               )}
               {upcomingTasks.length > 0 && (
-                <UpcomingTasks tasks={upcomingTasks.map(buildUpcomingTask)} />
+                <UpcomingTasks tasks={upcomingTasks.map(buildUpcomingTask)} projectId={activeProject?.id} />
               )}
             </div>
           </div>

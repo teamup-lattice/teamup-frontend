@@ -1,9 +1,17 @@
+import { useNavigate } from "react-router-dom";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
-import { projectId } from "../../data/collaborationData";
 import styles from "./NeedsAttentionCard.module.css";
 
-function NeedsAttentionCard({ needsAttention }) {
+function NeedsAttentionCard({ needsAttention, taskId, projectId }) {
+  const navigate = useNavigate();
+
+  const handleOpenTask = () => {
+    if (projectId && taskId) {
+      navigate(`/projects/${projectId}/workspace/tasks/${taskId}`);
+    }
+  };
+
   return (
     <article className={styles.card}>
       <div className={styles.statuses}>
@@ -44,14 +52,16 @@ function NeedsAttentionCard({ needsAttention }) {
         </p>
       )}
 
-      <Button variant="secondary" fullWidth>
+      <Button
+        variant="secondary"
+        fullWidth
+        onClick={handleOpenTask}
+        disabled={!projectId || !taskId}
+      >
         Open task details
       </Button>
 
       <div className={styles.links}>
-        <AltLink to={`/projects/${projectId}/join-requests`}>
-          Review join requests
-        </AltLink>
         <AltLink to="/projects">Request new date</AltLink>
         <AltLink to="/projects">Hand over</AltLink>
       </div>
