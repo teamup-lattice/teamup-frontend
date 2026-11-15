@@ -1,5 +1,5 @@
 import Checkbox from "../../components/Checkbox";
-import { notificationOptions, onOff } from "./notificationOptions";
+import { notificationGroups, onOff } from "./notificationOptions";
 import styles from "./Settings.module.css";
 
 function NotificationsCard({
@@ -29,40 +29,47 @@ function NotificationsCard({
         </p>
       </div>
 
-      <ul className={styles.notificationList}>
-        {notificationOptions.map((option) => {
-          const isOn = values[option.key];
-          const isUnsaved =
-            hasSavedPreferences && isOn !== savedValues[option.key];
-          const helperLines = [
-            isUnsaved
-              ? `Unsaved: ${onOff(isOn)} · Previously saved: ${onOff(savedValues[option.key])}`
-              : null,
-            option.helperText ?? null,
-          ].filter(Boolean);
+      {notificationGroups.map((group) => (
+        <div key={group.title} className={styles.cardHeader}>
+          <h3>{group.title}</h3>
+          <ul className={styles.notificationList}>
+            {group.options.map((option) => {
+              const isOn = values[option.key] ?? true;
+              const savedVal = savedValues[option.key] ?? true;
+              const isUnsaved = hasSavedPreferences && isOn !== savedVal;
+              const helperLines = [
+                isUnsaved
+                  ? `Unsaved: ${onOff(isOn)} · Previously saved: ${onOff(savedVal)}`
+                  : null,
+                option.helperText ?? null,
+              ].filter(Boolean);
 
-          return (
-            <li className={styles.notificationItem} key={option.key}>
-              <Checkbox
-                label={`${option.label} · ${onOff(isOn)}`}
-                helperText={
-                  helperLines.length > 0
-                    ? helperLines.map((line) => (
-                        <span className={styles.helperLine} key={line}>
-                          {line}
-                        </span>
-                      ))
-                    : undefined
-                }
-                name={option.key}
-                checked={isOn}
-                disabled={disabled}
-                onChange={(event) => onToggle(option.key, event.target.checked)}
-              />
-            </li>
-          );
-        })}
-      </ul>
+              return (
+                <li className={styles.notificationItem} key={option.key}>
+                  <Checkbox
+                    label={`${option.label} · ${onOff(isOn)}`}
+                    helperText={
+                      helperLines.length > 0
+                        ? helperLines.map((line) => (
+                            <span className={styles.helperLine} key={line}>
+                              {line}
+                            </span>
+                          ))
+                        : undefined
+                    }
+                    name={option.key}
+                    checked={isOn}
+                    disabled={disabled}
+                    onChange={(event) =>
+                      onToggle(option.key, event.target.checked)
+                    }
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
 
       <p className={styles.helper}>{footerText}</p>
     </section>

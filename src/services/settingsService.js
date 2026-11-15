@@ -3,8 +3,18 @@ import { api } from "./api";
 export const NOTIFICATION_TYPE_MAP = {
   invitations: "PROJECT_INVITATION",
   joinRequests: "JOIN_REQUEST",
+  repliesToMyInvitations: "INVITATION_RESPONDED",
+  decisionsOnMyJoinRequests: "JOIN_REQUEST_DECIDED",
+  someoneJoinsMyProject: "MEMBER_JOINED",
+  someoneLeavesMyProject: "MEMBER_LEFT",
+  teamUpdates: "TEAM_UPDATE",
+  tasksAssignedToMe: "TASK_ASSIGNED",
+  commentsOnMyTasks: "TASK_COMMENTED",
   deadlineReminders: "TASK_DEADLINE",
   overduePrompts: "TASK_OVERDUE",
+  milestoneUpdates: "MILESTONE_UPDATE",
+  contributionReviews: "CONTRIBUTION_REVIEW",
+  projectCompleted: "PROJECT_COMPLETED",
 };
 
 const defaultVisibility = {
@@ -65,11 +75,41 @@ export async function getSettings() {
     joinRequests: inAppPrefs.has("JOIN_REQUEST")
       ? Boolean(inAppPrefs.get("JOIN_REQUEST"))
       : true,
+    repliesToMyInvitations: inAppPrefs.has("INVITATION_RESPONDED")
+      ? Boolean(inAppPrefs.get("INVITATION_RESPONDED"))
+      : true,
+    decisionsOnMyJoinRequests: inAppPrefs.has("JOIN_REQUEST_DECIDED")
+      ? Boolean(inAppPrefs.get("JOIN_REQUEST_DECIDED"))
+      : true,
+    someoneJoinsMyProject: inAppPrefs.has("MEMBER_JOINED")
+      ? Boolean(inAppPrefs.get("MEMBER_JOINED"))
+      : true,
+    someoneLeavesMyProject: inAppPrefs.has("MEMBER_LEFT")
+      ? Boolean(inAppPrefs.get("MEMBER_LEFT"))
+      : true,
+    teamUpdates: inAppPrefs.has("TEAM_UPDATE")
+      ? Boolean(inAppPrefs.get("TEAM_UPDATE"))
+      : true,
+    tasksAssignedToMe: inAppPrefs.has("TASK_ASSIGNED")
+      ? Boolean(inAppPrefs.get("TASK_ASSIGNED"))
+      : true,
+    commentsOnMyTasks: inAppPrefs.has("TASK_COMMENTED")
+      ? Boolean(inAppPrefs.get("TASK_COMMENTED"))
+      : true,
     deadlineReminders: inAppPrefs.has("TASK_DEADLINE")
       ? Boolean(inAppPrefs.get("TASK_DEADLINE"))
       : true,
     overduePrompts: inAppPrefs.has("TASK_OVERDUE")
       ? Boolean(inAppPrefs.get("TASK_OVERDUE"))
+      : true,
+    milestoneUpdates: inAppPrefs.has("MILESTONE_UPDATE")
+      ? Boolean(inAppPrefs.get("MILESTONE_UPDATE"))
+      : true,
+    contributionReviews: inAppPrefs.has("CONTRIBUTION_REVIEW")
+      ? Boolean(inAppPrefs.get("CONTRIBUTION_REVIEW"))
+      : true,
+    projectCompleted: inAppPrefs.has("PROJECT_COMPLETED")
+      ? Boolean(inAppPrefs.get("PROJECT_COMPLETED"))
       : true,
     roleReleasedMessages: true,
     weeklyCheckIns: true,
