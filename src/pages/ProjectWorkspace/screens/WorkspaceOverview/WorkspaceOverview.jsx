@@ -395,26 +395,28 @@ function WorkspaceOverview() {
         </div>
 
         <div className={styles.rightStack}>
-          <section className={styles.attentionSection}>
-            <h2 className={styles.sectionLabel}>
-              {isOwner ? "Needs attention" : "My tasks"}
-            </h2>
-            {isOwner ? (
-              attentionTaskCards(attentionTasks)
-            ) : (
-              <>
-                <div className={styles.memberTasks}>
-                  {attentionTaskCards(currentUserTasks)}
-                </div>
-                <Button fullWidth onClick={() => navigateTo("/tasks")}>
-                  View my tasks
-                </Button>
-                <p className={styles.memberNote}>
-                  Create task and role management are not available to members.
-                </p>
-              </>
-            )}
-          </section>
+          {(!isOwner || attentionTasks.length > 0) && (
+            <section className={styles.attentionSection}>
+              <h2 className={styles.sectionLabel}>
+                {isOwner ? "Needs attention" : "My tasks"}
+              </h2>
+              {isOwner ? (
+                attentionTaskCards(attentionTasks)
+              ) : (
+                <>
+                  <div className={styles.memberTasks}>
+                    {attentionTaskCards(currentUserTasks)}
+                  </div>
+                  <Button fullWidth onClick={() => navigateTo("/tasks")}>
+                    View my tasks
+                  </Button>
+                  <p className={styles.memberNote}>
+                    Create task and role management are not available to members.
+                  </p>
+                </>
+              )}
+            </section>
+          )}
 
           <article className={`${styles.card} ${styles.upcomingCard}`}>
             <h2 className={styles.cardTitle}>Upcoming tasks</h2>
@@ -426,13 +428,6 @@ function WorkspaceOverview() {
                     {task.assignee} · Due {formatShortDate(task.dueDate)} ·{" "}
                     {task.status}
                   </p>
-                  <button
-                    type="button"
-                    className={styles.taskItemLink}
-                    onClick={() => navigateTo(`/tasks/${task.id}`)}
-                  >
-                    View task
-                  </button>
                 </article>
               ))}
             </div>
