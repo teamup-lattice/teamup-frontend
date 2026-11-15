@@ -77,3 +77,22 @@
     flex-direction: column;
   }
 }
+
+.taskLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-purple);
+  font-family: inherit;
+  font-size: var(--font-size-helper);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+  cursor: pointer;
+}
+
+.taskLink:focus-visible {
+  border-radius: var(--radius-control);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
