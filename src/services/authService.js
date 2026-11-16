@@ -68,3 +68,7 @@ export async function signOut() {
     clearToken();
   }
 }
+
+export async function logoutAllDevices() {
+  return api.post("/api/auth/logout-all");
+}
