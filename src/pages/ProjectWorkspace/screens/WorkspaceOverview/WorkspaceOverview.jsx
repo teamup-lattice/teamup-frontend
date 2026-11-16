@@ -6,6 +6,8 @@ import Skeleton from "../../../../components/Skeleton";
 import overviewImage from "../../../../assets/overview.png";
 import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
+import AvatarGroup from "../../../../components/AvatarGroup";
+import activeProjectStyles from "../../../Dashboard/ActiveProjectCard.module.css";
 import StatusTag from "../../shared/StatusTag";
 import styles from "./WorkspaceOverview.module.css";
 
@@ -293,42 +295,36 @@ function WorkspaceOverview() {
                   </Button>
                 </>
               )}
-              <div className={styles.memberRows} aria-label="Project members">
-                {membersLoading ? (
-                  <p role="status">Loading members…</p>
-                ) : membersError ? (
+                            {membersLoading ? (
+                <p role="status">Loading members…</p>
+              ) : membersError ? (
+                <>
                   <Alert variant="error" title="Couldn't load members">
                     {membersError}
                   </Alert>
-                ) : members.map((member) => (
-                  <span
-                    className={styles.memberAvatar}
-                    key={member.id}
-                    role="img"
-                    aria-label={member.name}
+                  <Button
+                    variant="secondary"
+                    onClick={retryWorkspace}
                   >
-                    {member.name.charAt(0)}
-                  </span>
-                ))}
-              </div>
-              {membersError && (
-                <Button
-                  variant="secondary"
-                  onClick={retryWorkspace}
-                >
-                  Retry loading members
-                </Button>
+                    Retry loading members
+                  </Button>
+                </>
+              ) : (
+                <div className={activeProjectStyles.teammates}>
+                  <AvatarGroup
+                    hidden
+                    items={members.map((member) => ({
+                      initial: member.name.charAt(0),
+                      label: member.name,
+                    }))}
+                  />
+                  <p className={activeProjectStyles.teammateText}>
+                    {members.length}{" "}
+                    {members.length === 1 ? "accepted teammate" : "accepted teammates"}{" · "}
+                    {members.map((m) => m.name).join(", ")}
+                  </p>
+                </div>
               )}
-              <p className={styles.summaryMeta}>
-                {membersLoading ? "Loading joined members…" : `${members.length} joined members`}
-              </p>
-              <p className={styles.acceptedDate}>
-                {membersLoading
-                  ? ""
-                  : members[0]?.acceptedDate
-                    ? `Joined ${members[0].acceptedDate}`
-                    : ""}
-              </p>
               <div className={styles.buttonRow}>
                 <Button fullWidth onClick={() => navigateTo("/tasks")}>
                   View tasks
@@ -399,26 +395,28 @@ function WorkspaceOverview() {
         </div>
 
         <div className={styles.rightStack}>
-          <section className={styles.attentionSection}>
-            <h2 className={styles.sectionLabel}>
-              {isOwner ? "Needs attention" : "My tasks"}
-            </h2>
-            {isOwner ? (
-              attentionTaskCards(attentionTasks)
-            ) : (
-              <>
-                <div className={styles.memberTasks}>
-                  {attentionTaskCards(currentUserTasks)}
-                </div>
-                <Button fullWidth onClick={() => navigateTo("/tasks")}>
-                  View my tasks
-                </Button>
-                <p className={styles.memberNote}>
-                  Create task and role management are not available to members.
-                </p>
-              </>
-            )}
-          </section>
+          {(!isOwner || attentionTasks.length > 0) && (
+            <section className={styles.attentionSection}>
+              <h2 className={styles.sectionLabel}>
+                {isOwner ? "Needs attention" : "My tasks"}
+              </h2>
+              {isOwner ? (
+                attentionTaskCards(attentionTasks)
+              ) : (
+                <>
+                  <div className={styles.memberTasks}>
+                    {attentionTaskCards(currentUserTasks)}
+                  </div>
+                  <Button fullWidth onClick={() => navigateTo("/tasks")}>
+                    View my tasks
+                  </Button>
+                  <p className={styles.memberNote}>
+                    Create task and role management are not available to members.
+                  </p>
+                </>
+              )}
+            </section>
+          )}
 
           <article className={`${styles.card} ${styles.upcomingCard}`}>
             <h2 className={styles.cardTitle}>Upcoming tasks</h2>
