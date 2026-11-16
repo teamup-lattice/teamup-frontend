@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import Alert from "../../components/Alert";
-import { getProjectDetails } from "../../services/projectDetailsService";
 import {
-  AgreementsCard,
+  getProjectDetails,
+  getProjectMembers,
+} from "../../services/projectDetailsService";
+import {
   MilestonesCard,
   OtherRoleCard,
   OverviewCard,
@@ -27,41 +28,42 @@ function ProjectDetailsView({ projectId }) {
 
   const [details, setDetails] = useState(null);
   const [selectedRoleId, setSelectedRoleId] = useState("");
-  const [isRoleClosed, setIsRoleClosed] = useState(false);
   const [status, setStatus] = useState("loading");
-  const [hasSelectionNotice, setHasSelectionNotice] = useState(false);
 
-  const loadDetails = useCallback((id, roleId, source) => {
+  const loadDetails = useCallback((id) => {
     const requestId = requestRef.current + 1;
     requestRef.current = requestId;
 
-    getProjectDetails({ id, roleId, isRetry: source === "retry" })
-      .then((result) => {
-        // Ignore answers to older requests (for example after changing role twice).
+    Promise.allSettled([getProjectDetails(id), getProjectMembers(id)]).then(
+      ([projectResult, membersResult]) => {
+        // Ignore answers to older requests (for example after changing project).
         if (requestId !== requestRef.current) return;
 
-        const role = result.roles.find((item) => item.id === result.selectedRoleId);
+        if (projectResult.status === "rejected") {
+          console.error("Failed to load project details:", projectResult.reason);
+          setStatus(projectResult.reason.status === 404 ? "not-found" : "error");
+          return;
+        }
 
-        setDetails(result);
-        setSelectedRoleId(result.selectedRoleId);
-        setIsRoleClosed(result.isRoleClosed);
-        setHasSelectionNotice(
-          source === "select" &&
-            !result.isRoleClosed &&
-            role.eligibility.isEligible,
-        );
+        const project = projectResult.value.project;
+        const roles = project?.roles ?? [];
+        const members =
+          membersResult.status === "fulfilled"
+            ? membersResult.value.members ?? []
+            : [];
+
+        setDetails({ project, roles, members });
+        setSelectedRoleId((current) => {
+          if (roles.some((role) => role.id === current)) return current;
+          return roles[0]?.id ?? "";
+        });
         setStatus("ready");
-      })
-      .catch((error) => {
-        console.error("Failed to load project details:", error);
-        if (requestId !== requestRef.current) return;
-
-        setStatus(error.code === "not_found" ? "not-found" : "error");
-      });
+      },
+    );
   }, []);
 
   useEffect(() => {
-    loadDetails(projectId, undefined, "initial");
+    loadDetails(projectId);
   }, [projectId, loadDetails]);
 
   // The role select is replaced by the loading state while terms load, so
@@ -77,25 +79,21 @@ function ProjectDetailsView({ projectId }) {
     const roleId = event.target.value;
     if (!roleId) return;
 
-    shouldRestoreFocusRef.current = true;
     setSelectedRoleId(roleId);
-    setStatus("loading");
-    setHasSelectionNotice(false);
-    loadDetails(projectId, roleId, "select");
   };
 
   const handleRecheck = () => {
     shouldRestoreFocusRef.current = true;
     setStatus("loading");
-    setHasSelectionNotice(false);
-    loadDetails(projectId, selectedRoleId || undefined, "retry");
+    loadDetails(projectId);
   };
 
   const project = details?.project;
   const roles = details?.roles ?? [];
-  const profile = details?.profile;
+  const members = details?.members ?? [];
   const selectedRole = roles.find((role) => role.id === selectedRoleId);
   const otherRoles = roles.filter((role) => role.id !== selectedRoleId);
+  const isRoleClosed = selectedRole?.status === "CLOSED";
 
   // Recruitment only: there is no workspace or Owner contact link here.
   // Requesting is not joining; the request itself is the next screen.
@@ -155,37 +153,28 @@ function ProjectDetailsView({ projectId }) {
             <TeamCard
               project={project}
               roles={roles}
+              membersCount={members.length}
               selectedRoleId={selectedRoleId}
               onRoleChange={handleRoleChange}
               selectRef={selectRef}
             />
 
-            {hasSelectionNotice && (
-              <Alert variant="success" title={`${selectedRole.title} selected`}>
-                Requirements met. Requesting is not joining.
-              </Alert>
+            {selectedRole && (
+              <RoleTermsCard role={selectedRole} project={project} />
             )}
-
-            <RoleTermsCard role={selectedRole} />
-            <MilestonesCard
-              milestones={project.milestones}
-              taskDeadlines={selectedRole.taskDeadlines}
-            />
+            <MilestonesCard milestones={project.milestones} />
 
             {otherRoles.map((role) => (
-              <OtherRoleCard key={role.id} role={role} profile={profile} />
+              <OtherRoleCard key={role.id} role={role} project={project} />
             ))}
 
-            <AgreementsCard
-              agreements={project.agreements}
-              proposal={project.responseWindowProposal}
-            />
-            <RequestCard
-              project={project}
-              role={selectedRole}
-              profile={profile}
-              onRequest={handleRequest}
-            />
+            {selectedRole && (
+              <RequestCard
+                project={project}
+                role={selectedRole}
+                onRequest={handleRequest}
+              />
+            )}
           </>
         )}
       </div>
