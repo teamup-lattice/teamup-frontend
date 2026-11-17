@@ -474,7 +474,8 @@ function WorkspaceOverview() {
               </div>
             )}
             <div className={styles.checkIn}>
-              <p className={styles.updateMeta}>Weekly check-in</p>
+              <p className={styles.checkInLabel}>Prompt</p>
+              <p className={styles.checkInTitle}>Weekly check-in</p>
               <p className={styles.updateText}>
                 What moved forward? What help would be useful? Reply in Updates.
               </p>
