@@ -46,6 +46,9 @@ function WorkspaceOverview() {
     milestones,
     tasks,
     updates,
+    updatesLoading,
+    updatesError,
+    retryUpdates,
     currentUser,
     isOwner,
     canManageMembers,
@@ -435,19 +438,41 @@ function WorkspaceOverview() {
 
           <article className={`${styles.card} ${styles.updatesCard}`}>
             <h2 className={styles.cardTitle}>Latest project updates</h2>
-            <div className={styles.updateList}>
-              {updates.slice(0, 2).map((update) => (
-                <article
-                  className={styles.update}
-                  key={`${update.author}-${update.date}`}
-                >
-                  <p className={styles.updateMeta}>
-                    {update.author} · {formatShortDate(update.date)}
-                  </p>
-                  <p className={styles.updateText}>{update.message}</p>
-                </article>
-              ))}
-            </div>
+
+            {updatesLoading && <p role="status">Loading updates…</p>}
+
+            {!updatesLoading && updatesError && (
+              <>
+                <Alert variant="error" title="Couldn't load updates">
+                  {updatesError}
+                </Alert>
+                <Button variant="secondary" onClick={retryUpdates}>
+                  Retry loading updates
+                </Button>
+              </>
+            )}
+
+            {!updatesLoading && !updatesError && updates.length === 0 && (
+              <p className={styles.updateText}>
+                No updates yet. Start the project thread in Updates.
+              </p>
+            )}
+
+            {!updatesLoading && !updatesError && updates.length > 0 && (
+              <div className={styles.updateList}>
+                {updates.slice(0, 2).map((update) => (
+                  <article className={styles.update} key={update.id}>
+                    <p className={styles.updateMeta}>
+                      {update.author}
+                      {update.date
+                        ? ` · ${formatShortDate(update.date)}`
+                        : ""}
+                    </p>
+                    <p className={styles.updateText}>{update.message}</p>
+                  </article>
+                ))}
+              </div>
+            )}
             <div className={styles.checkIn}>
               <p className={styles.updateMeta}>Weekly check-in</p>
               <p className={styles.updateText}>

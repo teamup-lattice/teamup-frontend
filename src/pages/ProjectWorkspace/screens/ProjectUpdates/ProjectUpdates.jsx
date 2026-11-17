@@ -1,27 +1,35 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Textarea from "../../../../components/Textarea";
-import { postUpdate } from "../../../../services/workspaceService";
-import { useSimulate } from "../../useSimulate";
+import { postProjectUpdate } from "../../../../services/projectUpdatesService";
 import { useWorkspace } from "../../useWorkspace";
-import { SEP, formatDate, numberWord } from "../../workspaceFormat";
+import { SEP, formatDate } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import styles from "./ProjectUpdates.module.css";
 
+const MAX_UPDATE_LENGTH = 5000;
+
 function ProjectUpdates() {
-  const { updates, currentUser } = useWorkspace();
-  const simulate = useSimulate();
-  const [thread, setThread] = useState(() => (simulate === "empty" ? [] : updates));
+  const { projectId } = useParams();
+  const {
+    updates,
+    updatesLoading,
+    updatesError,
+    retryUpdates,
+    addUpdate,
+  } = useWorkspace();
   const [draft, setDraft] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [postError, setPostError] = useState("");
   const [status, setStatus] = useState("idle"); // idle | posting | error | posted
   const errorRef = useRef(null);
 
   const isPosting = status === "posting";
   const hasDraft = draft.trim() !== "";
   const showWriteAnother = status === "posted" && !hasDraft;
-  const existing = `${numberWord(thread.length)} update${thread.length === 1 ? "" : "s"}`;
+  const characterCount = `${draft.length}/${MAX_UPDATE_LENGTH}`;
 
   useEffect(() => {
     if (status === "error" && errorRef.current) errorRef.current.focus();
@@ -30,7 +38,8 @@ function ProjectUpdates() {
   function handleChange(event) {
     setDraft(event.target.value);
     setFieldError("");
-    if (status === "posted") setStatus("idle");
+    setPostError("");
+    if (status === "posted" || status === "error") setStatus("idle");
   }
 
   async function handlePost(event) {
@@ -41,22 +50,15 @@ function ProjectUpdates() {
       return;
     }
 
+    setPostError("");
     setStatus("posting");
     try {
-      await postUpdate(draft.trim(), { simulateFail: simulate === "fail" });
-      const now = new Date();
-      setThread((current) => [
-        {
-          author: currentUser.name,
-          date: now.toISOString().slice(0, 10),
-          time: now.toTimeString().slice(0, 5),
-          message: draft.trim(),
-        },
-        ...current,
-      ]);
+      const update = await postProjectUpdate(projectId, draft.trim());
+      addUpdate(update);
       setDraft("");
       setStatus("posted");
-    } catch {
+    } catch (error) {
+      setPostError(error?.message || "Something went wrong. Try again.");
       setStatus("error");
     }
   }
@@ -66,9 +68,12 @@ function ProjectUpdates() {
     document.getElementById("update-message").focus();
   }
 
-  let helper = "";
-  if (isPosting) helper = "Temporarily locked while saving. Your draft is retained.";
-  else if (hasDraft) helper = `Local draft${SEP}Not posted`;
+  let helper = `${characterCount} characters`;
+  if (isPosting) {
+    helper = `Temporarily locked while saving. ${characterCount} characters. Your draft is retained.`;
+  } else if (hasDraft) {
+    helper = `${characterCount} characters${SEP}Local draft, not posted`;
+  }
 
   return (
     <div>
@@ -80,11 +85,6 @@ function ProjectUpdates() {
       <form className={shared.card} onSubmit={handlePost} noValidate>
         <h3 className={shared.cardTitle}>Write an update</h3>
 
-        {thread.length === 0 && status === "idle" && (
-          <Alert variant="info" title="No updates yet">
-            Start the project thread. Everyone on the accepted team can read and post.
-          </Alert>
-        )}
         {isPosting && (
           <Alert variant="info" title="Posting update...">
             Posting. Draft retained; post temporarily locked.
@@ -93,8 +93,7 @@ function ProjectUpdates() {
         {status === "error" && (
           <div ref={errorRef} tabIndex={-1} className={shared.errorWrap}>
             <Alert variant="error" title="Update did not post">
-              Your draft is retained below. The existing {existing}{" "}
-              {thread.length === 1 ? "is" : "are"} unchanged.
+              {postError} Your draft is retained below.
             </Alert>
           </div>
         )}
@@ -111,6 +110,7 @@ function ProjectUpdates() {
           onChange={handleChange}
           error={fieldError}
           disabled={isPosting}
+          maxLength={MAX_UPDATE_LENGTH}
           helperText={helper || undefined}
         />
 
@@ -130,33 +130,57 @@ function ProjectUpdates() {
         )}
       </form>
 
-      {thread.length > 0 && (
-        <section aria-labelledby="thread-title">
-          <h3 id="thread-title" className={shared.sectionTitle}>
-            Project thread
-          </h3>
+      <section aria-labelledby="thread-title">
+        <h3 id="thread-title" className={shared.sectionTitle}>
+          Project thread
+        </h3>
+
+        {updatesLoading && (
+          <Alert variant="info" title="Loading updates...">
+            Fetching the latest project updates.
+          </Alert>
+        )}
+
+        {!updatesLoading && updatesError && (
+          <div className={shared.errorWrap}>
+            <Alert variant="error" title="Couldn't load updates">
+              {updatesError}
+            </Alert>
+            <Button variant="secondary" fullWidth onClick={retryUpdates}>
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {!updatesLoading && !updatesError && updates.length === 0 && (
+          <Alert variant="info" title="No updates yet">
+            Start the project thread. Everyone on the accepted team can read and
+            post.
+          </Alert>
+        )}
+
+        {!updatesLoading && !updatesError && updates.length > 0 && (
           <ul className={styles.thread}>
-            {thread.map((update, index) => (
-              <li
-                key={`${update.author}-${update.date}-${update.time ?? ""}-${index}`}
-                className={shared.card}
-              >
+            {updates.map((update) => (
+              <li key={update.id} className={shared.card}>
                 <div className={shared.person}>
                   <span className={shared.avatar} aria-hidden="true">
-                    {update.author.charAt(0)}
+                    {(update.author || "?").charAt(0)}
                   </span>
                   <span className={shared.text}>{update.author}</span>
                 </div>
-                <p className={shared.small}>
-                  {formatDate(update.date)}
-                  {update.time ? `${SEP}${update.time}` : ""}
-                </p>
+                {update.date && (
+                  <p className={shared.small}>
+                    {formatDate(update.date)}
+                    {update.time ? `${SEP}${update.time}` : ""}
+                  </p>
+                )}
                 <p className={shared.text}>{update.message}</p>
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }

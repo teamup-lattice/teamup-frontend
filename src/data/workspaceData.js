@@ -140,19 +140,6 @@ export const taskComments = [
   },
 ];
 
-export const projectUpdates = [
-  {
-    author: "David",
-    date: "2026-11-12",
-    message: "Waiting for agreed sign-up fields.",
-  },
-  {
-    author: "Ada",
-    date: "2026-11-12",
-    message: "I'll help agree the fields today.",
-  },
-];
-
 export function getTaskById(taskId) {
   return tasks.find((task) => task.id === taskId);
 }
