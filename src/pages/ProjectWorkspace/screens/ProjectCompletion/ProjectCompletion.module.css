@@ -1,0 +1,182 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+}
+
+.banner {
+  margin-bottom: var(--space-4);
+}
+
+.statusLine {
+  margin: 0 0 var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.missingLine {
+  margin: 0 0 var(--space-3);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.readOnlyLabel {
+  margin: 0 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 500;
+}
+
+.readOnlyBox {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  background: var(--color-canvas);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-text);
+  overflow-wrap: anywhere;
+}
+
+/* Saved work */
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+}
+
+.track {
+  height: 6px;
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--color-action-disabled);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--color-green);
+}
+
+/* Member confirmations */
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+}
+
+.summary {
+  margin: 0 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.noteBox {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-purple);
+  background: var(--color-purple-light);
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.noteBoxDone {
+  border-left-color: var(--color-green);
+  background: var(--color-green-light);
+}
+
+.noteTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.noteTitleDone {
+  color: var(--color-green);
+}
+
+.noteText {
+  margin: 0;
+}
+
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+/* Before you complete */
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+}
+
+.checkPending {
+  color: var(--color-text-secondary);
+}
+
+/* Success */
+.successBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+}

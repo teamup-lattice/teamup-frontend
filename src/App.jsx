@@ -9,7 +9,6 @@ import RequiredProfile from "./pages/RequiredProfile/RequiredProfile";
 import MyProjects from "./pages/MyProjects/MyProjects";
 import ProjectDetails from "./pages/ProjectDetails/ProjectDetails";
 import CreateProject from "./pages/CreateProject/CreateProject";
-import ProjectPage from "./pages/ProjectPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
 import Landing from "./pages/Landing/Landing";
@@ -36,13 +35,11 @@ import Settings from "./pages/Settings/Settings";
 import SharingPrivacy from "./pages/SharingPrivacy/SharingPrivacy";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
 import Notifications from "./pages/Notifications/Notifications";
+import ProjectCompletion from "./pages/ProjectWorkspace/screens/ProjectCompletion/ProjectCompletion";
+import PrivateProjectPage from "./pages/ProjectWorkspace/screens/PrivateProjectPage/PrivateProjectPage";
 
 function ContributionsPlaceholder() {
   return <h2>Contributions</h2>;
-}
-
-function CompletionPlaceholder() {
-  return <h2>Project completion</h2>;
 }
 
 function App() {
@@ -94,25 +91,28 @@ function App() {
           path="/projects/:projectId/workspace"
           element={<ProjectWorkspace />}
         >
-          <Route index element={<WorkspaceOverview />} />
-          <Route path="team-health" element={<TeamHealth />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="tasks/new" element={<CreateTask />} />
-          <Route path="tasks/:taskId" element={<TaskDetail />} />
-          <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
-          <Route path="team" element={<Team />} />
-          <Route path="team/release-role" element={<ReleaseRole />} />
-          <Route path="contributions" element={<ContributionsPlaceholder />} />
-          <Route path="completion" element={<CompletionPlaceholder />} />
-          <Route path="milestones" element={<Milestones />} />
-          <Route path="updates" element={<ProjectUpdates />} />
-          <Route path="reminders" element={<Reminders />} />
-          <Route path="sharing-privacy" element={<SharingPrivacy />} />
-        </Route>
+        <Route index element={<WorkspaceOverview />} />
+        <Route path="team-health" element={<TeamHealth />} />
+        <Route path="tasks" element={<Tasks />} />
+        <Route path="tasks/new" element={<CreateTask />} />
+        <Route path="tasks/:taskId" element={<TaskDetail />} />
+        <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
+        <Route path="team" element={<Team />} />
+        <Route path="team/release-role" element={<ReleaseRole />} />
+        <Route path="contributions" element={<ContributionsPlaceholder />} />
+        <Route path="completion" element={<ProjectCompletion />} />
+        <Route path="milestones" element={<Milestones />} />
+        <Route path="updates" element={<ProjectUpdates />} />
+        <Route path="reminders" element={<Reminders />} />
+        <Route path="sharing-privacy" element={<SharingPrivacy />} />
       </Route>
-      <Route path="/projects/:id" element={<ProjectDetails />} />
-      <Route path="/projects/:id/page" element={<ProjectPage />} />
-    </Routes>
+
+      <Route path="/projects/:projectId/page" element={<ProjectWorkspace />}>
+        <Route index element={<PrivateProjectPage />} />
+      </Route>
+    </Route>
+    <Route path="/projects/:id" element={<ProjectDetails />} />
+  </Routes>
   );
 }
 
