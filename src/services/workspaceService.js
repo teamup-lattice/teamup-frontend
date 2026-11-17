@@ -17,8 +17,5 @@ export const saveMilestone = (values, { simulateFail = false } = {}) =>
 export const requestNewDate = (values, { simulateFail = false } = {}) =>
   mock(values, simulateFail);
 
-export const requestHandover = (values, { simulateFail = false } = {}) =>
-  mock(values, simulateFail);
-
 export const releaseRole = (values, { simulateFail = false } = {}) =>
   mock(values, simulateFail);

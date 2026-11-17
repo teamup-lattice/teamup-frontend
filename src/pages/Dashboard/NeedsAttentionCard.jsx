@@ -11,16 +11,16 @@ function NeedsAttentionCard({
   projectId,
   taskTitle,
   rawDueDate,
-  viewerAccessRole,
+  assigneeMemberId,
   onActionComplete,
 }) {
   const navigate = useNavigate();
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const canOpenTask = Boolean(projectId && taskId);
-  const canHandOver =
-    canOpenTask &&
-    (viewerAccessRole === "OWNER" || viewerAccessRole === "MANAGER");
+  // Dashboard attention tasks are scoped to the signed-in assignee, so a
+  // present assignee member id means this task belongs to the current user.
+  const canHandOver = canOpenTask && Boolean(assigneeMemberId);
 
   const handleOpenTask = () => {
     if (canOpenTask) {
@@ -30,7 +30,10 @@ function NeedsAttentionCard({
 
   const handleHandOver = () => {
     if (canHandOver) {
-      navigate(`/projects/${projectId}/workspace/tasks/${taskId}/reassign`);
+      const taskParam = encodeURIComponent(taskId);
+      navigate(
+        `/projects/${projectId}/workspace/reminders?taskId=${taskParam}&mode=handover`,
+      );
     }
   };
 
@@ -112,7 +115,7 @@ function NeedsAttentionCard({
               Hand over
             </button>
           )}
-          {/* Members cannot hand over: the backend has no member handover endpoint yet. */}
+          {/* Owners and managers reassign tasks from the task details screen. */}
         </div>
       )}
 
