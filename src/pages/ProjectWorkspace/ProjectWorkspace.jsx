@@ -3,8 +3,8 @@ import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-rout
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
-import { projectUpdates } from "../../data/workspaceData";
 import { getProjectMilestones } from "../../services/milestonesService";
+import { getProjectUpdates } from "../../services/projectUpdatesService";
 import {
   getWorkspaceCurrentUser,
   getWorkspaceMembers,
@@ -49,6 +49,7 @@ function ProjectWorkspace() {
   const [workspaceRetryCount, setWorkspaceRetryCount] = useState(0);
   const [membersRetryCount, setMembersRetryCount] = useState(0);
   const [tasksRetryCount, setTasksRetryCount] = useState(0);
+  const [updatesRetryCount, setUpdatesRetryCount] = useState(0);
   const [workspaceState, setWorkspaceState] = useState({
     projectId: null,
     retryCount: 0,
@@ -71,6 +72,13 @@ function ProjectWorkspace() {
     error: "",
     tasks: [],
     summary: null,
+  });
+  const [updatesState, setUpdatesState] = useState({
+    projectId: null,
+    retryCount: 0,
+    loading: true,
+    error: "",
+    data: [],
   });
   const isMilestonesRequestCurrent =
     milestonesState.projectId === projectId &&
@@ -141,6 +149,12 @@ function ProjectWorkspace() {
     : isTasksRequestCurrent
       ? tasksState.error
       : "";
+  const isUpdatesRequestCurrent =
+    updatesState.projectId === projectId &&
+    updatesState.retryCount === updatesRetryCount;
+  const updates = isUpdatesRequestCurrent ? updatesState.data : EMPTY_ARRAY;
+  const updatesLoading = !isUpdatesRequestCurrent || updatesState.loading;
+  const updatesError = isUpdatesRequestCurrent ? updatesState.error : "";
 
   useEffect(() => {
     let isCurrent = true;
@@ -244,6 +258,38 @@ function ProjectWorkspace() {
   }, [projectId, milestonesRetryCount]);
 
   useEffect(() => {
+    let isCurrent = true;
+
+    getProjectUpdates(projectId)
+      .then((loadedUpdates) => {
+        if (isCurrent) {
+          setUpdatesState({
+            projectId,
+            retryCount: updatesRetryCount,
+            loading: false,
+            error: "",
+            data: loadedUpdates,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load project updates:", error);
+        if (!isCurrent) return;
+        setUpdatesState({
+          projectId,
+          retryCount: updatesRetryCount,
+          loading: false,
+          error: error.message || "Something went wrong. Try again.",
+          data: [],
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [projectId, updatesRetryCount]);
+
+  useEffect(() => {
     if (workspaceLoading || !project) return undefined;
     let isCurrent = true;
 
@@ -293,6 +339,10 @@ function ProjectWorkspace() {
 
   const retryTasks = () => {
     setTasksRetryCount((count) => count + 1);
+  };
+
+  const retryUpdates = () => {
+    setUpdatesRetryCount((count) => count + 1);
   };
 
   const refreshTasks = async () => {
@@ -373,6 +423,13 @@ function ProjectWorkspace() {
     });
   };
 
+  const addUpdate = (update) => {
+    setUpdatesState((current) => {
+      const currentUpdates = current.projectId === projectId ? current.data : [];
+      return { ...current, data: [update, ...currentUpdates] };
+    });
+  };
+
   const workspacePath = `/projects/${projectId}/workspace`;
   const currentSection = location.pathname.startsWith(`${workspacePath}/tasks`)
     ? "tasks"
@@ -401,7 +458,11 @@ function ProjectWorkspace() {
     retryTasks,
     taskSummary,
     refreshTasks,
-    updates: projectUpdates,
+    updates,
+    updatesLoading,
+    updatesError,
+    retryUpdates,
+    addUpdate,
     currentUser,
     isOwner,
     canManageMembers,
