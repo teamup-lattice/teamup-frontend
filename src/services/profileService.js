@@ -1,7 +1,13 @@
 import { api } from "./api";
 import { getMyProfile as fetchMyProfile } from "./dashboardService";
 
-export const getSkills = () => api.get("/api/profile/skills");
+export const getSkillCategories = () =>
+  api.get("/api/profile/skills/categories");
+
+export const getSkills = (category) => {
+  const query = category ? `?category=${encodeURIComponent(category)}` : "";
+  return api.get(`/api/profile/skills${query}`);
+};
 
 function mapVisibilitySettings(settings = {}) {
   const visibility = settings ?? {};
@@ -43,12 +49,16 @@ export async function getProfile() {
   const skillNames = skills
     .map((entry) => entry?.skill?.name?.trim())
     .filter((name) => typeof name === "string" && name.length > 0);
+  const skillIds = skills
+    .map((entry) => entry?.skill?.id)
+    .filter((id) => id !== undefined && id !== null);
 
   return {
     name: user.name ?? "",
     role: user.headline ?? "",
     avatarUrl: user.avatarUrl ?? "",
     skills: skillNames,
+    skillIds,
     skillLevel: mapSkillLevel(skills),
     goals: user.goals ?? "",
     availabilityHours: user.weeklyAvailabilityHours ?? null,
