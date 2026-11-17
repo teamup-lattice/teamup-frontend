@@ -10,8 +10,6 @@ export const availabilityProfile = {
   weeks: 6,
 };
 
-const toOptions = (values) => values.map((value) => ({ value, label: value }));
-
 const LEGACY_PROJECT_TYPE_VALUES = {
   "web application": "WEB_APPLICATION",
   "mobile app": "MOBILE_APP",
@@ -45,7 +43,7 @@ export function normalizeProjectTypeValue(value) {
   return LEGACY_PROJECT_TYPE_VALUES[trimmed.toLowerCase()] ?? "";
 }
 
-// The five optional filters. "summaryLabel" is the short label used in the
+// The optional filters. "summaryLabel" is the short label used in the
 // mobile summary ("Type: Web application").
 export const filterFields = [
   {
@@ -55,20 +53,6 @@ export const filterFields = [
     placeholder: "Any skill",
     options: [],
     dynamic: "skills",
-  },
-  {
-    key: "role",
-    label: "Role",
-    summaryLabel: "Role",
-    placeholder: "Any role",
-    disabled: true,
-    helperText: "Role filter coming soon",
-    options: toOptions([
-      "UI/UX Designer",
-      "Frontend Developer",
-      "Backend Developer",
-      "Product Manager",
-    ]),
   },
   {
     key: "type",

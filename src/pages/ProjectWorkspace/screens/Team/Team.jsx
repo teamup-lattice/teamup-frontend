@@ -141,7 +141,7 @@ function Team() {
                 onChange={(event) => setDraftResponsibilities(event.target.value)}
               />
               <p className={styles.metaLine}>
-                Unsaved local role changes for {member.name}. Role editing is not connected to the backend.
+                Unsaved local role changes for {member.name}.
               </p>
               <Button type="button" fullWidth onClick={confirmRoleSave}>Confirm role changes</Button>
               <Button type="button" variant="secondary" fullWidth onClick={resetEdit}>Cancel</Button>
@@ -180,6 +180,7 @@ function Team() {
                   type="button"
                   variant="secondary"
                   fullWidth
+                  disabled
                   onClick={() => openEdit(member)}
                 >
                   Edit role
