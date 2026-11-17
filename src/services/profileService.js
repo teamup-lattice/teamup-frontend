@@ -60,8 +60,8 @@ export async function getProfile() {
 }
 
 export function saveProfile(values) {
-  // Role is omitted because the backend does not have a field for it yet.
   return api.put("/api/profile/users/me/onboarding", {
+    headline: values.role,
     weeklyAvailabilityHours: Number(values.weeklyAvailability),
     goals: values.goals.trim(),
     preferredProjectDurationWeeks: parseInt(values.duration, 10),
