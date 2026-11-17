@@ -234,11 +234,11 @@ function Reminders() {
               </p>
               <p className={shared.text}>
                 Stored due: {shortDate(task.dueDate)}
-                {SEP}
-                {task.milestoneId}
+                {milestone && `${SEP}${milestone.name}`}
               </p>
               <p className={shared.text}>
-                Overdue {task.overdueDays} days{SEP}Milestone {task.milestoneId} {milestone?.name}
+                Overdue {task.overdueDays} days
+                {milestone && `${SEP}Milestone ${milestone.name}`}
               </p>
               <p className={shared.text}>
                 Request pending{SEP}Proposed {shortDate(sent.date)}
@@ -261,8 +261,7 @@ function Reminders() {
               <p className={shared.text}>
                 {task.status}
                 {SEP}Due {shortDate(task.dueDate)}
-                {SEP}
-                {task.milestoneId}
+                {milestone && `${SEP}${milestone.name}`}
               </p>
               {sent.message && <p className={shared.text}>Message: &ldquo;{sent.message}&rdquo;</p>}
               <Button fullWidth variant="secondary" onClick={() => navigate(taskPath(task))}>
@@ -326,7 +325,7 @@ function Reminders() {
               </div>
               <p className={shared.small}>
                 Due {formatDate(item.dueDate)}
-                {SEP}Milestone: {item.milestoneId} {milestoneOf(item)?.name}
+                {milestoneOf(item) && `${SEP}Milestone: ${milestoneOf(item).name}`}
               </p>
               {item.blockerNote && (
                 <p className={shared.text}>Blocker note: {item.blockerNote}</p>
@@ -373,7 +372,7 @@ function Reminders() {
               </div>
               <p className={shared.small}>
                 Due {formatDate(item.dueDate)}
-                {SEP}Milestone: {item.milestoneId} {milestoneOf(item)?.name}
+                {milestoneOf(item) && `${SEP}Milestone: ${milestoneOf(item).name}`}
               </p>
               {item.note && <p className={shared.text}>{item.note}</p>}
               <p className={shared.helper}>
