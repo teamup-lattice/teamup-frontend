@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
@@ -33,6 +33,12 @@ function readable(status) {
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+function statusForView(view) {
+  if (view === "PROJECTS") return "ready";
+  if (view === "DISCOVERY") return "empty";
+  return "error";
 }
 
 function buildActiveProject(dashboard) {
@@ -114,6 +120,26 @@ function buildNeedsAttention(task) {
   };
 }
 
+function getViewerAccessRole(dashboard, projectId) {
+  if (!dashboard?.user?.id || !projectId) return null;
+
+  const projects = [
+    ...(dashboard.ownedProjects ?? []),
+    ...(dashboard.memberProjects ?? []),
+  ];
+  const project = projects.find(
+    (item) => String(item.id) === String(projectId),
+  );
+  if (!project) return null;
+
+  const membership = project.memberships?.find(
+    (item) => String(item.userId) === String(dashboard.user.id),
+  );
+  if (membership?.accessRole) return membership.accessRole;
+  if (String(project.ownerId) === String(dashboard.user.id)) return "OWNER";
+  return "MEMBER";
+}
+
 function buildUpcomingTask(task) {
   return {
     id: task.id,
@@ -143,16 +169,35 @@ function buildInvitation(inv) {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const isMountedRef = useRef(true);
   const [profile, setProfile] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [status, setStatus] = useState("loading");
 
+  const refreshDashboard = useCallback(async () => {
+    try {
+      const result = await getDashboard();
+      if (!isMountedRef.current) return;
+
+      if (result.view === "ONBOARDING") {
+        navigate("/profile/setup", { replace: true });
+        return;
+      }
+
+      setDashboard(result);
+      setProfile(result.user);
+      setStatus(statusForView(result.view));
+    } catch (error) {
+      console.error("Failed to refresh dashboard data:", error);
+    }
+  }, [navigate]);
+
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
 
     getDashboard()
       .then((result) => {
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         if (result.view === "ONBOARDING") {
           navigate("/profile/setup", { replace: true });
@@ -161,21 +206,15 @@ function Dashboard() {
 
         setDashboard(result);
         setProfile(result.user);
-        if (result.view === "PROJECTS") {
-          setStatus("ready");
-        } else if (result.view === "DISCOVERY") {
-          setStatus("empty");
-        } else {
-          setStatus("error");
-        }
+        setStatus(statusForView(result.view));
       })
       .catch((error) => {
         console.error("Failed to load dashboard data:", error);
-        if (isMounted) setStatus("error");
+        if (isMountedRef.current) setStatus("error");
       });
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
   }, [navigate]);
 
@@ -292,6 +331,14 @@ function Dashboard() {
                       needsAttention={buildNeedsAttention(task)}
                       taskId={task.id}
                       projectId={task.projectId}
+                      taskTitle={task.title}
+                      rawDueDate={task.dueDate}
+                      assigneeMemberId={task.assigneeMemberId}
+                      viewerAccessRole={getViewerAccessRole(
+                        dashboard,
+                        task.projectId,
+                      )}
+                      onActionComplete={refreshDashboard}
                     />
                   ))}
                 </section>

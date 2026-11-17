@@ -1,15 +1,45 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AltLink from "../../components/AltLink";
+import Alert from "../../components/Alert";
 import Button from "../../components/Button";
+import RequestNewDateModal from "./RequestNewDateModal";
 import styles from "./NeedsAttentionCard.module.css";
 
-function NeedsAttentionCard({ needsAttention, taskId, projectId }) {
+function NeedsAttentionCard({
+  needsAttention,
+  taskId,
+  projectId,
+  taskTitle,
+  rawDueDate,
+  viewerAccessRole,
+  onActionComplete,
+}) {
   const navigate = useNavigate();
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const canOpenTask = Boolean(projectId && taskId);
+  const canHandOver =
+    canOpenTask &&
+    (viewerAccessRole === "OWNER" || viewerAccessRole === "MANAGER");
 
   const handleOpenTask = () => {
-    if (projectId && taskId) {
+    if (canOpenTask) {
       navigate(`/projects/${projectId}/workspace/tasks/${taskId}`);
     }
+  };
+
+  const handleHandOver = () => {
+    if (canHandOver) {
+      navigate(`/projects/${projectId}/workspace/tasks/${taskId}/reassign`);
+    }
+  };
+
+  const handleRequestSuccess = () => {
+    setIsDateModalOpen(false);
+    setSuccessMessage(
+      "New date requested. Your project owner has been notified.",
+    );
+    onActionComplete?.();
   };
 
   return (
@@ -52,16 +82,50 @@ function NeedsAttentionCard({ needsAttention, taskId, projectId }) {
         </p>
       )}
 
-      {projectId && taskId && (
+      {successMessage && (
+        <div className={styles.feedback}>
+          <Alert variant="success">{successMessage}</Alert>
+        </div>
+      )}
+
+      {canOpenTask && (
         <Button variant="secondary" fullWidth onClick={handleOpenTask}>
           Open task details
         </Button>
       )}
 
-      <div className={styles.links}>
-        <AltLink to="/projects">Request new date</AltLink>
-        <AltLink to="/projects">Hand over</AltLink>
-      </div>
+      {canOpenTask && (
+        <div className={styles.links}>
+          <button
+            type="button"
+            className={styles.linkButton}
+            onClick={() => setIsDateModalOpen(true)}
+          >
+            Request new date
+          </button>
+          {canHandOver && (
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={handleHandOver}
+            >
+              Hand over
+            </button>
+          )}
+          {/* Members cannot hand over: the backend has no member handover endpoint yet. */}
+        </div>
+      )}
+
+      {isDateModalOpen && (
+        <RequestNewDateModal
+          projectId={projectId}
+          taskId={taskId}
+          taskTitle={taskTitle || needsAttention.title}
+          rawDueDate={rawDueDate}
+          onClose={() => setIsDateModalOpen(false)}
+          onSuccess={handleRequestSuccess}
+        />
+      )}
     </article>
   );
 }

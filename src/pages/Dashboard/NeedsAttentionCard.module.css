@@ -102,7 +102,35 @@
   margin-top: calc(-1 * var(--space-4));
 }
 
-.links a {
+.linkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
   min-height: var(--button-height);
-  margin-top: 0;
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--color-purple);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.feedback {
+  width: 100%;
+}
+
+.feedback > div {
+  margin-bottom: 0;
 }
