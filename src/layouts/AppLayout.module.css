@@ -15,7 +15,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-5);
+  height: var(--header-height);
+  padding: 0 var(--space-5);
   background: var(--color-card);
   border-bottom: 1px solid var(--color-border-subtle);
 }
@@ -132,13 +133,13 @@
 
 .nav {
   position: sticky;
-  top: 65px;
+  top: var(--header-height);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   flex: 0 0 240px;
   width: 240px;
-  height: calc(100vh - 65px);
+  height: calc(100vh - var(--header-height));
   padding: var(--space-4);
   background: var(--color-card);
   border-right: 1px solid var(--color-border-subtle);
@@ -272,37 +273,45 @@
 }
 
 @media (max-width: 599px) {
-  .shell {
-    --header-height: 61px;
-  }
-
   .header {
     box-sizing: border-box;
-    height: var(--header-height);
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .logo img {
-    width: 120px;
+    padding: 0 var(--space-3);
   }
 
   .headerActions {
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
 
   .notificationButton {
+    position: relative;
     width: 44px;
     height: 44px;
+    background: transparent;
+  }
+
+  .notificationButton::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-purple-light);
+    content: "";
+    transform: translate(-50%, -50%);
   }
 
   .notificationButton svg {
-    width: 24px;
-    height: 24px;
+    position: relative;
+    z-index: 1;
+    width: 20px;
+    height: 20px;
   }
 
   .notificationCount {
     top: 0;
     right: 0;
+    z-index: 2;
   }
 
   .settingsLink {
@@ -311,10 +320,15 @@
     min-height: 44px;
   }
 
+  .settingsLink svg {
+    width: 18px;
+    height: 18px;
+  }
+
   .headerActions .menuButton {
     min-height: 44px;
     margin-left: 0;
-    padding: 0 var(--space-2);
+    padding: 0 var(--space-1);
   }
 
   /* Drawer: fixed to the screen under the header, scrolls on its own */
@@ -325,10 +339,10 @@
     bottom: 0;
     left: 0;
     width: min(240px, 80vw);
-    height: calc(100vh - var(--header-height));
+    height: calc(100dvh - var(--header-height));
     min-height: 0;
     flex-basis: min(240px, 80vw);
-    z-index: 20;
+    z-index: 5;
     border-right: 1px solid var(--color-border-subtle);
     transform: translateX(0);
     transition: transform 200ms ease;
@@ -345,11 +359,12 @@
     right: 0;
     bottom: 0;
     left: 0;
+    height: calc(100dvh - var(--header-height));
     display: block;
     padding: 0;
     border: 0;
     background: color-mix(in srgb, var(--color-navy) 40%, transparent);
-    z-index: 1;
+    z-index: 4;
   }
 }
 

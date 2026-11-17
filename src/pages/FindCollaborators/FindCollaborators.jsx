@@ -60,28 +60,28 @@ function OptionalFilters({
           options={skills}
           value={values.skill}
           onChange={setValue("skill")}
-          placeholder=""
+          placeholder="Any skill"
         />
         <Select
           label="Project type"
           options={projectTypes}
           value={values.projectType}
           onChange={setValue("projectType")}
-          placeholder=""
+          placeholder="Any project type"
         />
         <Select
           label="Duration"
           options={durations}
           value={values.duration}
           onChange={setValue("duration")}
-          placeholder=""
+          placeholder="Any duration"
         />
         <Select
           label="Weekly hours"
           options={hours}
           value={values.hours}
           onChange={setValue("hours")}
-          placeholder=""
+          placeholder="Any weekly hours"
         />
       </div>
       <button className={styles.textLink} type="button" onClick={onReset}>

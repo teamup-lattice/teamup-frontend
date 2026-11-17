@@ -1,12 +1,12 @@
-import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
+import { formatDate } from "../../services/discoverService";
 import {
   capitalize,
   countWord,
   joinWithAnd,
   ownerLine,
-  unavailableMessage,
+  skillNames,
 } from "./projectDetailsHelpers";
 import styles from "./ProjectDetails.module.css";
 
@@ -49,13 +49,15 @@ export function OverviewCard({ project }) {
         {project.title}
       </h2>
       <p className={styles.meta}>
-        {project.type} · {project.recruitmentStatus}
+        {project.projectType} · {project.status}
       </p>
       <dl className={styles.fieldList}>
         <Field label="Problem">{project.problem}</Field>
         <Field label="Description">{project.description}</Field>
-        <Field label="Expected outcome">{project.expectedOutcome}</Field>
-        <Field label="Project skills">{project.skills.join(" · ")}</Field>
+        <Field label="Expected outcome">{project.outcome}</Field>
+        <Field label="Project skills">
+          {skillNames(project.skills).join(" · ")}
+        </Field>
       </dl>
       <div className={styles.owner}>
         <span className={styles.avatar} aria-hidden="true">
@@ -73,11 +75,12 @@ export function OverviewCard({ project }) {
 export function TeamCard({
   project,
   roles,
+  membersCount,
   selectedRoleId,
   onRoleChange,
   selectRef,
 }) {
-  const joined = project.collaboratorsJoined;
+  const joined = membersCount;
   const openRoles = `${capitalize(countWord(roles.length))} open ${
     roles.length === 1 ? "role" : "roles"
   }: ${joinWithAnd(roles.map((role) => role.title))}.`;
@@ -94,7 +97,7 @@ export function TeamCard({
   return (
     <section className={styles.card} aria-labelledby="team-title">
       <h2 className={styles.cardTitle} id="team-title">
-        {`A team of ${countWord(project.plannedTeamSize)}`}
+        {`A team of ${countWord(project.teamSize)}`}
       </h2>
       <p className={styles.meta}>{ownerLine(project.owner)}</p>
       <p className={styles.bodyText}>
@@ -116,73 +119,62 @@ export function TeamCard({
   );
 }
 
-export function RoleTermsCard({ role }) {
+export function RoleTermsCard({ role, project }) {
+  const start = formatDate(project.startDate);
+  const end = formatDate(project.targetEndDate);
+
   return (
     <section className={styles.card} aria-labelledby="role-title">
       <h2 className={styles.cardTitle} id="role-title">
         Your role and expected contribution
       </h2>
       <p className={styles.strong}>{role.title}</p>
-      <p className={styles.bodyText}>{role.summary}</p>
+      <p className={styles.bodyText}>{role.description}</p>
       <dl className={styles.fieldList}>
-        <Field label="Required skills">{role.skills.join(" · ")}</Field>
-        <Field label="Expected contribution">{role.expectedContribution}</Field>
+        <Field label="Required skills">
+          {skillNames(role.skills).join(" · ")}
+        </Field>
       </dl>
       <p className={styles.strong}>
-        {role.hoursPerWeek} h / week · {role.weeks} weeks
+        {role.hoursPerWeek} h / week
+        {project.durationWeeks ? ` · ${project.durationWeeks} weeks` : ""}
       </p>
-      <p className={styles.meta}>
-        Start: {role.start}
-        <br />
-        End: {role.end}
-      </p>
-      <dl className={styles.fieldList}>
-        <Field label="Availability expectations">{role.availability}</Field>
-      </dl>
+      {(start || end) && (
+        <p className={styles.meta}>
+          {start && <>Start: {start}</>}
+          {start && end && <br />}
+          {end && <>End: {end}</>}
+        </p>
+      )}
     </section>
   );
 }
 
-export function MilestonesCard({ milestones, taskDeadlines }) {
+export function MilestonesCard({ milestones = [] }) {
+  if (milestones.length === 0) return null;
+
   return (
     <section className={styles.card} aria-labelledby="milestones-title">
       <h2 className={styles.cardTitle} id="milestones-title">
         Planned milestones and deadlines
       </h2>
       <ul className={styles.plainList}>
-        {milestones.map((milestone) => (
-          <li key={milestone.label}>
-            {milestone.label} — {milestone.date}
-          </li>
-        ))}
-      </ul>
-      <p className={styles.fieldLabel}>Your planned task deadlines</p>
-      <ul className={styles.plainList}>
-        {taskDeadlines.map((task) => (
-          <li key={task.label}>
-            {task.label} — {task.date}
-          </li>
-        ))}
+        {milestones.map((milestone) => {
+          const dueDate = formatDate(milestone.dueDate);
+          if (!dueDate) return null;
+          return (
+            <li key={milestone.id}>
+              {milestone.title} — {dueDate}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
 }
 
-function UnavailableRequest({ role, profile, buttonLabel }) {
-  return (
-    <div>
-      <Alert variant="info" title={`Request unavailable for ${profile.name}`}>
-        {unavailableMessage(role, profile)}
-      </Alert>
-      <Button fullWidth disabled>
-        {buttonLabel}
-      </Button>
-    </div>
-  );
-}
-
 // A role that is not the one currently selected, shown for information.
-export function OtherRoleCard({ role, profile }) {
+export function OtherRoleCard({ role, project }) {
   const titleId = `role-${role.id}-title`;
 
   return (
@@ -190,70 +182,35 @@ export function OtherRoleCard({ role, profile }) {
       <h2 className={styles.cardTitle} id={titleId}>
         {role.title} / informational
       </h2>
-      <p className={styles.bodyText}>{role.summary}</p>
+      <p className={styles.bodyText}>{role.description}</p>
       <p className={styles.bodyText}>
-        Required skills: {role.skills.join(" · ")}
+        Required skills: {skillNames(role.skills).join(" · ")}
       </p>
       <p className={styles.strong}>
-        {role.hoursPerWeek} h / week · {role.weeks} weeks
+        {role.hoursPerWeek} h / week
+        {project.durationWeeks ? ` · ${project.durationWeeks} weeks` : ""}
       </p>
-      {!role.eligibility.isEligible && (
-        <UnavailableRequest
-          role={role}
-          profile={profile}
-          buttonLabel={`Request ${role.shortName} role`}
-        />
-      )}
     </section>
   );
 }
 
-export function AgreementsCard({ agreements, proposal }) {
-  return (
-    <section className={styles.card} aria-labelledby="agreements-title">
-      <h2 className={styles.cardTitle} id="agreements-title">
-        Team agreements
-      </h2>
-      <ul className={styles.bulletList}>
-        {agreements.map((agreement) => (
-          <li key={agreement}>{agreement}</li>
-        ))}
-      </ul>
-      <dl className={styles.fieldList}>
-        <Field label="Response-window proposal">{proposal}</Field>
-      </dl>
-      <p className={styles.helper}>Response window: to be agreed</p>
-    </section>
-  );
-}
-
-export function RequestCard({ project, role, profile, onRequest }) {
+export function RequestCard({ project, role, onRequest }) {
   return (
     <section className={styles.card} aria-labelledby="request-title">
       <h2 className={styles.cardTitle} id="request-title">
         Selected role: {role.title}
       </h2>
-      {role.eligibility.isEligible ? (
-        <>
-          <p className={styles.bodyText}>
-            Stated requirements met: {role.skills.join(", ")},{" "}
-            {role.hoursPerWeek} h / week for {role.weeks} weeks.
-          </p>
-          <Button fullWidth onClick={onRequest}>
-            Request selected role
-          </Button>
-          <p className={styles.helper}>
-            {project.owner.name} reviews your request. Joining requires
-            approval and saved commitment acceptance.
-          </p>
-        </>
-      ) : (
-        <UnavailableRequest
-          role={role}
-          profile={profile}
-          buttonLabel="Request selected role"
-        />
-      )}
+      <p className={styles.bodyText}>
+        Stated requirements: {skillNames(role.skills).join(", ")},{" "}
+        {role.hoursPerWeek} h / week.
+      </p>
+      <Button fullWidth onClick={onRequest}>
+        Request selected role
+      </Button>
+      <p className={styles.helper}>
+        {project.owner.name} reviews your request. Joining requires approval
+        and saved commitment acceptance.
+      </p>
     </section>
   );
 }

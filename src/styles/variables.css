@@ -41,10 +41,15 @@
 
   --button-height: 44px;
   --input-height: 48px;
+
+  --header-height: 64px;
+  --logo-width: 153.6px;
 }
 
 @media (max-width: 599px) {
   :root {
     --font-size-heading: 24px;
+    --header-height: 56px;
+    --logo-width: 104px;
   }
 }

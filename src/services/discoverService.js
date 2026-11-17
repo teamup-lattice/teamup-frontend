@@ -54,7 +54,7 @@ function formatProjectType(value) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function formatDate(value) {
+export function formatDate(value) {
   if (typeof value !== "string" || !value) return "";
   const timestamp = Date.parse(value);
   if (Number.isNaN(timestamp)) return "";

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
-import { getSessions } from "../../services/authService";
+import { clearToken } from "../../services/api";
+import { getSessions, logoutAllDevices } from "../../services/authService";
 import { updateProfileDetails } from "../../services/profileService";
 import {
   NOTIFICATION_TYPE_MAP,
@@ -128,6 +130,8 @@ function SettingsForm({ initialSettings }) {
     sessions: [],
   });
   const [isShowingAllSessions, setIsShowingAllSessions] = useState(false);
+  const [logoutAllStatus, setLogoutAllStatus] = useState("idle");
+  const [logoutAllError, setLogoutAllError] = useState("");
 
   const isSaving = saveStatus === "saving";
   const sessionsStatus =
@@ -152,6 +156,25 @@ function SettingsForm({ initialSettings }) {
 
     return visible;
   })();
+
+  const navigate = useNavigate();
+
+  async function handleLogoutAllDevices() {
+    setLogoutAllStatus("submitting");
+    setLogoutAllError("");
+
+    try {
+      await logoutAllDevices();
+      clearToken();
+      navigate("/login");
+    } catch (error) {
+      console.error("Failed to sign out of all devices:", error);
+      setLogoutAllError(
+        "Couldn't sign out of all devices. Please try again.",
+      );
+      setLogoutAllStatus("confirm");
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -441,6 +464,52 @@ function SettingsForm({ initialSettings }) {
               )}
             </>
           ))}
+
+        <div className={styles.accountAction}>
+          {logoutAllError && (
+            <Alert variant="error" title="Sign out failed">
+              {logoutAllError}
+            </Alert>
+          )}
+
+          {logoutAllStatus !== "idle" ? (
+            <div className={styles.removeConfirm}>
+              <p className={styles.removePrompt}>
+                Sign out everywhere? This also signs you out here.
+              </p>
+              <div className={styles.removeActions}>
+                <Button
+                  variant="secondary"
+                  disabled={logoutAllStatus === "submitting"}
+                  onClick={() => {
+                    setLogoutAllStatus("idle");
+                    setLogoutAllError("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  loading={logoutAllStatus === "submitting"}
+                  loadingText="Signing out…"
+                  onClick={handleLogoutAllDevices}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setLogoutAllError("");
+                setLogoutAllStatus("confirm");
+              }}
+            >
+              Sign out of all devices
+            </Button>
+          )}
+        </div>
       </section>
 
       <AccountControls />
