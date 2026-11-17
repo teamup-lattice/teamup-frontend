@@ -17,9 +17,15 @@ import {
   updateProjectTask,
   updateProjectTaskComment,
 } from "../../../../services/tasksService";
+import {
+  decideDateExtensionRequest,
+  getDateExtensionRequests,
+} from "../../../../services/dateExtensionsService";
+import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import TaskSummaryCard from "../../shared/TaskSummaryCard";
+import DateExtensionBanner from "./DateExtensionBanner";
 import styles from "./TaskDetail.module.css";
 
 const taskStatusOptions = [
@@ -50,6 +56,22 @@ function formatErrorMessage(error, fallback = "Something went wrong. Try again."
     if (messages.length > 0) return messages.join(" ");
   }
   return error.message || fallback;
+}
+
+function getDecisionErrorMessage(error) {
+  switch (Number(error?.status)) {
+    case 409:
+      return "This request has already been handled.";
+    case 403:
+      return "You don't have permission to decide this request.";
+    case 404:
+      return "This request no longer exists.";
+    default:
+      return formatErrorMessage(
+        error,
+        "We couldn't save your decision. Try again.",
+      );
+  }
 }
 
 function TaskDetail() {
@@ -104,6 +126,12 @@ function TaskDetail() {
   const [commentActionLoadingId, setCommentActionLoadingId] = useState(null);
   const [commentActionError, setCommentActionError] = useState("");
   const [deletingCommentId, setDeletingCommentId] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsError, setRequestsError] = useState("");
+  const [decidingRequestId, setDecidingRequestId] = useState(null);
+  const [decisionError, setDecisionError] = useState("");
+  const [decisionSuccess, setDecisionSuccess] = useState("");
 
   const isTaskCurrent =
     taskState.projectId === projectId &&
@@ -143,6 +171,8 @@ function TaskDetail() {
         setStatusError("");
         setSuccessMessage("");
         setNoChangesNotice(false);
+        setDecisionError("");
+        setDecisionSuccess("");
         setTaskState({
           projectId,
           taskId,
@@ -218,6 +248,39 @@ function TaskDetail() {
     workspaceError,
     detailRetryCount,
   ]);
+
+  useEffect(() => {
+    if (!canManageMembers || !project || !task) {
+      setPendingRequests([]);
+      setRequestsLoading(false);
+      setRequestsError("");
+      return undefined;
+    }
+
+    let isCurrent = true;
+    setRequestsLoading(true);
+    setRequestsError("");
+
+    getDateExtensionRequests(projectId, {
+      status: "PENDING",
+      taskId,
+    })
+      .then((requests) => {
+        if (!isCurrent) return;
+        setPendingRequests(requests);
+        setRequestsLoading(false);
+      })
+      .catch(() => {
+        if (!isCurrent) return;
+        setPendingRequests([]);
+        setRequestsError("Unable to load pending date requests.");
+        setRequestsLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [canManageMembers, project, projectId, task, taskId]);
 
   const taskRoute =
     `/projects/${projectId}/workspace/tasks` +
@@ -550,6 +613,92 @@ function TaskDetail() {
     }
   };
 
+  const refetchPendingRequests = async () => {
+    try {
+      const requests = await getDateExtensionRequests(projectId, {
+        status: "PENDING",
+        taskId,
+      });
+      setPendingRequests(requests);
+    } catch {
+      setPendingRequests([]);
+    }
+  };
+
+  const handleDecide = async (request, decision, decisionNote) => {
+    if (decidingRequestId !== null || !project) return;
+
+    setDecidingRequestId(request.id);
+    setDecisionError("");
+    setDecisionSuccess("");
+
+    try {
+      await decideDateExtensionRequest(projectId, request.id, {
+        status: decision,
+        decisionNote,
+      });
+
+      setPendingRequests((current) =>
+        current.filter((item) => String(item.id) !== String(request.id)),
+      );
+
+      if (decision === "ACCEPTED") {
+        try {
+          const updatedTask = await getProjectTask(projectId, taskId, {
+            memberships: project.memberships,
+            milestones,
+          });
+
+          setStatus(updatedTask.status);
+          setBlockerNote(updatedTask.blockerNote);
+          setCompletionNote("");
+          setArtifactUrl("");
+          setStatusError("");
+          setSuccessMessage("");
+          setNoChangesNotice(false);
+          setTaskState({
+            projectId,
+            taskId,
+            retryCount: detailRetryCount,
+            loading: false,
+            error: "",
+            task: updatedTask,
+          });
+
+          const deadline = formatDate(updatedTask.dueDate);
+          setDecisionSuccess(
+            deadline
+              ? `Request accepted. The deadline is now ${deadline}.`
+              : "Request accepted.",
+          );
+        } catch {
+          setDecisionSuccess(
+            "Request accepted. Refresh the page to see the new deadline.",
+          );
+        }
+
+        try {
+          await refreshTasks();
+        } catch {
+          setDecisionSuccess((current) =>
+            current
+              ? `${current} The task list could not be refreshed.`
+              : "Request accepted, but the task list could not be refreshed.",
+          );
+        }
+      } else {
+        setDecisionSuccess("Request declined.");
+      }
+    } catch (error) {
+      setDecisionError(getDecisionErrorMessage(error));
+      if (Number(error?.status) === 409) {
+        await refetchPendingRequests();
+      }
+    } finally {
+      setDecidingRequestId(null);
+    }
+  };
+
   if (workspaceError) {
     return (
       <section className={styles.page}>
@@ -785,6 +934,31 @@ function TaskDetail() {
   return (
     <section className={styles.page}>
       <h2 className={styles.pageTitle}>Task detail</h2>
+
+      {decisionError && (
+        <Alert variant="error" title="Decision not saved">
+          {decisionError}
+        </Alert>
+      )}
+      {decisionSuccess && (
+        <Alert variant="success" title="Date request updated">
+          {decisionSuccess}
+        </Alert>
+      )}
+      {!requestsLoading &&
+        !requestsError &&
+        pendingRequests.map((request) => (
+          <DateExtensionBanner
+            key={request.id}
+            request={request}
+            currentDueDate={task.dueDate}
+            deciding={decidingRequestId !== null}
+            onDecide={(status, decisionNote) =>
+              handleDecide(request, status, decisionNote)
+            }
+          />
+        ))}
+
       <TaskSummaryCard task={task} milestone={milestone} />
       {task.createdBy && (
         <p className={styles.metaLine}>Created by {task.createdBy}</p>
