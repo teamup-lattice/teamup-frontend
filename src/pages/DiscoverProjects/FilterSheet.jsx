@@ -9,9 +9,22 @@ const FOCUSABLE =
 
 // Mobile filter sheet: focus starts on the heading, Tab stays inside the sheet,
 // and Escape or Close discards changes (the page restores focus to "Filters").
-function FilterSheet({ values, onChange, onApply, onReset, onClose }) {
+function FilterSheet({
+  values,
+  onChange,
+  onApply,
+  onReset,
+  onClose,
+  fields,
+  skillStatus,
+  onRetrySkills,
+}) {
   const sheetRef = useRef(null);
   const headingRef = useRef(null);
+  const skillField = fields.find((field) => field.key === "skill");
+  const skillLabel =
+    skillField?.options.find((option) => option.value === values.skill)?.label ??
+    values.skill;
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -84,16 +97,23 @@ function FilterSheet({ values, onChange, onApply, onReset, onClose }) {
         </p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
-          <FilterFields idPrefix="sheet" values={values} onChange={onChange} />
+          <FilterFields
+            idPrefix="sheet"
+            values={values}
+            onChange={onChange}
+            fields={fields}
+            skillStatus={skillStatus}
+            onRetrySkills={onRetrySkills}
+          />
 
           {values.skill && (
             <div className={styles.chips}>
               <span className={styles.chip}>
-                {values.skill}
+                {skillLabel}
                 <button
                   type="button"
                   className={styles.chipRemove}
-                  aria-label={`Remove ${values.skill} filter`}
+                  aria-label={`Remove ${skillLabel} filter`}
                   onClick={() => onChange("skill", "")}
                 >
                   Remove ×

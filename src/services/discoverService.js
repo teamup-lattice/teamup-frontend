@@ -1,57 +1,20 @@
 import { api } from "./api";
+import {
+  normalizeProjectTypeValue,
+  projectTypeOptions,
+} from "../data/discoverData";
 
-const PROJECT_TYPE_VALUES = {
-  "web application": "WEB_APPLICATION",
-  "mobile app": "MOBILE_APP",
-  "desktop app": "DESKTOP_APP",
-  "api service": "API_SERVICE",
-  "data science": "DATA_SCIENCE",
-  design: "DESIGN",
-  other: "OTHER",
-};
-
-let skillsCache = null;
-
-function getSkillsCatalog() {
-  if (!skillsCache) {
-    skillsCache = api
-      .get("/api/profile/skills")
-      .then((response) => {
-        if (Array.isArray(response)) return response;
-        if (response && typeof response === "object") {
-          const array = Object.values(response).find(Array.isArray);
-          if (array) return array;
-        }
-        return [];
-      })
-      .catch(() => {
-        skillsCache = null;
-        return [];
-      });
-  }
-
-  return skillsCache;
-}
-
-function getProjectTypeValue(value) {
-  if (typeof value !== "string" || !value.trim()) return "";
-  return PROJECT_TYPE_VALUES[value.trim().toLowerCase()] ?? "";
-}
-
-function normalizeSkillKey(value) {
-  if (value === null || value === undefined) return "";
-  return String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+const PROJECT_TYPE_LABELS = new Map(
+  projectTypeOptions.map((option) => [option.value, option.label]),
+);
 
 function formatProjectType(value) {
   if (typeof value !== "string" || !value) return "";
-  const label = value.replaceAll("_", " ").toLowerCase();
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  const enumValue = value.toUpperCase();
+  const label = PROJECT_TYPE_LABELS.get(enumValue);
+  if (label) return label;
+  const fallback = value.replaceAll("_", " ").toLowerCase();
+  return fallback.charAt(0).toUpperCase() + fallback.slice(1);
 }
 
 export function formatDate(value) {
@@ -115,34 +78,10 @@ export async function getOpenProjects({
     : filters.skill
       ? [filters.skill]
       : [];
-  const selectedValues = selectedSkills.filter(
-    (value) => value !== "" && value !== null && value !== undefined,
-  );
-  if (selectedValues.length > 0) {
-    const catalog = await getSkillsCatalog();
-    const skillIdByKey = new Map();
 
-    for (const skill of catalog) {
-      if (
-        !skill ||
-        skill.id === "" ||
-        skill.id === null ||
-        skill.id === undefined
-      ) {
-        continue;
-      }
-
-      for (const key of [skill.id, skill.slug, skill.name]) {
-        const normalized = normalizeSkillKey(key);
-        if (normalized) skillIdByKey.set(normalized, skill.id);
-      }
-    }
-
-    for (const value of selectedValues) {
-      const skillId = skillIdByKey.get(normalizeSkillKey(value));
-      if (skillId !== undefined) {
-        params.append("skillIds", String(skillId));
-      }
+  for (const value of selectedSkills) {
+    if (value !== "" && value !== null && value !== undefined) {
+      params.append("skillIds", String(value));
     }
   }
 
@@ -151,7 +90,7 @@ export async function getOpenProjects({
     params.set("page", String(pageNumber));
   }
 
-  addParam("projectType", getProjectTypeValue(filters.type));
+  addParam("projectType", normalizeProjectTypeValue(filters.type));
   addParam("minDuration", filters.duration);
   addParam("maxDuration", filters.duration);
   addParam("minHours", filters.hours);
