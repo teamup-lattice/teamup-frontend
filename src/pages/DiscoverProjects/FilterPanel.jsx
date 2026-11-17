@@ -2,7 +2,15 @@ import Button from "../../components/Button";
 import FilterFields from "./FilterFields";
 import styles from "./Filters.module.css";
 
-function FilterPanel({ values, onChange, onApply, onReset }) {
+function FilterPanel({
+  values,
+  onChange,
+  onApply,
+  onReset,
+  fields,
+  skillStatus,
+  onRetrySkills,
+}) {
   const handleSubmit = (event) => {
     event.preventDefault();
     onApply();
@@ -14,7 +22,14 @@ function FilterPanel({ values, onChange, onApply, onReset }) {
         Filter Open projects
       </h2>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <FilterFields idPrefix="panel" values={values} onChange={onChange} />
+        <FilterFields
+          idPrefix="panel"
+          values={values}
+          onChange={onChange}
+          fields={fields}
+          skillStatus={skillStatus}
+          onRetrySkills={onRetrySkills}
+        />
         <Button type="submit" fullWidth>
           Apply filters
         </Button>
