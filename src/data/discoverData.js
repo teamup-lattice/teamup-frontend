@@ -12,6 +12,39 @@ export const availabilityProfile = {
 
 const toOptions = (values) => values.map((value) => ({ value, label: value }));
 
+const LEGACY_PROJECT_TYPE_VALUES = {
+  "web application": "WEB_APPLICATION",
+  "mobile app": "MOBILE_APP",
+  "desktop app": "DESKTOP_APP",
+  "api service": "API_SERVICE",
+  "data science": "DATA_SCIENCE",
+  design: "DESIGN",
+  other: "OTHER",
+};
+
+const DURATION_VALUES = new Set(["4", "6", "8"]);
+const HOURS_VALUES = new Set(["4", "6", "8"]);
+
+export const projectTypeOptions = [
+  { value: "WEB_APPLICATION", label: "Web application" },
+  { value: "MOBILE_APP", label: "Mobile app" },
+  { value: "DESKTOP_APP", label: "Desktop app" },
+  { value: "API_SERVICE", label: "API service" },
+  { value: "DATA_SCIENCE", label: "Data science" },
+  { value: "DESIGN", label: "Design" },
+  { value: "OTHER", label: "Other" },
+];
+
+export function normalizeProjectTypeValue(value) {
+  if (typeof value !== "string" || !value.trim()) return "";
+  const trimmed = value.trim();
+  const enumValue = trimmed.toUpperCase();
+  if (projectTypeOptions.some((option) => option.value === enumValue)) {
+    return enumValue;
+  }
+  return LEGACY_PROJECT_TYPE_VALUES[trimmed.toLowerCase()] ?? "";
+}
+
 // The five optional filters. "summaryLabel" is the short label used in the
 // mobile summary ("Type: Web application").
 export const filterFields = [
@@ -20,19 +53,16 @@ export const filterFields = [
     label: "Skill",
     summaryLabel: "Skill",
     placeholder: "Any skill",
-    options: toOptions([
-      "UI design",
-      "Prototyping",
-      "Frontend development",
-      "Backend development",
-      "Product management",
-    ]),
+    options: [],
+    dynamic: "skills",
   },
   {
     key: "role",
     label: "Role",
     summaryLabel: "Role",
     placeholder: "Any role",
+    disabled: true,
+    helperText: "Role filter coming soon",
     options: toOptions([
       "UI/UX Designer",
       "Frontend Developer",
@@ -45,7 +75,7 @@ export const filterFields = [
     label: "Project type",
     summaryLabel: "Type",
     placeholder: "Any project type",
-    options: toOptions(["Web application", "Mobile app"]),
+    options: projectTypeOptions,
   },
   {
     key: "duration",
@@ -69,6 +99,12 @@ export const filterFields = [
   },
 ];
 
+export function buildFilterFields(skillOptions = []) {
+  return filterFields.map((field) =>
+    field.dynamic === "skills" ? { ...field, options: skillOptions } : field,
+  );
+}
+
 export const emptyFilters = {
   skill: "",
   role: "",
@@ -76,6 +112,34 @@ export const emptyFilters = {
   duration: "",
   hours: "",
 };
+
+export function normalizeFilters(filters = {}, { skillIds = null } = {}) {
+  const raw = filters ?? {};
+  const next = { ...emptyFilters };
+
+  const skill = raw.skill === null || raw.skill === undefined ? "" : String(raw.skill);
+  if (skill) {
+    if (skillIds instanceof Set) {
+      if (skillIds.has(skill)) next.skill = skill;
+    } else {
+      next.skill = skill;
+    }
+  }
+
+  next.type = normalizeProjectTypeValue(raw.type);
+
+  const duration =
+    raw.duration === null || raw.duration === undefined
+      ? ""
+      : String(raw.duration);
+  if (DURATION_VALUES.has(duration)) next.duration = duration;
+
+  const hours =
+    raw.hours === null || raw.hours === undefined ? "" : String(raw.hours);
+  if (HOURS_VALUES.has(hours)) next.hours = hours;
+
+  return next;
+}
 
 export const openProjects = [
   {

@@ -1,16 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import listFilterIcon from "../../assets/list-filter.svg";
 import heroImage from "../../assets/landing-cta.png";
-import { emptyFilters, filterFields } from "../../data/discoverData";
+import {
+  buildFilterFields,
+  emptyFilters,
+  normalizeFilters,
+} from "../../data/discoverData";
 import { getOpenProjects } from "../../services/discoverService";
 import { getProfile } from "../../services/profileService";
 import FilterPanel from "./FilterPanel";
 import FilterSheet from "./FilterSheet";
 import ProjectResultCard from "./ProjectResultCard";
 import useIsWide from "./useIsWide";
+import useSkillsCatalog from "./useSkillsCatalog";
 import styles from "./DiscoverProjects.module.css";
 
 // Filter panel next to the results when the page area is at least this wide;
@@ -39,9 +44,9 @@ const projectWord = (count) => (count === 1 ? "project" : "projects");
 const eligibleProjects = (count) =>
   `${capitalize(countWord(count))} eligible Open ${projectWord(count)}`;
 
-function getSelectedFilters(filters) {
-  return filterFields
-    .filter((field) => filters[field.key])
+function getSelectedFilters(filters, fields) {
+  return fields
+    .filter((field) => !field.disabled && filters[field.key])
     .map((field) => ({
       label: field.summaryLabel,
       text:
@@ -58,6 +63,19 @@ function DiscoverProjects() {
   const searchTimerRef = useRef(null);
   const appliedRef = useRef(emptyFilters);
   const isWide = useIsWide(pageRef, WIDE_LAYOUT_MIN_WIDTH);
+  const {
+    status: skillStatus,
+    options: skillOptions,
+    retry: retrySkills,
+  } = useSkillsCatalog();
+  const fields = useMemo(
+    () => buildFilterFields(skillOptions),
+    [skillOptions],
+  );
+  const skillIds = useMemo(
+    () => new Set(skillOptions.map((option) => option.value)),
+    [skillOptions],
+  );
 
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState(emptyFilters);
@@ -180,12 +198,27 @@ function DiscoverProjects() {
     }, SEARCH_DELAY_MS);
   };
 
+  const appliedFilters = useMemo(
+    () =>
+      normalizeFilters(applied, {
+        skillIds: skillStatus === "ready" ? skillIds : null,
+      }),
+    [applied, skillIds, skillStatus],
+  );
+
+  useEffect(() => {
+    appliedRef.current = appliedFilters;
+  }, [appliedFilters]);
+
   const applyFilters = (nextFilters, source) => {
     window.clearTimeout(searchTimerRef.current);
-    appliedRef.current = nextFilters;
-    setDraft(nextFilters);
-    setApplied(nextFilters);
-    startFetch(query, nextFilters, source);
+    const normalized = normalizeFilters(nextFilters, {
+      skillIds: skillStatus === "ready" ? skillIds : null,
+    });
+    appliedRef.current = normalized;
+    setDraft(normalized);
+    setApplied(normalized);
+    startFetch(query, normalized, source);
   };
 
   const handleDraftChange = (key, value) => {
@@ -193,12 +226,12 @@ function DiscoverProjects() {
   };
 
   const openSheet = () => {
-    setDraft(applied);
+    setDraft(appliedFilters);
     setIsSheetOpen(true);
   };
 
   const closeSheet = () => {
-    setDraft(applied);
+    setDraft(appliedFilters);
     setIsSheetOpen(false);
     filtersButtonRef.current?.focus();
   };
@@ -220,17 +253,19 @@ function DiscoverProjects() {
     resultsHeadingRef.current?.focus();
   };
 
-  const handleRetry = () => startFetch(query, applied, "retry");
+  const handleRetry = () => startFetch(query, appliedFilters, "retry");
 
   const handleLoadMore = () => {
     if (isLoadingMore || currentPage >= totalPages) return;
     setIsLoadingMore(true);
     setLoadMoreError("");
-    fetchResults(query, applied, "load-more", currentPage + 1, true);
+    fetchResults(query, appliedFilters, "load-more", currentPage + 1, true);
   };
 
-  const appliedCount = Object.values(applied).filter(Boolean).length;
-  const selectedFilters = getSelectedFilters(applied);
+  const appliedCount = fields.filter(
+    (field) => !field.disabled && appliedFilters[field.key],
+  ).length;
+  const selectedFilters = getSelectedFilters(appliedFilters, fields);
   const isLoading = status === "loading";
   const isError = status === "error";
   const isEmpty = status === "ready" && projects.length === 0;
@@ -353,6 +388,9 @@ function DiscoverProjects() {
             onChange={handleDraftChange}
             onApply={() => applyFilters(draft, "apply")}
             onReset={() => applyFilters(emptyFilters, "reset")}
+            fields={fields}
+            skillStatus={skillStatus}
+            onRetrySkills={retrySkills}
           />
         )}
 
@@ -461,6 +499,9 @@ function DiscoverProjects() {
           onApply={handleSheetApply}
           onReset={handleSheetReset}
           onClose={closeSheet}
+          fields={fields}
+          skillStatus={skillStatus}
+          onRetrySkills={retrySkills}
         />
       )}
     </div>
