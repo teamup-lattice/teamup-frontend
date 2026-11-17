@@ -101,7 +101,7 @@ function Tasks() {
         if (!isCurrent) return;
         const errorMessage =
           error.status === 404 && /^Cannot GET\s+/i.test(error.message)
-            ? `The task endpoint is not deployed: ${error.message}`
+            ? "We couldn't load tasks. Try again."
             : error.message || "Something went wrong. Try again.";
         setTaskResult({
           projectId,
