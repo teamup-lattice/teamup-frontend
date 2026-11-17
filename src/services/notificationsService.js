@@ -11,6 +11,8 @@ const notificationTypeLabels = {
   TASK_COMMENTED: "Task comment",
   TASK_DEADLINE: "Deadline reminder",
   TASK_OVERDUE: "Overdue prompt",
+  DATE_EXTENSION_REQUEST: "Date request",
+  DATE_EXTENSION_DECIDED: "Date request update",
   MILESTONE_UPDATE: "Milestone update",
   TEAM_UPDATE: "Team update",
   CONTRIBUTION_REVIEW: "Contribution review",
@@ -45,6 +47,7 @@ function formatNotificationTime(createdAt) {
 function getNotificationAction(notification) {
   const projectId = notification.project?.id;
   const entityId = notification.entityId;
+  const data = notification.data;
 
   switch (notification.type) {
     case "PROJECT_INVITATION":
@@ -103,6 +106,22 @@ function getNotificationAction(notification) {
         };
       }
       break;
+    case "DATE_EXTENSION_REQUEST":
+      if (projectId && data?.taskId) {
+        return {
+          actionLabel: "Review request",
+          to: `/projects/${projectId}/workspace/tasks/${data.taskId}`,
+        };
+      }
+      break;
+    case "DATE_EXTENSION_DECIDED":
+      if (projectId && data?.taskId) {
+        return {
+          actionLabel: "View task",
+          to: `/projects/${projectId}/workspace/tasks/${data.taskId}`,
+        };
+      }
+      break;
     default:
       break;
   }
@@ -122,6 +141,7 @@ function mapNotification(notification) {
     read: notification.readAt !== null,
     actionLabel,
     to,
+    data: notification.data,
   };
 }
 
