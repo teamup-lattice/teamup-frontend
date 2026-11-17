@@ -33,7 +33,7 @@ function SavedWorkCard({ milestones }) {
       <ul className={shared.list}>
         {milestones.map((milestone) => (
           <li key={milestone.id} className={shared.small}>
-            {milestone.id} {milestone.name}
+            {milestone.name}
             {SEP}
             {formatDate(milestone.targetDate)}
             {SEP}
