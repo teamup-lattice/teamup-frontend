@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Textarea from "../../../../components/Textarea";
+import { deleteProjectEvidence } from "../../../../services/evidenceService";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import { deliverableKindLabel } from "./completionHelpers";
@@ -32,7 +34,12 @@ function EvidenceCard({
   onDirtyChange,
   onCancel,
 }) {
-  const savedDeliverable = saved.deliverable;
+  const { projectId } = useParams();
+  const [removed, setRemoved] = useState(false);
+  const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState("");
+  const savedDeliverable = removed ? null : saved.deliverable;
 
   const [label, setLabel] = useState(savedDeliverable?.label ?? "");
   const [mode, setMode] = useState("saved"); // saved | choose | file | link
@@ -105,6 +112,46 @@ function EvidenceCard({
     setLink("");
     setErrors({});
     onCancel();
+  }
+
+  function startRemove() {
+    setRemoveError("");
+    setIsConfirmingRemove(true);
+  }
+
+  function cancelRemove() {
+    if (isRemoving) return;
+    setIsConfirmingRemove(false);
+    setRemoveError("");
+  }
+
+  async function handleRemove() {
+    if (isRemoving) return;
+    if (!projectId || !savedDeliverable?.id) {
+      setRemoveError("This deliverable cannot be removed.");
+      return;
+    }
+
+    setIsRemoving(true);
+    setRemoveError("");
+    try {
+      await deleteProjectEvidence(projectId, savedDeliverable.id);
+      setRemoved(true);
+      setIsConfirmingRemove(false);
+      setMode("saved");
+      setPickedFile(null);
+      setLink("");
+      setLabel("");
+      setErrors({});
+      onCancel();
+    } catch (error) {
+      console.error("Failed to remove deliverable:", error);
+      setRemoveError(
+        error?.message || "Could not remove this deliverable. Try again.",
+      );
+    } finally {
+      setIsRemoving(false);
+    }
   }
 
   function handleSubmit(event) {
@@ -280,12 +327,55 @@ function EvidenceCard({
 
       {!isLocalDeliverable && savedDeliverable && (
         <>
-          <p className={`${shared.text} ${styles.statusLine}`}>
-            {savedDeliverable.name}
-            {SEP}
-            {deliverableKindLabel(savedDeliverable.kind)}
-            {SEP}Saved
-          </p>
+          <div className={styles.deliverableRow}>
+            <p className={`${shared.text} ${styles.deliverableStatus}`}>
+              {savedDeliverable.name}
+              {SEP}
+              {deliverableKindLabel(savedDeliverable.kind)}
+              {SEP}Saved
+            </p>
+            {!isConfirmingRemove && (
+              <button
+                type="button"
+                className={`${styles.textButton} ${styles.removeButton}`}
+                disabled={isSaving || locked || isRemoving}
+                onClick={startRemove}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {isConfirmingRemove && (
+            <div className={styles.removeConfirm}>
+              <p className={styles.removePrompt}>Remove this deliverable?</p>
+              <div className={styles.removeActions}>
+                <button
+                  type="button"
+                  className={`${styles.textButton} ${styles.cancelButton}`}
+                  disabled={isRemoving}
+                  onClick={cancelRemove}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.textButton} ${styles.removeButton}`}
+                  aria-busy={isRemoving}
+                  disabled={isSaving || locked || isRemoving}
+                  onClick={handleRemove}
+                >
+                  {isRemoving ? "Removing..." : "Remove"}
+                </button>
+              </div>
+            </div>
+          )}
+          {removeError && (
+            <div className={styles.removeError}>
+              <Alert variant="error" title="Remove failed">
+                {removeError}
+              </Alert>
+            </div>
+          )}
           <p className={shared.helper}>
             At least one project deliverable is required: a link OR a file.
           </p>
