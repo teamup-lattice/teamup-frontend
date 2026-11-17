@@ -16,13 +16,56 @@ export function capitalize(text) {
 }
 
 // "30 Nov 2026 · 19 Oct–30 Nov · 6 weeks"
-export function projectDatesLine(project) {
-  const weeks = `${project.durationWeeks} ${project.durationWeeks === 1 ? "week" : "weeks"}`;
-  return [
-    formatDate(project.endDate),
-    `${shortDate(project.startDate)}–${shortDate(project.endDate)}`,
-    weeks,
-  ].join(SEP);
+function toDateInput(value) {
+  if (typeof value !== "string" || !value) return "";
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp)
+    ? ""
+    : new Date(timestamp).toISOString().slice(0, 10);
+}
+
+export function projectDatesLine(project = {}) {
+  const startDate = toDateInput(project.startDate);
+  const endDate = toDateInput(project.endDate);
+  const durationWeeks =
+    typeof project.durationWeeks === "number" &&
+    Number.isFinite(project.durationWeeks)
+      ? project.durationWeeks
+      : null;
+  const parts = [];
+
+  if (endDate) parts.push(formatDate(endDate));
+  if (startDate && endDate) {
+    parts.push(`${shortDate(startDate)}–${shortDate(endDate)}`);
+  }
+  if (durationWeeks !== null) {
+    parts.push(
+      `${durationWeeks} ${durationWeeks === 1 ? "week" : "weeks"}`,
+    );
+  }
+
+  return parts.join(SEP);
+}
+
+// Saved work for the completion screen, derived from real milestones and
+// tasks. Tasks are matched by milestone id (never by name).
+export function buildSavedWork(milestones, tasks) {
+  const milestoneList = Array.isArray(milestones) ? milestones : [];
+  const taskList = Array.isArray(tasks) ? tasks : [];
+
+  return milestoneList.map((milestone) => {
+    const milestoneTasks = taskList.filter(
+      (task) => String(task.milestoneId) === String(milestone.id),
+    );
+
+    return {
+      id: milestone.id,
+      name: milestone.name,
+      targetDate: milestone.targetDate,
+      done: milestoneTasks.filter((task) => task.status === "Done").length,
+      total: milestoneTasks.length,
+    };
+  });
 }
 
 // What is saved and what still blocks completion.

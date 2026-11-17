@@ -21,6 +21,7 @@ import {
   APOS,
   AUDIENCE,
   VISIBILITY,
+  buildSavedWork,
   capitalize,
   getReadiness,
   projectDatesLine,
@@ -31,7 +32,22 @@ import styles from "./ProjectCompletion.module.css";
 const LOAD_VARIANTS = ["missing", "eligible", "failcomplete", "completed", "loadfail"];
 
 function ProjectCompletion() {
-  const { isOwner, currentUser } = useWorkspace();
+  const {
+    isOwner,
+    currentUser,
+    project: workspaceProject,
+    milestones,
+    tasks,
+    workspaceLoading,
+    workspaceError,
+    milestonesLoading,
+    milestonesError,
+    tasksLoading,
+    tasksError,
+    retryWorkspace,
+    retryMilestones,
+    retryTasks,
+  } = useWorkspace();
   const { projectId } = useParams();
   const { search } = useLocation();
   const navigate = useNavigate();
@@ -75,8 +91,24 @@ function ProjectCompletion() {
     };
   }, [projectId, variant, requestKey]);
 
-  const retryLoad = () => setAttempt((count) => count + 1);
-  const isLoading = loaded.key !== requestKey;
+  const hasContextProject =
+    !workspaceLoading &&
+    workspaceProject != null &&
+    workspaceProject.id != null &&
+    workspaceProject.id !== "";
+  const savedWorkLoading = milestonesLoading || tasksLoading;
+  const loadError = workspaceError || milestonesError || tasksError || loaded.error;
+
+  const retryLoad = () => {
+    setAttempt((count) => count + 1);
+    if (workspaceError) retryWorkspace();
+    if (milestonesError) retryMilestones();
+    if (tasksError) retryTasks();
+  };
+  const isLoading =
+    loaded.key !== requestKey ||
+    (!workspaceError && !hasContextProject) ||
+    savedWorkLoading;
   const data = isLoading ? null : loaded.data;
 
   const viewContribution = useCallback(() => {
@@ -112,13 +144,6 @@ function ProjectCompletion() {
     failCompleteOnce.current = false;
     try {
       const outcome = await completeProject(projectId, { simulateFail: shouldFail });
-      setLoaded((current) => ({
-        ...current,
-        data: {
-          ...current.data,
-          project: { ...current.data.project, status: outcome.status },
-        },
-      }));
       setResult({ visibility: outcome.visibility, audience: outcome.audience });
       setCompleteStatus("idle");
     } catch (error) {
@@ -144,12 +169,12 @@ function ProjectCompletion() {
     );
   }
 
-  if (loaded.error || !data) {
+  if (loadError || !data) {
     return (
       <div>
         <h2 className={shared.title}>Project completion</h2>
         <Alert variant="error" title="Couldn't load project completion">
-          {loaded.error || "Something went wrong. Try again."}
+          {loadError || "Something went wrong. Try again."}
         </Alert>
         <Button fullWidth onClick={retryLoad}>
           Retry
@@ -158,9 +183,13 @@ function ProjectCompletion() {
     );
   }
 
-  const { project, evidence, savedWork, confirmations } = data;
+  const { evidence, confirmations } = data;
+  const project = workspaceProject ?? {};
+  const savedWork = { milestones: buildSavedWork(milestones, tasks) };
   const readiness = getReadiness(evidence, confirmations);
-  const isCompleted = project.status === "Completed";
+  const mockCompletedPreview = variant === "completed";
+  const isCompleted =
+    project.status === "Completed" || Boolean(result) || mockCompletedPreview;
   const ownerName = project.ownerName;
   const dates = projectDatesLine(project);
   const pageTo = `/projects/${projectId}/page${search}`;
