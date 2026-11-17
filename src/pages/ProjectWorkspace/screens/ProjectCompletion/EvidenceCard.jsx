@@ -12,31 +12,40 @@ import styles from "./ProjectCompletion.module.css";
 const OUTCOME_ERROR = "Add a final outcome before completing.";
 
 // Owner-only form for the final outcome and the project deliverable.
-//   saved         last saved evidence { outcome, deliverable }
+//   saved         saved deliverable { deliverable }
+//   outcome       local final outcome, sent only when completing
 //   status        "idle" | "saving" | "error" (owned by the screen)
 //   locked        true while the project is being completed
-//   onSave        called with the evidence to save
+//   onOutcomeChange updates the local final outcome
+//   onSave        called with the deliverable to save
 //   onDirtyChange tells the screen whether local edits are unsaved
 //   onCancel      tells the screen local edits were discarded
 // The screen remounts this card (new key) after a successful save, so the
 // local draft always starts from the saved evidence.
-function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }) {
+function EvidenceCard({
+  saved,
+  outcome,
+  status,
+  locked,
+  onOutcomeChange,
+  onSave,
+  onDirtyChange,
+  onCancel,
+}) {
   const savedDeliverable = saved.deliverable;
 
-  const [outcome, setOutcome] = useState(saved.outcome);
   const [label, setLabel] = useState(savedDeliverable?.label ?? "");
   const [mode, setMode] = useState("saved"); // saved | choose | file | link
   const [pickedFile, setPickedFile] = useState(null);
   const [link, setLink] = useState("");
   const [errors, setErrors] = useState({});
-  const [noChange, setNoChange] = useState(false);
   const fileInputRef = useRef(null);
   const errorRef = useRef(null);
 
   const isSaving = status === "saving";
   const hasError = status === "error";
   const isLocalDeliverable = mode === "file" || mode === "link";
-  const evidenceSaved = saved.outcome.trim() !== "" && Boolean(savedDeliverable);
+  const evidenceSaved = outcome.trim() !== "" && Boolean(savedDeliverable);
   const pendingName =
     mode === "file" && pickedFile
       ? pickedFile.name
@@ -49,14 +58,12 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
   }, [hasError]);
 
   function markEdited() {
-    setNoChange(false);
     onDirtyChange(true);
   }
 
   function handleOutcomeChange(event) {
-    setOutcome(event.target.value);
+    onOutcomeChange(event.target.value);
     setErrors((current) => ({ ...current, outcome: undefined }));
-    markEdited();
   }
 
   function handleLabelChange(event) {
@@ -92,27 +99,23 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
   }
 
   function handleCancel() {
-    setOutcome(saved.outcome);
     setLabel(savedDeliverable?.label ?? "");
     setMode("saved");
     setPickedFile(null);
     setLink("");
     setErrors({});
-    setNoChange(false);
     onCancel();
   }
 
   function handleSubmit(event) {
     event.preventDefault();
     if (isSaving || locked) return;
+    if (!isLocalDeliverable) return;
 
-    const trimmedOutcome = outcome.trim();
     const trimmedLabel = label.trim();
     const trimmedLink = link.trim();
     const found = {};
 
-    // Saving may not wipe an outcome that is already saved.
-    if (!trimmedOutcome && saved.outcome.trim()) found.outcome = OUTCOME_ERROR;
     if (mode === "link") {
       if (!trimmedLink) {
         found.link = "Enter a project deliverable link.";
@@ -122,18 +125,9 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
     }
     setErrors(found);
 
-    const firstInvalid = ["outcome", "link"].find((name) => found[name]);
+    const firstInvalid = ["link"].find((name) => found[name]);
     if (firstInvalid) {
       document.getElementById(`completion-${firstInvalid}`)?.focus();
-      return;
-    }
-
-    const unchanged =
-      mode === "saved" &&
-      trimmedOutcome === saved.outcome.trim() &&
-      trimmedLabel === (savedDeliverable?.label ?? "");
-    if (unchanged && !hasError) {
-      setNoChange(true);
       return;
     }
 
@@ -150,16 +144,12 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
         kind: "link",
         label: trimmedLabel || trimmedLink,
         name: trimmedLink,
-      };
-    } else if (savedDeliverable) {
-      deliverable = {
-        ...savedDeliverable,
-        label: trimmedLabel || savedDeliverable.label,
+        url: trimmedLink,
       };
     }
 
-    setNoChange(false);
-    onSave({ outcome: trimmedOutcome, deliverable });
+    if (!deliverable) return;
+    onSave({ deliverable });
   }
 
   const heading = (
@@ -180,7 +170,7 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
       <section className={shared.card} aria-labelledby="evidence-title">
         {heading}
         <ReadOnlyBox label="Final outcome * (temporarily locked)">
-          {saved.outcome}
+          {outcome}
         </ReadOnlyBox>
         {savedDeliverable && (
           <p className={`${shared.text} ${styles.statusLine}`}>
@@ -211,11 +201,11 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
     );
   }
 
-  const showLabelInput = Boolean(savedDeliverable) || isLocalDeliverable;
+  const showLabelInput = isLocalDeliverable;
   const showMissingDeliverable = !savedDeliverable && !isLocalDeliverable;
-  const submitLabel = isLocalDeliverable ? "Save deliverable" : "Save outcome and deliverables";
+  const submitLabel = "Save deliverable";
 
-  const errorTitle = isLocalDeliverable ? "Deliverable did not save" : "Evidence did not save";
+  const errorTitle = "Deliverable did not save";
   const deliverableState = isLocalDeliverable ? "Not attached" : "Saved";
 
   return (
@@ -230,7 +220,7 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
       {hasError && (
         <div ref={errorRef} tabIndex={-1} className={shared.errorWrap}>
           <Alert variant="error" title={errorTitle}>
-            Your outcome and safe inputs are retained. No completion was submitted.
+            Your final outcome and safe inputs are retained. No completion was submitted.
           </Alert>
         </div>
       )}
@@ -240,9 +230,11 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
         label="Final outcome"
         required
         rows={4}
+        maxLength={5000}
         placeholder="Not entered"
         value={outcome}
         onChange={handleOutcomeChange}
+        helperText={`${outcome.length}/5000 characters`}
         error={errors.outcome ?? (outcome.trim() ? undefined : OUTCOME_ERROR)}
       />
 
@@ -250,6 +242,7 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
         <Input
           id="completion-label"
           label="Project deliverable label"
+          maxLength={150}
           value={label}
           onChange={handleLabelChange}
         />
@@ -305,12 +298,6 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
         </p>
       )}
 
-      {noChange && (
-        <p className={shared.helper} role="status">
-          Nothing new to save. Your outcome and deliverable are already saved.
-        </p>
-      )}
-
       <input
         ref={fileInputRef}
         type="file"
@@ -344,13 +331,13 @@ function EvidenceCard({ saved, status, locked, onSave, onDirtyChange, onCancel }
           </>
         )}
 
-        {hasError && (
+        {hasError && isLocalDeliverable && (
           <Button type="submit" variant="secondary" fullWidth>
-            {isLocalDeliverable ? "Retry artifact save" : "Retry evidence save"}
+            Retry deliverable save
           </Button>
         )}
 
-        {!hasError && (
+        {!hasError && isLocalDeliverable && (
           <Button type="submit" fullWidth>
             {submitLabel}
           </Button>

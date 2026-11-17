@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
+import { getCompletion } from "../../../../services/completionService";
 import {
   completeProject,
-  getCompletion,
-  saveCompletionEvidence,
-} from "../../../../services/completionService";
+  getProjectEvidence,
+  saveEvidenceDeliverable,
+} from "../../../../services/evidenceService";
 import { useSimulate } from "../../useSimulate";
 import { useWorkspace } from "../../useWorkspace";
 import shared from "../shared.module.css";
@@ -29,7 +30,20 @@ import {
 import { SEP } from "../../workspaceFormat";
 import styles from "./ProjectCompletion.module.css";
 
-const LOAD_VARIANTS = ["missing", "eligible", "failcomplete", "completed", "loadfail"];
+const LOAD_VARIANTS = ["eligible", "loadfail"];
+
+function completionErrorMessage(error) {
+  if (error?.status === 403) {
+    return "Only the Owner can complete this project.";
+  }
+  if (error?.status === 409) {
+    const checks = Array.isArray(error.checks) ? error.checks : [];
+    return checks.length > 0
+      ? checks.join(" ")
+      : error.message || "Project cannot be completed yet.";
+  }
+  return error?.message || "Something went wrong. Try again.";
+}
 
 function ProjectCompletion() {
   const {
@@ -59,22 +73,28 @@ function ProjectCompletion() {
   const [loaded, setLoaded] = useState({ key: null, data: null, error: "" });
 
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
-  const [completeStatus, setCompleteStatus] = useState("idle"); // idle | completing | error
+  const [completeStatus, setCompleteStatus] = useState("idle"); // idle | completing
+  const [completeError, setCompleteError] = useState("");
   const [evidenceVersion, setEvidenceVersion] = useState(0);
   const [dirty, setDirty] = useState(false);
   const [savedNote, setSavedNote] = useState("");
+  const [outcome, setOutcome] = useState("");
   const [result, setResult] = useState(null); // { visibility, audience } after completing
-
-  // In dev, ?simulate=fail / failcomplete makes the FIRST attempt fail so the
-  // retry path can be tried; the next attempt succeeds.
-  const failSaveOnce = useRef(simulate === "fail");
-  const failCompleteOnce = useRef(simulate === "failcomplete");
 
   useEffect(() => {
     let isCurrent = true;
-    getCompletion(projectId, { variant })
-      .then((data) => {
-        if (isCurrent) setLoaded({ key: requestKey, data, error: "" });
+    Promise.all([
+      getCompletion(projectId, { variant }),
+      getProjectEvidence(projectId),
+    ])
+      .then(([completion, deliverables]) => {
+        if (isCurrent) {
+          setLoaded({
+            key: requestKey,
+            data: { confirmations: completion.confirmations, deliverables },
+            error: "",
+          });
+        }
       })
       .catch((error) => {
         console.error("Failed to load project completion:", error);
@@ -115,40 +135,39 @@ function ProjectCompletion() {
     navigate(`/projects/${projectId}/workspace/contributions${search}`);
   }, [navigate, projectId, search]);
 
-  async function handleSave(evidence) {
+  async function handleSave({ deliverable }) {
     setSaveStatus("saving");
     setSavedNote("");
-    const shouldFail = failSaveOnce.current;
-    failSaveOnce.current = false;
     try {
-      const saved = await saveCompletionEvidence(projectId, evidence, {
-        simulateFail: shouldFail,
-      });
+      const saved = await saveEvidenceDeliverable(projectId, deliverable);
       setLoaded((current) => ({
         ...current,
-        data: { ...current.data, evidence: saved },
+        data: {
+          ...current.data,
+          deliverables: [saved, ...(current.data?.deliverables ?? [])],
+        },
       }));
       setEvidenceVersion((version) => version + 1);
       setDirty(false);
       setSaveStatus("idle");
-      setSavedNote("Outcome and deliverable saved.");
+      setSavedNote("Deliverable saved.");
     } catch (error) {
-      console.error("Failed to save completion evidence:", error);
+      console.error("Failed to save deliverable:", error);
       setSaveStatus("error");
     }
   }
 
   async function handleComplete() {
+    setCompleteError("");
     setCompleteStatus("completing");
-    const shouldFail = failCompleteOnce.current;
-    failCompleteOnce.current = false;
     try {
-      const outcome = await completeProject(projectId, { simulateFail: shouldFail });
-      setResult({ visibility: outcome.visibility, audience: outcome.audience });
+      await completeProject(projectId, outcome);
+      setResult({ visibility: VISIBILITY, audience: AUDIENCE });
       setCompleteStatus("idle");
     } catch (error) {
       console.error("Failed to complete project:", error);
-      setCompleteStatus("error");
+      setCompleteError(completionErrorMessage(error));
+      setCompleteStatus("idle");
     }
   }
 
@@ -183,13 +202,15 @@ function ProjectCompletion() {
     );
   }
 
-  const { evidence, confirmations } = data;
+  const { confirmations, deliverables } = data;
   const project = workspaceProject ?? {};
   const savedWork = { milestones: buildSavedWork(milestones, tasks) };
+  const evidence = {
+    outcome,
+    deliverable: Array.isArray(deliverables) ? (deliverables[0] ?? null) : null,
+  };
   const readiness = getReadiness(evidence, confirmations);
-  const mockCompletedPreview = variant === "completed";
-  const isCompleted =
-    project.status === "Completed" || Boolean(result) || mockCompletedPreview;
+  const isCompleted = project.status === "Completed" || Boolean(result);
   const ownerName = project.ownerName;
   const dates = projectDatesLine(project);
   const pageTo = `/projects/${projectId}/page${search}`;
@@ -288,6 +309,14 @@ function ProjectCompletion() {
         </div>
       )}
 
+      {completeError && (
+        <div className={styles.banner}>
+          <Alert variant="error" title="Project did not complete">
+            {completeError}
+          </Alert>
+        </div>
+      )}
+
       {!(isCompleted && result) && <div className={styles.banner}>{banner}</div>}
 
       {isCompleted && result && (
@@ -323,8 +352,10 @@ function ProjectCompletion() {
             <EvidenceCard
               key={evidenceVersion}
               saved={evidence}
+              outcome={outcome}
               status={saveStatus}
               locked={completeStatus === "completing"}
+              onOutcomeChange={setOutcome}
               onSave={handleSave}
               onDirtyChange={setDirty}
               onCancel={handleCancel}
