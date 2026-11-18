@@ -60,6 +60,11 @@ const teamHealthData = {
     message:
       "You may not be a team member on this project, or the project wasn't found.",
   },
+  endpointMissing: {
+    title: "Health endpoint unavailable",
+    message:
+      "The team health endpoint could not be found. Retry, or contact support if this continues.",
+  },
 };
 
 export default teamHealthData;

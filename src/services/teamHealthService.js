@@ -24,6 +24,9 @@ export function normalizeTeamHealth(value) {
     value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const status =
     typeof source.status === "string" ? source.status.toUpperCase() : "";
+  if (!HEALTH_STATUSES.has(status) && import.meta.env.DEV) {
+    console.warn("Unrecognized team health response shape:", value);
+  }
   const signals =
     source.signals &&
     typeof source.signals === "object" &&
