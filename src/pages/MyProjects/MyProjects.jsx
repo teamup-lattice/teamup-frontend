@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
+import { CloseIcon } from "../../components/Icons";
 import Select from "../../components/Select";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getMyProfile } from "../../services/dashboardService";
 import { getMyProjects } from "../../services/myProjectsService";
+import DeleteProjectDialog from "./DeleteProjectDialog";
 import ProjectCard from "./ProjectCard";
 import TeamHealthSummary from "./TeamHealthSummary";
 import { STATUS_OPTIONS } from "./statusConfig";
@@ -34,6 +36,8 @@ function MyProjects() {
   const [statusFilter, setStatusFilter] = useState("");
   const [isRetrying, setIsRetrying] = useState(false);
   const [wasRefreshed, setWasRefreshed] = useState(false);
+  const [projectPendingDelete, setProjectPendingDelete] = useState(null);
+  const [deleteNotice, setDeleteNotice] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -93,8 +97,34 @@ function MyProjects() {
     filterRef.current?.focus();
   };
 
-  const handleDeleteProject = (deletedId) => {
-    setRecords((prev) => prev.filter((project) => project.id !== deletedId));
+  useEffect(() => {
+    if (!deleteNotice) return undefined;
+
+    const timer = window.setTimeout(() => setDeleteNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [deleteNotice]);
+
+  const handleRequestDelete = (project) => {
+    setDeleteNotice(null);
+    setProjectPendingDelete(project);
+  };
+
+  const handleCloseDelete = () => {
+    setProjectPendingDelete(null);
+  };
+
+  const handleDeletedProject = () => {
+    const project = projectPendingDelete;
+    if (!project) return;
+
+    const title =
+      typeof project.title === "string" && project.title.trim()
+        ? project.title
+        : "Untitled project";
+
+    setProjectPendingDelete(null);
+    setRecords((prev) => prev.filter((record) => record.id !== project.id));
+    setDeleteNotice(`"${title}" was deleted.`);
   };
 
   const isLoading = status === "loading";
@@ -160,6 +190,23 @@ function MyProjects() {
         </div>
       )}
 
+      {deleteNotice && (
+        <div className={`${styles.fullWidth} ${styles.noticeRow}`}>
+          <div className={styles.noticeAlert}>
+            <Alert variant="success" title={deleteNotice} />
+          </div>
+          <button
+            type="button"
+            className={styles.noticeDismiss}
+            aria-label="Dismiss"
+            title="Dismiss"
+            onClick={() => setDeleteNotice(null)}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+
       {isLoading && (
         <div className={styles.fullWidth} aria-busy="true">
           <p className={styles.loadingText} role="status">
@@ -186,7 +233,7 @@ function MyProjects() {
               <ProjectCard
                 project={project}
                 currentUserId={currentUserId}
-                onDelete={handleDeleteProject}
+                onRequestDelete={handleRequestDelete}
                 healthSummary={
                   project.teamHealth ? (
                     <TeamHealthSummary teamHealth={project.teamHealth} />
@@ -241,6 +288,14 @@ function MyProjects() {
             Discover Projects
           </Button>
         </section>
+      )}
+
+      {projectPendingDelete && (
+        <DeleteProjectDialog
+          project={projectPendingDelete}
+          onClose={handleCloseDelete}
+          onDeleted={handleDeletedProject}
+        />
       )}
     </div>
   );

@@ -1,10 +1,12 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Alert from "../../components/Alert";
 import Button from "../../components/Button";
-import { deleteProject } from "../../services/myProjectsService";
+import { TrashIcon } from "../../components/Icons";
 import { formatDate } from "../CreateProject/formatDate";
-import { defaultStatusConfig, statusConfig } from "./statusConfig";
+import {
+  defaultStatusConfig,
+  isDeletableStatus,
+  statusConfig,
+} from "./statusConfig";
 import styles from "./ProjectCard.module.css";
 
 const PROJECT_TYPE_LABELS = {
@@ -31,11 +33,13 @@ function readableLabel(value) {
     .join(" ");
 }
 
-function ProjectCard({ project = {}, currentUserId, onDelete, healthSummary }) {
+function ProjectCard({
+  project = {},
+  currentUserId,
+  onRequestDelete,
+  healthSummary,
+}) {
   const navigate = useNavigate();
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
 
   const projectId = project.id;
   const title =
@@ -57,24 +61,11 @@ function ProjectCard({ project = {}, currentUserId, onDelete, healthSummary }) {
       String(project.ownerId) === String(currentUserId)) ||
     (currentUserId != null &&
       project.owner?.id != null &&
-      String(project.owner.id) === String(currentUserId)) ||
-    (project.isOwner === undefined && project.ownerId == null);
+      String(project.owner.id) === String(currentUserId));
 
-  const canDelete = isDraft && isOwner;
+  const canDelete = isOwner && isDeletableStatus(project.status);
+  const deleteLabel = isDraft ? "Delete draft" : "Delete project";
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    setDeleteError(null);
-    try {
-      await deleteProject(projectId);
-      onDelete?.(projectId);
-    } catch (error) {
-      console.error("Failed to delete project draft:", error);
-      setDeleteError(error.message || "Failed to delete draft");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
   const attention = project.attention;
   const attentionBadge =
     typeof attention?.badge === "string" ? attention.badge : "";
@@ -150,50 +141,19 @@ function ProjectCard({ project = {}, currentUserId, onDelete, healthSummary }) {
           {config.actionLabel}
         </Button>
 
-        {canDelete && !isConfirmingDelete && (
-          <Button
-            variant="secondary"
+        {canDelete && (
+          <button
+            type="button"
+            className={styles.deleteButton}
             disabled={!projectId}
-            onClick={() => {
-              setDeleteError(null);
-              setIsConfirmingDelete(true);
-            }}
+            aria-label={deleteLabel}
+            title={deleteLabel}
+            onClick={() => onRequestDelete?.(project)}
           >
-            Delete draft
-          </Button>
+            <TrashIcon />
+          </button>
         )}
       </div>
-
-      {canDelete && isConfirmingDelete && (
-        <div className={styles.deleteConfirm}>
-          <p className={styles.deletePrompt}>Delete this draft?</p>
-          <div className={styles.deleteActions}>
-            <Button
-              variant="secondary"
-              disabled={isDeleting}
-              onClick={() => {
-                setIsConfirmingDelete(false);
-                setDeleteError(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              loading={isDeleting}
-              loadingText="Deleting..."
-              onClick={handleDelete}
-            >
-              Confirm delete
-            </Button>
-          </div>
-          {deleteError && (
-            <Alert variant="error">
-              {deleteError}
-            </Alert>
-          )}
-        </div>
-      )}
 
       {note && <p className={styles.note}>{note}</p>}
     </article>
