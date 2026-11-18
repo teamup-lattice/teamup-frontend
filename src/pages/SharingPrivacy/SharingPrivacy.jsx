@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import {
   getSharingPrivacy,
-  saveProfileDisplay,
+  shareProject,
+  unshareProject,
 } from "../../services/sharingPrivacyService";
 import shared from "../ProjectWorkspace/screens/shared.module.css";
 import styles from "./SharingPrivacy.module.css";
-
-const TEAM_ONLY = "team";
-const LINK_MODE = "link";
 
 function NoticeIcon({ tone }) {
   const iconClass = {
@@ -79,24 +77,32 @@ function Notice({ tone, title, children }) {
   );
 }
 
+function actionErrorMessage(error) {
+  if (error?.status === 403) {
+    return "Only the project owner can change sharing.";
+  }
+  if (error?.status === 404) {
+    return "This project no longer exists.";
+  }
+  return error?.message || "Something went wrong. Try again.";
+}
+
 function SharingPrivacy() {
+  const { projectId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [status, setStatus] = useState("loading");
-  const [teamChoice, setTeamChoice] = useState(TEAM_ONLY);
-  const [savedDisplay, setSavedDisplay] = useState(false);
-  const [localDisplay, setLocalDisplay] = useState(false);
-  const [saveState, setSaveState] = useState("idle"); // idle | saving | error | success
+  const [actionState, setActionState] = useState("idle"); // idle | sharing | unsharing | success | error
+  const [actionError, setActionError] = useState("");
+  const [confirmingUnshare, setConfirmingUnshare] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    getSharingPrivacy()
+    getSharingPrivacy(projectId)
       .then((result) => {
         if (!isMounted) return;
         setData(result);
-        setSavedDisplay(result.profile.displayOnProfile);
-        setLocalDisplay(result.profile.displayOnProfile);
         setStatus("ready");
       })
       .catch((error) => {
@@ -107,25 +113,40 @@ function SharingPrivacy() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [projectId]);
 
-  function handleSaveProfileChoice() {
-    setSaveState("saving");
-    saveProfileDisplay(localDisplay)
-      .then(() => {
-        setSavedDisplay(localDisplay);
-        setSaveState("success");
-      })
-      .catch((error) => {
-        console.error("Failed to save profile choice:", error);
-        setSaveState("error");
-      });
+  async function refreshData() {
+    const result = await getSharingPrivacy(projectId);
+    setData(result);
   }
 
-  function handleCancelLocalChanges() {
-    setLocalDisplay(savedDisplay);
-    setTeamChoice(TEAM_ONLY);
-    setSaveState("idle");
+  async function handleShare() {
+    setActionError("");
+    setActionState("sharing");
+    try {
+      await shareProject(projectId);
+      await refreshData();
+      setActionState("success");
+    } catch (error) {
+      console.error("Failed to share project:", error);
+      setActionError(actionErrorMessage(error));
+      setActionState("error");
+    }
+  }
+
+  async function handleUnshare() {
+    setActionError("");
+    setActionState("unsharing");
+    try {
+      await unshareProject(projectId);
+      await refreshData();
+      setConfirmingUnshare(false);
+      setActionState("success");
+    } catch (error) {
+      console.error("Failed to unshare project:", error);
+      setActionError(actionErrorMessage(error));
+      setActionState("error");
+    }
   }
 
   if (status === "loading") {
@@ -149,15 +170,8 @@ function SharingPrivacy() {
     );
   }
 
-  const { user, project, sharing } = data;
-  const others = project.team
-    .filter((member) => member.name !== user.name)
-    .map((member) => member.name)
-    .join(" and ");
-  const savedLabel = savedDisplay ? "On" : "Off";
-  const localLabel = localDisplay ? "On" : "Off";
-  const isLinkPreview = teamChoice === LINK_MODE;
-  const isSaving = saveState === "saving";
+  const { user, project, team, sharing, isShared, isOwner } = data;
+  const isBusy = actionState === "sharing" || actionState === "unsharing";
 
   // Empty state: the project is not completed yet
   if (project.status !== "Completed") {
@@ -185,12 +199,14 @@ function SharingPrivacy() {
     <div className={styles.page}>
       <h2 className={shared.title}>Sharing and privacy</h2>
       <p className={shared.description}>
-        {project.completedOn} · {project.dates}
+        {[project.completedOn, project.dates].filter(Boolean).join(" · ")}
       </p>
 
-      <Notice tone="info" title="Private by default">
-        Saved: {sharing.savedVisibility} page · Profile display {savedLabel}.
-        Completion changes neither.
+      <Notice tone="info" title={isShared ? "Shared page" : "Private by default"}>
+        Saved: {sharing.savedVisibility} page · Profile display Off.
+        {isShared
+          ? " Visible to every signed-in user and listed in Discover."
+          : " Not listed in Discover."}
       </Notice>
 
       <div className={styles.columns}>
@@ -199,91 +215,139 @@ function SharingPrivacy() {
           <section className={shared.card}>
             <h2 className={shared.cardTitle}>Team page sharing</h2>
 
-            {isLinkPreview ? (
-              <>
-                <label className={styles.label} htmlFor="teamChoice">
-                  Team page sharing choice
-                </label>
-                <select
-                  id="teamChoice"
-                  className={styles.select}
-                  value={teamChoice}
-                  onChange={(event) => setTeamChoice(event.target.value)}
+            <p className={`${shared.text} ${styles.strongText}`}>
+              {sharing.savedVisibility} (saved) ·{" "}
+              {isShared ? "VISIBLE TO SIGNED-IN USERS" : "PRIVATE"}
+            </p>
+
+            {actionState === "error" && (
+              <div className={styles.innerCard}>
+                <Alert variant="error" title="Sharing did not update">
+                  {actionError}
+                </Alert>
+              </div>
+            )}
+
+            {actionState === "success" && (
+              <div className={styles.innerCard}>
+                <Alert
+                  variant="success"
+                  title={isShared ? "Sharing activated" : "Sharing turned off"}
                 >
-                  <option value={TEAM_ONLY}>Team-only</option>
-                  <option value={LINK_MODE}>Link mode · LOCAL PREVIEW</option>
-                </select>
-                <p className={`${shared.text} ${styles.strongText}`}>
-                  Saved visibility: {sharing.savedVisibility}
-                </p>
-                <p className={shared.text}>
-                  Preview includes outcome, named roles, individual task
-                  evidence and marketplace-prototype.zip only. No contacts,
-                  private comments or drafts.
-                </p>
-                <div className={shared.stack}>
-                  <Button fullWidth disabled>
+                  {isShared
+                    ? "The page is visible to every signed-in user and listed in Discover and recommendations."
+                    : "The page is private to the team again. Members who already joined keep full access."}
+                </Alert>
+              </div>
+            )}
+
+            {isOwner ? (
+              isShared ? (
+                <>
+                  <p className={shared.text}>
+                    This page is listed in Discover and shown in recommendations
+                    to signed-in users. Members keep full access.
+                  </p>
+                  {confirmingUnshare ? (
+                    <>
+                      <div className={styles.innerCard}>
+                        <p className={shared.text}>
+                          Unsharing hides the page from Discover and
+                          recommendations. Members who already joined keep full
+                          access.
+                        </p>
+                      </div>
+                      <div className={shared.stack}>
+                        <Button
+                          fullWidth
+                          variant="danger"
+                          loading={actionState === "unsharing"}
+                          loadingText="Unsharing..."
+                          disabled={isBusy && actionState !== "unsharing"}
+                          onClick={handleUnshare}
+                        >
+                          Confirm unshare
+                        </Button>
+                        <Button
+                          fullWidth
+                          variant="secondary"
+                          disabled={isBusy}
+                          onClick={() => setConfirmingUnshare(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className={shared.helper}>
+                        Unsharing hides the page from Discover and
+                        recommendations. Members who already joined keep full
+                        access.
+                      </p>
+                      <Button
+                        fullWidth
+                        variant="secondary"
+                        disabled={isBusy}
+                        onClick={() => {
+                          setActionError("");
+                          setActionState("idle");
+                          setConfirmingUnshare(true);
+                        }}
+                      >
+                        Unshare
+                      </Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className={shared.text}>
+                    Only accepted teammates can view this page. Sharing makes it
+                    visible to every signed-in user and lists it in Discover and
+                    recommendations.
+                  </p>
+                  <Button
+                    fullWidth
+                    loading={actionState === "sharing"}
+                    loadingText="Activating sharing..."
+                    disabled={isBusy && actionState !== "sharing"}
+                    onClick={handleShare}
+                  >
                     Activate sharing
                   </Button>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setTeamChoice(TEAM_ONLY)}
-                  >
-                    Cancel preview
-                  </Button>
-                </div>
-              </>
+                </>
+              )
             ) : (
               <>
-                <p className={`${shared.text} ${styles.strongText}`}>
-                  {sharing.savedVisibility} (saved) · PRIVATE
-                </p>
-                <label className={styles.label} htmlFor="teamChoice">
-                  Team page sharing choice
-                </label>
-                <select
-                  id="teamChoice"
-                  className={styles.select}
-                  value={teamChoice}
-                  onChange={(event) => setTeamChoice(event.target.value)}
-                >
-                  <option value={TEAM_ONLY}>Team-only</option>
-                  <option value={LINK_MODE}>Link mode · LOCAL PREVIEW</option>
-                </select>
                 <p className={shared.text}>
-                  Only accepted teammates can view the saved page.
+                  {isShared
+                    ? "This page is shared with every signed-in user and appears in Discover and recommendations."
+                    : "Only accepted teammates can view this page."}
                 </p>
-                <div className={shared.stack}>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setTeamChoice(LINK_MODE)}
-                  >
-                    Preview link mode
-                  </Button>
-                  <Button fullWidth disabled>
-                    Activate sharing
-                  </Button>
-                </div>
                 <p className={shared.helper}>
-                  Link mode: preview only. Sharing unavailable pending policy
-                  approval.
+                  Only the project owner can change sharing.
                 </p>
               </>
             )}
           </section>
 
-          {/* Saved team-only view */}
+          {/* Saved page view */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>Saved team-only view</h2>
-            <p className={`${shared.text} ${styles.strongText}`}>{project.title}</p>
+            <h2 className={shared.cardTitle}>
+              {isShared ? "Saved shared view" : "Saved team-only view"}
+            </h2>
+            <p className={`${shared.text} ${styles.strongText}`}>
+              {project.title}
+            </p>
             <p className={shared.text}>
-              {project.status} · PRIVATE · {project.completedOn}
+              {[project.status, isShared ? "SHARED" : "PRIVATE", project.completedOn]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
             <p className={shared.text}>{project.summary}</p>
             <ul className={shared.list}>
-              {project.team.map((member) => (
+              {team.map((member) => (
                 <li key={member.name}>
                   {member.name} · {member.role}
                 </li>
@@ -301,127 +365,49 @@ function SharingPrivacy() {
         <div className={styles.column}>
           {/* Independent choice / your profile */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>Independent choice / your profile</h2>
+            <h2 className={shared.cardTitle}>
+              Independent choice / your profile
+            </h2>
 
             <div className={styles.innerCard}>
-              <h3 className={shared.cardTitle}>Your profile · {user.name}</h3>
+              <h3 className={shared.cardTitle}>
+                Your profile · {user.name}
+              </h3>
 
-              {saveState === "success" ? (
-                <>
-                  <Notice tone="success" title={`${user.name}'s profile choice saved`}>
-                    Displayed on {user.name}&apos;s profile. {others} unchanged;
-                    team page stays {sharing.savedVisibility}.
-                  </Notice>
-                  <p className={shared.text}>
-                    {savedLabel} (saved) · {user.name} only
-                  </p>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
-                    Back to private project page
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {saveState === "error" && (
-                    <Notice tone="error" title="Profile choice did not save">
-                      {user.name}&apos;s local selection is retained; saved
-                      profile remains {savedLabel}. Saved team page remains{" "}
-                      {sharing.savedVisibility}.
-                    </Notice>
-                  )}
+              <label className={styles.checkboxRow}>
+                <input type="checkbox" checked={false} disabled />
+                <span>Display on my profile</span>
+              </label>
 
-                  <label className={styles.checkboxRow}>
-                    <input
-                      type="checkbox"
-                      checked={localDisplay}
-                      disabled={isSaving}
-                      onChange={(event) => {
-                        setLocalDisplay(event.target.checked);
-                        if (saveState === "error") setSaveState("idle");
-                      }}
-                    />
-                    <span>Display on my profile</span>
-                  </label>
+              <p className={shared.helper}>Not available yet.</p>
 
-                  <p className={shared.helper}>
-                    {localDisplay !== savedDisplay
-                      ? `${localLabel} selected locally · ${savedLabel} still saved`
-                      : `${savedLabel} (saved) · ${
-                          savedDisplay
-                            ? "Displayed on your profile."
-                            : "Not displayed on your profile."
-                        }`}
-                  </p>
-
-                  {isSaving ? (
-                    <p className={styles.savingBox} role="status">
-                      <span className={styles.spinner} aria-hidden="true" />
-                      Saving profile choice…
-                    </p>
-                  ) : (
-                    <Button
-                      fullWidth
-                      onClick={handleSaveProfileChoice}
-                    >
-                      {saveState === "error"
-                        ? "Retry own profile save"
-                        : "Save own profile choice"}
-                    </Button>
-                  )}
-
-                  <p className={shared.helper}>
-                    {isSaving
-                      ? `${sharing.savedVisibility} remains saved. ${others} are unchanged.`
-                      : `Changes your profile only. ${others} and team-page sharing are unaffected.`}
-                  </p>
-                </>
-              )}
+              <Button fullWidth disabled>
+                Save own profile choice
+              </Button>
             </div>
 
             <p className={shared.text}>
               Completion does not display projects automatically. Profile
-              display does not share the team page.
+              display does not change team-page sharing.
             </p>
-            <p className={shared.helper}>
-              Cancel local choices leaves saved {savedLabel} and{" "}
-              {sharing.savedVisibility} unchanged. Your choice never changes
-              another person&apos;s profile.
-            </p>
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={handleCancelLocalChanges}
-              disabled={isSaving}
-            >
-              Cancel local changes
-            </button>
           </section>
 
-          {/* Preview comparison */}
+          {/* Current audience */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>Preview comparison</h2>
+            <h2 className={shared.cardTitle}>Current audience</h2>
             <p className={`${shared.text} ${styles.strongText}`}>
               {sharing.savedVisibility} · saved audience
             </p>
             <p className={shared.text}>
-              Accepted team access only. No share link.
-            </p>
-            <p className={`${shared.text} ${styles.strongText}`}>
-              Chosen link mode · LOCAL PREVIEW
-            </p>
-            <p className={shared.text}>
-              Evidence preview only; not live, not published. No URL is created.
+              {isShared
+                ? "Every signed-in user can view this page. It is listed in Discover and recommendations."
+                : "Accepted team access only. The page is not listed in Discover."}
             </p>
             <p className={shared.helper}>
-              Audience, consent and authenticated-access exceptions are not yet
-              defined.
+              {isShared
+                ? "Unsharing hides the page from Discover and recommendations. Members who already joined keep full access."
+                : "Only the project owner can change sharing."}
             </p>
-            <Button fullWidth disabled>
-              Activate link mode
-            </Button>
           </section>
         </div>
       </div>
