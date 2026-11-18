@@ -23,11 +23,11 @@ export async function getPrivateProjectPage(projectId, { variant = null } = {}) 
 
   // Team-page sharing and the profile choice are owned by the Sharing and
   // privacy screen, so read them from there to keep both screens in step.
-  const sharing = await getSharingPrivacy();
+  const sharing = await getSharingPrivacy(projectId);
   return {
     ...data,
     sharing: {
-      savedVisibility: sharing.sharing.savedVisibility,
+      savedVisibility: sharing.isShared ? "Shared" : "Team-only",
       displayOnProfile: sharing.profile.displayOnProfile,
     },
   };
