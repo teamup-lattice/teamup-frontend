@@ -31,7 +31,8 @@ function AccountDeletion() {
     getMyProjects()
       .then((data) => {
         if (!isMounted) return;
-        setOwnedProjects(Array.isArray(data?.projects) ? data.projects : []);
+        const projects = Array.isArray(data?.projects) ? data.projects : [];
+        setOwnedProjects(projects.filter((project) => project.isOwner !== false));
         setProjectsStatus("ready");
       })
       .catch((loadError) => {
@@ -66,6 +67,17 @@ function AccountDeletion() {
       sessionStorage.removeItem(DRAFT_BACKUP_KEY);
       navigate("/", { replace: true });
     } catch (deleteError) {
+      if (deleteError?.status === 401) {
+        clearToken();
+        navigate("/login", { replace: true });
+        return;
+      }
+      if (deleteError?.status === 404) {
+        clearToken();
+        sessionStorage.removeItem(DRAFT_BACKUP_KEY);
+        navigate("/", { replace: true });
+        return;
+      }
       console.error("Failed to delete account:", deleteError);
       setError("Couldn't delete your account. Check your connection and try again.");
       setIsDeleting(false);
@@ -94,31 +106,30 @@ function AccountDeletion() {
 
         <section className={styles.card} aria-labelledby="deletion-heading">
           <h2 className={styles.cardTitle} id="deletion-heading">
-            Delete account
+            Before you delete your account
           </h2>
-          <p className={styles.fieldText}>
-            Deleting your account is immediate and can&apos;t be undone from the
-            app.
-          </p>
 
           <div className={styles.deletionWarning}>
             <p className={styles.deletionWarningTitle}>
-              What happens to projects you own
+              This can&apos;t be undone
             </p>
             <p className={styles.deletionWarningText}>
-              They are handed to an active manager, or to your longest-standing
-              active member if there is no manager. If no active member remains,
-              the project is closed.
+              Deleting your account is immediate. You can&apos;t undo it from the
+              app.
             </p>
           </div>
 
-          {projectsStatus === "error" && (
-            <p className={styles.helper}>Couldn&apos;t load your projects</p>
-          )}
-
           {projectsStatus === "ready" && ownedProjects.length > 0 && (
             <div className={styles.deletionProjects}>
-              <p className={styles.deletionProjectsLabel}>Projects you own</p>
+              <p className={styles.deletionProjectsLabel}>
+                What happens to projects you own
+              </p>
+              <p className={styles.deletionProjectsText}>
+                Each project you own is handed to an active manager, or to its
+                longest-standing active member. If no active member remains, the
+                project is closed.
+              </p>
+
               <ul className={styles.deletionProjectList}>
                 {visibleProjects.map((project, index) => (
                   <li
@@ -134,6 +145,21 @@ function AccountDeletion() {
               )}
             </div>
           )}
+
+          {projectsStatus === "error" && (
+            <p className={styles.helper}>Couldn&apos;t load your projects</p>
+          )}
+
+          <div className={styles.consequences}>
+            <p className={styles.consequencesHeading}>What will happen</p>
+            <ul className={styles.consequencesList}>
+              <li>You&apos;ll be signed out everywhere</li>
+              <li>Pending invitations and join requests are cancelled</li>
+              <li>Your project memberships end</li>
+              <li>Your open tasks are unassigned</li>
+              <li>Your profile is anonymised</li>
+            </ul>
+          </div>
 
           <form className={styles.deletionForm} onSubmit={handleSubmit}>
             <Input

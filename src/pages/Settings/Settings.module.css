@@ -317,11 +317,12 @@
   border: 1px solid var(--color-red);
   border-radius: var(--radius-control);
   background: var(--color-red-light);
-  color: var(--color-red);
+  color: var(--color-navy);
 }
 
 .deletionWarningTitle {
   margin: 0;
+  color: var(--color-red);
   font-size: var(--font-size-label);
   font-weight: 600;
   line-height: var(--line-height-text);
@@ -329,6 +330,7 @@
 
 .deletionWarningText {
   margin: 0;
+  color: var(--color-navy);
   font-size: var(--font-size-label);
   line-height: var(--line-height-text);
 }
@@ -347,6 +349,13 @@
   line-height: var(--line-height-text);
 }
 
+.deletionProjectsText {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
 .deletionProjectList {
   display: flex;
   flex-direction: column;
@@ -360,6 +369,31 @@
 
 .deletionProjectItem {
   overflow-wrap: anywhere;
+}
+
+.consequences {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.consequencesHeading {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.consequencesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
 }
 
 .deletionForm {
