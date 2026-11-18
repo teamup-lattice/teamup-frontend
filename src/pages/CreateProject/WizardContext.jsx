@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   createProjectDraft,
   getProjectById,
@@ -270,6 +271,7 @@ function buildProjectPayload({ basics, roles, commitment, milestones }) {
 }
 
 export function WizardProvider({ children, initialDraftId = null }) {
+  const navigate = useNavigate();
   const [draftId, setDraftId] = useState(initialDraftId);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState([]);
@@ -285,6 +287,7 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [publishedProjectId, setPublishedProjectId] = useState(null);
   const saveInFlightRef = useRef(false);
   const publishInFlightRef = useRef(false);
+  const locallyCreatedDraftIdRef = useRef(null);
   const [availableSkills, setAvailableSkills] = useState([]);
   const [skillsLoadStatus, setSkillsLoadStatus] = useState("loading");
   const [skillsLoadAttempt, setSkillsLoadAttempt] = useState(0);
@@ -337,6 +340,10 @@ export function WizardProvider({ children, initialDraftId = null }) {
 
   useEffect(() => {
     if (!initialDraftId) {
+      return;
+    }
+
+    if (String(initialDraftId) === locallyCreatedDraftIdRef.current) {
       return;
     }
 
@@ -543,7 +550,9 @@ export function WizardProvider({ children, initialDraftId = null }) {
         if (!createdDraftId) {
           throw new Error("Draft creation response did not include an ID");
         }
+        locallyCreatedDraftIdRef.current = String(createdDraftId);
         setDraftId(createdDraftId);
+        navigate(`/projects/${createdDraftId}/edit`, { replace: true });
       }
 
       // TODO: Load skills with backend IDs before adding them to the payload.
