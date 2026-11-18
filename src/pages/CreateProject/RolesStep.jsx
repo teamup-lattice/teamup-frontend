@@ -154,13 +154,15 @@ function RolesStep() {
       skills: [...newRole.skills],
       isOwner: false,
     };
-    setRoles((current) => ({
-      ...current,
-      roles: [...current.roles, createdRole],
-    }));
+    const nextRoles = {
+      ...roles,
+      roles: [...roles.roles, createdRole],
+    };
+    setRoles(nextRoles);
     setNewRole({ title: "", responsibilities: "", skills: [] });
     setNewRoleError(false);
     setIsAddingRole(false);
+    saveDraft({ roles: nextRoles });
   };
 
   const confirmRemoveRole = (roleId) => {
@@ -667,7 +669,7 @@ function RolesStep() {
           <Button
             variant="secondary"
             fullWidth
-            onClick={saveDraft}
+            onClick={() => saveDraft()}
             disabled={isSaving}
           >
             {isSaving

@@ -8,6 +8,104 @@ import {
 import { getSkills } from "../../services/profileService";
 import { WizardContext } from "./WizardContextValue";
 
+const DRAFT_BACKUP_KEY = "teamup:createProject:draft";
+
+function readDraftBackup(draftId) {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_BACKUP_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const backup = JSON.parse(raw);
+    const backupDraftId = backup?.draftId ?? null;
+    const draftIdMatches = draftId
+      ? String(backupDraftId) === String(draftId)
+      : backupDraftId === null;
+
+    if (
+      !Array.isArray(backup?.roles?.roles) ||
+      backup.roles.roles.length === 0 ||
+      !draftIdMatches
+    ) {
+      return null;
+    }
+
+    return backup;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraftBackup(backup) {
+  try {
+    sessionStorage.setItem(DRAFT_BACKUP_KEY, JSON.stringify(backup));
+  } catch {
+    return;
+  }
+}
+
+function clearDraftBackup() {
+  try {
+    sessionStorage.removeItem(DRAFT_BACKUP_KEY);
+  } catch {
+    return;
+  }
+}
+
+function getRoleTitleKey(role) {
+  return (role?.title ?? "").trim().toLowerCase();
+}
+
+function mergeRoleLists(
+  localRoles,
+  serverRoles,
+  { localIsAuthoritative = false } = {},
+) {
+  if (localIsAuthoritative) {
+    return localRoles;
+  }
+
+  const merged = [...serverRoles];
+  const mergedTitleKeys = new Set(
+    merged.map((role) => getRoleTitleKey(role)).filter(Boolean),
+  );
+  let mergedHasOwner = merged.some((role) => Boolean(role?.isOwner));
+
+  for (const localRole of localRoles) {
+    const localId = localRole?.id ? String(localRole.id) : null;
+    const titleKey = getRoleTitleKey(localRole);
+    const matchingIdIndex = localId
+      ? merged.findIndex((role) => String(role?.id) === localId)
+      : -1;
+
+    if (matchingIdIndex >= 0) {
+      if (getRoleTitleKey(merged[matchingIdIndex]) !== titleKey) {
+        merged[matchingIdIndex] = localRole;
+      }
+      continue;
+    }
+
+    if (titleKey && mergedTitleKeys.has(titleKey)) {
+      continue;
+    }
+
+    if (localRole?.isOwner && mergedHasOwner) {
+      continue;
+    }
+
+    merged.push(localRole);
+    if (titleKey) {
+      mergedTitleKeys.add(titleKey);
+    }
+    if (localRole?.isOwner) {
+      mergedHasOwner = true;
+    }
+  }
+
+  return merged;
+}
+
 const initialBasics = {
   name: "",
   problem: "",
@@ -176,7 +274,9 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState([]);
   const [basics, setBasics] = useState(initialBasics);
-  const [roles, setRoles] = useState(initialRoles);
+  const [roles, setRoles] = useState(
+    () => readDraftBackup(initialDraftId)?.roles ?? initialRoles,
+  );
   const [commitment, setCommitment] = useState(initialCommitment);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [saveStatus, setSaveStatus] = useState("idle");
@@ -190,6 +290,14 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [skillsLoadAttempt, setSkillsLoadAttempt] = useState(0);
   const [isLoadingDraft, setIsLoadingDraft] = useState(Boolean(initialDraftId));
   const [draftLoadError, setDraftLoadError] = useState(null);
+
+  useEffect(() => {
+    if (isLoadingDraft || draftLoadError) {
+      return;
+    }
+
+    writeDraftBackup({ draftId, roles });
+  }, [draftId, roles, isLoadingDraft, draftLoadError]);
 
   useEffect(() => {
     let isMounted = true;
@@ -233,6 +341,7 @@ export function WizardProvider({ children, initialDraftId = null }) {
     }
 
     let isMounted = true;
+    const hasDraftBackup = Boolean(readDraftBackup(initialDraftId));
 
     getProjectById(initialDraftId)
       .then((result) => {
@@ -277,13 +386,18 @@ export function WizardProvider({ children, initialDraftId = null }) {
           };
         });
 
-        setRoles({
+        const serverRoles =
+          mappedRoles.length > 0 ? mappedRoles : initialRoles.roles;
+
+        setRoles((current) => ({
           teamSize:
             project.teamSize !== undefined && project.teamSize !== null
               ? String(project.teamSize)
-              : "",
-          roles: mappedRoles.length > 0 ? mappedRoles : initialRoles.roles,
-        });
+              : current.teamSize,
+          roles: mergeRoleLists(current.roles, serverRoles, {
+            localIsAuthoritative: hasDraftBackup,
+          }),
+        }));
 
         const toDateInputValue = (isoString) => {
           if (!isoString) return "";
@@ -406,7 +520,7 @@ export function WizardProvider({ children, initialDraftId = null }) {
     setCurrentStep((step) => Math.max(step - 1, 1));
   };
 
-  const saveDraft = async () => {
+  const saveDraft = async (overrides = {}) => {
     if (saveInFlightRef.current || publishInFlightRef.current) {
       return;
     }
@@ -414,11 +528,12 @@ export function WizardProvider({ children, initialDraftId = null }) {
     saveInFlightRef.current = true;
     setSaveStatus("saving");
     try {
+      const snapshot = overrides?.nativeEvent ? {} : overrides;
       const data = buildProjectPayload({
-        basics,
-        roles,
-        commitment,
-        milestones,
+        basics: snapshot.basics ?? basics,
+        roles: snapshot.roles ?? roles,
+        commitment: snapshot.commitment ?? commitment,
+        milestones: snapshot.milestones ?? milestones,
       });
       if (draftId) {
         await updateProjectDraft(draftId, data);
@@ -476,6 +591,7 @@ export function WizardProvider({ children, initialDraftId = null }) {
       const result = await publishProjectService(projectId);
       setPublishedProjectId(result?.project?.id ?? result?.id ?? projectId);
       setPublishStatus("published");
+      clearDraftBackup();
     } catch (error) {
       if (!payloadSaved) {
         setSaveStatus("failed");
