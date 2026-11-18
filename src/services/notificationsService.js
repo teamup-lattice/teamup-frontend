@@ -11,6 +11,8 @@ const notificationTypeLabels = {
   TASK_COMMENTED: "Task comment",
   TASK_DEADLINE: "Deadline reminder",
   TASK_OVERDUE: "Overdue prompt",
+  TASK_HANDOVER_REQUEST: "Handover request",
+  TASK_HANDOVER_DECIDED: "Handover",
   DATE_EXTENSION_REQUEST: "Date request",
   DATE_EXTENSION_DECIDED: "Date request update",
   MILESTONE_UPDATE: "Milestone update",
@@ -87,6 +89,34 @@ function getNotificationAction(notification) {
         return {
           actionLabel: "Open task",
           to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(entityId)}`,
+        };
+      }
+      break;
+    case "TASK_HANDOVER_REQUEST":
+      if (projectId && data?.taskId) {
+        return {
+          actionLabel: "Review request",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(data.taskId)}/reassign`,
+        };
+      }
+      if (projectId) {
+        return {
+          actionLabel: "Review request",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
+        };
+      }
+      break;
+    case "TASK_HANDOVER_DECIDED":
+      if (projectId && data?.taskId) {
+        return {
+          actionLabel: "View task",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(data.taskId)}`,
+        };
+      }
+      if (projectId) {
+        return {
+          actionLabel: "View task",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
         };
       }
       break;

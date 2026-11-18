@@ -4,7 +4,8 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Textarea from "../../../../components/Textarea";
-import { requestHandover, requestNewDate } from "../../../../services/workspaceService";
+import { createHandoverRequest } from "../../../../services/handoverService";
+import { requestNewDate } from "../../../../services/workspaceService";
 import { useSimulate } from "../../useSimulate";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP, addDays, formatDate, shortDate } from "../../workspaceFormat";
@@ -36,6 +37,7 @@ function Reminders() {
   const [mode, setMode] = useState("list"); // list | date | handover
   const [form, setForm] = useState({ date: "", message: "" });
   const [errors, setErrors] = useState({});
+  const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | error | sent
   const [sent, setSent] = useState(null); // { type, date, message }
   const [doneNote, setDoneNote] = useState("");
@@ -64,12 +66,14 @@ function Reminders() {
     setMode(nextMode);
     setForm({ date: "", message: "" });
     setErrors({});
+    setErrorMessage("");
     setStatus("idle");
   }
 
   function cancelForm() {
     setMode("list");
     setErrors({});
+    setErrorMessage("");
     setStatus("idle");
   }
 
@@ -93,16 +97,29 @@ function Reminders() {
     }
 
     setStatus("sending");
-    const send = mode === "date" ? requestNewDate : requestHandover;
+    setErrorMessage("");
     try {
-      await send(
-        { taskId: task.id, ...form },
-        { simulateFail: simulate === "fail" },
-      );
+      if (mode === "date") {
+        await requestNewDate(
+          { taskId: task.id, ...form },
+          { simulateFail: simulate === "fail" },
+        );
+      } else {
+        await createHandoverRequest(projectId, task.id, form.message);
+      }
       setSent({ type: mode, date: form.date, message: form.message.trim() });
       setMode("list");
       setStatus("sent");
-    } catch {
+    } catch (error) {
+      if (mode === "handover") {
+        if (error?.status === 403) {
+          setErrorMessage("You can only request a handover for a task you own.");
+        } else if (error?.status === 409) {
+          setErrorMessage("This task already has a pending handover request.");
+        } else {
+          setErrorMessage(error?.message || "Something went wrong.");
+        }
+      }
       setStatus("error");
     }
   }
@@ -144,7 +161,9 @@ function Reminders() {
                 variant="error"
                 title={isDate ? "Date request did not send" : "Handover request did not send"}
               >
-                {`${isDate ? `Your ${shortDate(form.date)} proposal and message remain local. ` : "Your message remains local. "}${task.title} is still ${task.assignee}${APOS}s. ${task.status} and overdue.`}
+                {isDate
+                  ? `Your ${shortDate(form.date)} proposal and message remain local. ${task.title} is still ${task.assignee}${APOS}s. ${task.status} and overdue.`
+                  : errorMessage}
               </Alert>
             </div>
           )}
@@ -169,6 +188,8 @@ function Reminders() {
             value={form.message}
             onChange={handleChange}
             disabled={isSending}
+            maxLength={isDate ? undefined : 1000}
+            helperText={isDate ? undefined : `${form.message.length}/1000`}
           />
 
           <div className={shared.stack}>
@@ -213,11 +234,11 @@ function Reminders() {
               </p>
               <p className={shared.text}>
                 Stored due: {shortDate(task.dueDate)}
-                {SEP}
-                {task.milestoneId}
+                {milestone && `${SEP}${milestone.name}`}
               </p>
               <p className={shared.text}>
-                Overdue {task.overdueDays} days{SEP}Milestone {task.milestoneId} {milestone?.name}
+                Overdue {task.overdueDays} days
+                {milestone && `${SEP}Milestone ${milestone.name}`}
               </p>
               <p className={shared.text}>
                 Request pending{SEP}Proposed {shortDate(sent.date)}
@@ -231,7 +252,7 @@ function Reminders() {
         ) : (
           <>
             <Alert variant="success" title="Handover requested">
-              {`${owner} can review a separate manual assignment. Sending this request does not release your role.`}
+              {`Your handover request was sent to ${owner}, the project owner. ${task.title} stays with you until the owner reassigns it.`}
             </Alert>
             <section className={shared.card}>
               <h3 className={shared.cardTitle}>
@@ -240,8 +261,7 @@ function Reminders() {
               <p className={shared.text}>
                 {task.status}
                 {SEP}Due {shortDate(task.dueDate)}
-                {SEP}
-                {task.milestoneId}
+                {milestone && `${SEP}${milestone.name}`}
               </p>
               {sent.message && <p className={shared.text}>Message: &ldquo;{sent.message}&rdquo;</p>}
               <Button fullWidth variant="secondary" onClick={() => navigate(taskPath(task))}>
@@ -305,7 +325,7 @@ function Reminders() {
               </div>
               <p className={shared.small}>
                 Due {formatDate(item.dueDate)}
-                {SEP}Milestone: {item.milestoneId} {milestoneOf(item)?.name}
+                {milestoneOf(item) && `${SEP}Milestone: ${milestoneOf(item).name}`}
               </p>
               {item.blockerNote && (
                 <p className={shared.text}>Blocker note: {item.blockerNote}</p>
@@ -352,7 +372,7 @@ function Reminders() {
               </div>
               <p className={shared.small}>
                 Due {formatDate(item.dueDate)}
-                {SEP}Milestone: {item.milestoneId} {milestoneOf(item)?.name}
+                {milestoneOf(item) && `${SEP}Milestone: ${milestoneOf(item).name}`}
               </p>
               {item.note && <p className={shared.text}>{item.note}</p>}
               <p className={shared.helper}>
