@@ -31,7 +31,7 @@ function readableLabel(value) {
     .join(" ");
 }
 
-function ProjectCard({ project = {}, currentUserId, onDelete }) {
+function ProjectCard({ project = {}, currentUserId, onDelete, healthSummary }) {
   const navigate = useNavigate();
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -82,6 +82,7 @@ function ProjectCard({ project = {}, currentUserId, onDelete }) {
     typeof attention?.detail === "string" ? attention.detail : "";
   const badgeLabel = attentionBadge || statusLabel;
   const badgeTone = attentionBadge ? "amber" : config.tone;
+  const hasHealthSummary = Boolean(healthSummary);
   const titleId = `project-${projectId ?? "unknown"}-title`;
   const roles = Array.isArray(project.roles) ? project.roles : [];
   const skills = Array.isArray(project.skills) ? project.skills : [];
@@ -118,18 +119,26 @@ function ProjectCard({ project = {}, currentUserId, onDelete }) {
 
   return (
     <article className={styles.card} aria-labelledby={titleId}>
-      <span className={`${styles.badge} ${styles[badgeTone]}`}>
-        {badgeLabel}
-      </span>
+      {hasHealthSummary ? (
+        healthSummary
+      ) : (
+        <span className={`${styles.badge} ${styles[badgeTone]}`}>
+          {badgeLabel}
+        </span>
+      )}
 
-      {attentionDetail && <p className={styles.meta}>{attentionDetail}</p>}
+      {!hasHealthSummary && attentionDetail && (
+        <p className={styles.meta}>{attentionDetail}</p>
+      )}
 
       <h2 className={styles.title} id={titleId}>
         {title}
       </h2>
       {description && <p className={styles.description}>{description}</p>}
-      {details.length > 0 && (
-        <p className={styles.meta}>{details.join(" · ")}</p>
+      {(hasHealthSummary || details.length > 0) && (
+        <p className={styles.meta}>
+          {(hasHealthSummary ? [statusLabel, ...details] : details).join(" · ")}
+        </p>
       )}
 
       <div className={styles.actions}>

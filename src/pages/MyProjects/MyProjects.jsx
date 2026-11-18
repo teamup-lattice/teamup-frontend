@@ -183,13 +183,16 @@ function MyProjects() {
         <ul className={styles.grid}>
           {visibleRecords.map((project) => (
             <li className={styles.item} key={project.id}>
-              <TeamHealthSummary teamHealth={project.teamHealth}>
-                <ProjectCard
-                  project={project}
-                  currentUserId={currentUserId}
-                  onDelete={handleDeleteProject}
-                />
-              </TeamHealthSummary>
+              <ProjectCard
+                project={project}
+                currentUserId={currentUserId}
+                onDelete={handleDeleteProject}
+                healthSummary={
+                  project.teamHealth ? (
+                    <TeamHealthSummary teamHealth={project.teamHealth} />
+                  ) : null
+                }
+              />
             </li>
           ))}
         </ul>

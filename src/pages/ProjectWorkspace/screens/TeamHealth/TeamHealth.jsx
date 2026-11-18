@@ -13,6 +13,33 @@ import StateNotice from "../../shared/StateNotice";
 import shared from "../shared.module.css";
 import styles from "./TeamHealth.module.css";
 
+const STATUS_MEANINGS = {
+  ON_TRACK: "nothing is wrong.",
+  NEEDS_ATTENTION:
+    "an overdue task, a blocked task or a missed weekly check-in.",
+  AT_RISK:
+    "an overdue milestone or a member inactive for more than 14 days.",
+};
+
+const STATUS_ICON_TONES = {
+  onTrack: "iconOnTrack",
+  needsAttention: "iconNeedsAttention",
+  atRisk: "iconAtRisk",
+};
+
+function splitStatusLabel(label) {
+  if (typeof label !== "string") {
+    return { icon: "", text: "" };
+  }
+
+  const match = label.match(/^([^A-Za-z]*)(.*)$/);
+
+  return {
+    icon: match?.[1].trim() ?? "",
+    text: match?.[2].trim() ?? "",
+  };
+}
+
 function buildSignalLines(signals) {
   const lines = [];
 
@@ -231,17 +258,35 @@ function TeamHealth() {
         </p>
       ))}
 
-      <div className={styles.statusRow}>
-        {teamHealthData.statusLevels.map(({ label, tone }) => (
-          <span
-            key={label}
-            className={`${styles.statusChip} ${styles[tone]}`}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-      <p className={styles.helperText}>{teamHealthData.health.helper}</p>
+      <ul className={styles.statusKey}>
+        {teamHealthData.statusLevels.map(({ status, label, tone }) => {
+          const { icon, text } = splitStatusLabel(label);
+          const isCurrent = health.status === status;
+
+          return (
+            <li
+              key={status}
+              className={`${styles.statusKeyLine} ${
+                isCurrent ? styles.statusKeyCurrent : ""
+              }`}
+            >
+              <span
+                className={`${styles.statusKeyIcon} ${
+                  styles[STATUS_ICON_TONES[tone]]
+                }`}
+              >
+                {icon}
+              </span>
+              <span className={styles.statusKeyText}>
+                <strong>{text}</strong>: {STATUS_MEANINGS[status]}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className={`${styles.helperText} ${styles.statusKeyCaption}`}>
+        {teamHealthData.health.helper}
+      </p>
     </article>
   );
 
