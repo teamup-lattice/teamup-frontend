@@ -64,6 +64,11 @@
   color: var(--color-red);
 }
 
+.statusNeutral {
+  background: var(--color-canvas);
+  color: var(--color-text-secondary);
+}
+
 .statusLevels {
   display: flex;
   flex-direction: column;

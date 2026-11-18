@@ -1,7 +1,13 @@
 import teamHealthData from "../../data/teamHealthData";
+import { normalizeTeamHealth } from "../../services/teamHealthService";
 import styles from "./TeamHealthSummary.module.css";
 
-function TeamHealthSummary({ children }) {
+function TeamHealthSummary({ teamHealth, children }) {
+  const normalized = normalizeTeamHealth(teamHealth);
+  const statusLevel = teamHealthData.statusLevels.find(
+    (level) => level.status === normalized.status,
+  );
+
   return (
     <div className={styles.summaryGroup}>
       <div className={styles.outerCard}>
@@ -10,8 +16,12 @@ function TeamHealthSummary({ children }) {
           <h3 className={styles.heading} id="team-health-summary-title">
             Team health
           </h3>
-          <span className={`${styles.statusChip} ${styles.needsAttention}`}>
-            ! Needs attention
+          <span
+            className={`${styles.statusChip} ${
+              statusLevel ? styles[statusLevel.tone] : styles.statusNeutral
+            }`}
+          >
+            {statusLevel ? statusLevel.label : teamHealthData.health.unavailable}
           </span>
           <p className={styles.helperText}>
             Shared team context · No individual scores
