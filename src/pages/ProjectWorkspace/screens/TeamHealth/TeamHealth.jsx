@@ -40,6 +40,13 @@ function splitStatusLabel(label) {
   };
 }
 
+function isMissingEndpoint(error) {
+  return (
+    error?.status === 404 &&
+    /^Cannot GET\s+/i.test(String(error.message ?? ""))
+  );
+}
+
 function buildSignalLines(signals) {
   const lines = [];
 
@@ -84,6 +91,7 @@ function TeamHealth() {
   const {
     project,
     members,
+    membersLoading,
     isOwner,
     canManageMembers,
     taskSummary,
@@ -103,6 +111,7 @@ function TeamHealth() {
     data: null,
     error: "",
     notFound: false,
+    missingEndpoint: false,
   });
   const [healthRetry, setHealthRetry] = useState(0);
   const [draftCheckIn, setDraftCheckIn] = useState("");
@@ -121,6 +130,7 @@ function TeamHealth() {
           data,
           error: "",
           notFound: false,
+          missingEndpoint: false,
         });
       })
       .catch((error) => {
@@ -131,6 +141,7 @@ function TeamHealth() {
           data: null,
           error: error.message || teamHealthData.error.message,
           notFound: error.status === 404,
+          missingEndpoint: isMissingEndpoint(error),
         });
       });
 
@@ -142,6 +153,9 @@ function TeamHealth() {
   const healthIsCurrent = healthState.projectId === projectId;
   const healthStatus = healthIsCurrent ? healthState.status : "loading";
   const healthNotFound = healthIsCurrent ? healthState.notFound : false;
+  const healthMissingEndpoint = healthIsCurrent
+    ? healthState.missingEndpoint
+    : false;
   const healthError = healthIsCurrent ? healthState.error : "";
 
   const workspacePath = `/projects/${projectId}/workspace`;
@@ -161,6 +175,7 @@ function TeamHealth() {
       data: null,
       error: "",
       notFound: false,
+      missingEndpoint: false,
     });
     setHealthRetry((count) => count + 1);
   };
@@ -278,7 +293,10 @@ function TeamHealth() {
                 {icon}
               </span>
               <span className={styles.statusKeyText}>
-                <strong>{text}</strong>: {STATUS_MEANINGS[status]}
+                <strong className={styles[STATUS_ICON_TONES[tone]]}>
+                  {text}
+                </strong>
+                : {STATUS_MEANINGS[status]}
               </span>
             </li>
           );
@@ -502,7 +520,7 @@ function TeamHealth() {
     );
   }
 
-  if (healthStatus === "loading" || (workspaceLoading && !health)) {
+  if (healthStatus === "loading" || workspaceLoading || membersLoading) {
     return (
       <section className={styles.page} aria-live="polite">
         {pageTitle}
@@ -524,19 +542,26 @@ function TeamHealth() {
   }
 
   if (healthStatus === "error") {
+    const errorTitle = healthMissingEndpoint
+      ? teamHealthData.endpointMissing.title
+      : healthNotFound
+        ? teamHealthData.notFound.title
+        : teamHealthData.error.title;
+    const errorFallback = healthMissingEndpoint
+      ? teamHealthData.endpointMissing.message
+      : healthNotFound
+        ? teamHealthData.notFound.message
+        : teamHealthData.error.message;
+
     return (
       <section className={styles.page}>
         {pageTitle}
         <StateNotice
-          variant={healthNotFound ? "info" : "error"}
-          title={
-            healthNotFound
-              ? teamHealthData.notFound.title
-              : teamHealthData.error.title
-          }
-          text={healthNotFound ? teamHealthData.notFound.message : healthError}
-          buttonLabel={healthNotFound ? undefined : "Retry"}
-          onButtonClick={healthNotFound ? undefined : retryHealth}
+          variant={healthNotFound && !healthMissingEndpoint ? "info" : "error"}
+          title={errorTitle}
+          text={healthError || errorFallback}
+          buttonLabel="Retry"
+          onButtonClick={retryHealth}
         />
       </section>
     );
