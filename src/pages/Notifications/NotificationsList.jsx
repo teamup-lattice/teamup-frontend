@@ -64,7 +64,7 @@ function NotificationsList({ initialItems, refreshFailed, onRetry }) {
         {hasItems && (
           <button
             type="button"
-            className={`${styles.action} ${styles.boxed}`}
+            className={styles.action}
             aria-disabled={isSaving || unreadCount === 0}
             onClick={handleMarkAll}
           >
