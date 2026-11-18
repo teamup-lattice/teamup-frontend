@@ -2,32 +2,41 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
-import { signOut } from "../../services/authService";
-import { getSettings, requestAccountDeletion } from "../../services/settingsService";
+import Input from "../../components/Input";
+import { clearToken } from "../../services/api";
+import { getMyProjects } from "../../services/myProjectsService";
+import { deleteAccount } from "../../services/settingsService";
 import styles from "./Settings.module.css";
 
-const SEPARATE_NOTE =
-  "Notification and profile settings remain separate from this account request.";
+const DRAFT_BACKUP_KEY = "teamup:createProject:draft";
+const OWNED_PREVIEW_LIMIT = 5;
+
+function getProjectTitle(project) {
+  return typeof project.title === "string" && project.title.trim()
+    ? project.title
+    : "Untitled project";
+}
 
 function AccountDeletion() {
   const navigate = useNavigate();
-  const [accountName, setAccountName] = useState(null);
-  const [nameStatus, setNameStatus] = useState("loading"); // loading | ready | error
-  const [status, setStatus] = useState("confirm"); // confirm | submitting | error | received
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [ownedProjects, setOwnedProjects] = useState([]);
+  const [projectsStatus, setProjectsStatus] = useState("loading");
+  const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    getSettings()
-      .then((settings) => {
+    getMyProjects()
+      .then((data) => {
         if (!isMounted) return;
-        setAccountName(settings.name);
-        setNameStatus("ready");
+        setOwnedProjects(Array.isArray(data?.projects) ? data.projects : []);
+        setProjectsStatus("ready");
       })
-      .catch((error) => {
-        console.error("Failed to load account name:", error);
-        if (isMounted) setNameStatus("error");
+      .catch((loadError) => {
+        console.error("Failed to load owned projects:", loadError);
+        if (isMounted) setProjectsStatus("error");
       });
 
     return () => {
@@ -35,115 +44,130 @@ function AccountDeletion() {
     };
   }, []);
 
-  async function handleConfirm() {
-    setStatus("submitting");
-    try {
-      await requestAccountDeletion();
-      setStatus("received");
-    } catch (error) {
-      console.error("Failed to send deletion request:", error);
-      setStatus("error");
-    }
-  }
+  const isConfirmed = confirmation.trim() === "DELETE";
+  const visibleProjects = ownedProjects.slice(0, OWNED_PREVIEW_LIMIT);
+  const remainingProjects = ownedProjects.length - OWNED_PREVIEW_LIMIT;
 
-  async function handleSignOut() {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      // signOut clears the local token even when the request fails.
-      console.error("Sign out request failed:", error);
-    }
-    navigate("/login");
-  }
+  const handleConfirmationChange = (event) => {
+    setConfirmation(event.target.value);
+    setError("");
+  };
 
-  const accountLine = (
-    <p className={styles.fieldText}>
-      Account:{" "}
-      {nameStatus === "loading"
-        ? "…"
-        : nameStatus === "error"
-          ? "not available"
-          : accountName}
-    </p>
-  );
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!isConfirmed || isDeleting) return;
+
+    setIsDeleting(true);
+    setError("");
+
+    try {
+      await deleteAccount();
+      clearToken();
+      sessionStorage.removeItem(DRAFT_BACKUP_KEY);
+      navigate("/", { replace: true });
+    } catch (deleteError) {
+      console.error("Failed to delete account:", deleteError);
+      setError("Couldn't delete your account. Check your connection and try again.");
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
       <div className={styles.intro}>
-        <h1 className={styles.heading}>Account deletion</h1>
+        <h1 className={styles.heading}>Delete account</h1>
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
           <Link to="/settings" className={styles.textLink}>
             Settings
           </Link>
           <span aria-hidden="true"> / </span>
-          <span aria-current="page">Account controls</span>
+          <span aria-current="page">Delete account</span>
         </nav>
       </div>
 
-      {status === "received" ? (
-        <div className={styles.deletionBody}>
-          <Alert variant="success" title="Deletion request received">
-            Your request has been submitted. This is not confirmation that your
-            account is deleted.
+      <div className={styles.deletionBody}>
+        {error && (
+          <Alert variant="error" title="Account not deleted">
+            {error}
           </Alert>
-          {accountLine}
-          <div className={styles.buttonStack}>
-            <Button onClick={() => navigate("/settings")}>Back to Settings</Button>
-            <Button
-              variant="neutral"
-              loading={isSigningOut}
-              loadingText="Signing out…"
-              onClick={handleSignOut}
-            >
-              Sign out
-            </Button>
+        )}
+
+        <section className={styles.card} aria-labelledby="deletion-heading">
+          <h2 className={styles.cardTitle} id="deletion-heading">
+            Delete account
+          </h2>
+          <p className={styles.fieldText}>
+            Deleting your account is immediate and can&apos;t be undone from the
+            app.
+          </p>
+
+          <div className={styles.deletionWarning}>
+            <p className={styles.deletionWarningTitle}>
+              What happens to projects you own
+            </p>
+            <p className={styles.deletionWarningText}>
+              They are handed to an active manager, or to your longest-standing
+              active member if there is no manager. If no active member remains,
+              the project is closed.
+            </p>
           </div>
-          <p className={styles.helper}>{SEPARATE_NOTE}</p>
-        </div>
-      ) : (
-        <div className={styles.deletionBody}>
-          {status === "error" && (
-            <Alert variant="error" title="Deletion request didn't send">
-              Your account has not been deleted. Please try again.
-            </Alert>
+
+          {projectsStatus === "error" && (
+            <p className={styles.helper}>Couldn&apos;t load your projects</p>
           )}
-          <section
-            className={styles.card}
-            aria-labelledby="deletion-heading"
-          >
-            <h2 className={styles.cardTitle} id="deletion-heading">
-              Request account deletion?
-            </h2>
-            <p className={styles.fieldText}>
-              This sends a request to delete your TeamUp account. Your account
-              has not been deleted.
-            </p>
-            {accountLine}
-            <p className={styles.fieldText}>
-              No request is sent until you confirm.
-            </p>
+
+          {projectsStatus === "ready" && ownedProjects.length > 0 && (
+            <div className={styles.deletionProjects}>
+              <p className={styles.deletionProjectsLabel}>Projects you own</p>
+              <ul className={styles.deletionProjectList}>
+                {visibleProjects.map((project, index) => (
+                  <li
+                    className={styles.deletionProjectItem}
+                    key={project.id ?? `${getProjectTitle(project)}-${index}`}
+                  >
+                    {getProjectTitle(project)}
+                  </li>
+                ))}
+              </ul>
+              {remainingProjects > 0 && (
+                <p className={styles.helper}>and {remainingProjects} more</p>
+              )}
+            </div>
+          )}
+
+          <form className={styles.deletionForm} onSubmit={handleSubmit}>
+            <Input
+              label="Type DELETE to confirm"
+              helperText="This is case-sensitive."
+              id="delete-account-confirmation"
+              name="deleteAccountConfirmation"
+              value={confirmation}
+              onChange={handleConfirmationChange}
+              autoComplete="off"
+              disabled={isDeleting}
+            />
+
             <div className={styles.buttonRow}>
               <Button
-                variant="neutral"
-                disabled={status === "submitting"}
+                variant="secondary"
                 onClick={() => navigate("/settings")}
+                disabled={isDeleting}
               >
                 Cancel
               </Button>
               <Button
+                type="submit"
                 variant="danger"
-                loading={status === "submitting"}
-                loadingText="Sending request…"
-                onClick={handleConfirm}
+                loading={isDeleting}
+                loadingText="Deleting…"
+                disabled={!isConfirmed || isDeleting}
               >
-                Confirm request
+                Delete account
               </Button>
             </div>
-          </section>
-          <p className={styles.helper}>{SEPARATE_NOTE}</p>
-        </div>
-      )}
+          </form>
+        </section>
+      </div>
     </div>
   );
 }

@@ -308,3 +308,62 @@
     padding: var(--space-4);
   }
 }
+
+.deletionWarning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-red);
+  border-radius: var(--radius-control);
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+
+.deletionWarningTitle {
+  margin: 0;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.deletionWarningText {
+  margin: 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.deletionProjects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.deletionProjectsLabel {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-text);
+}
+
+.deletionProjectList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.deletionProjectItem {
+  overflow-wrap: anywhere;
+}
+
+.deletionForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
