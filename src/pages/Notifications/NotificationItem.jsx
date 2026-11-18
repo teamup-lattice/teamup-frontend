@@ -52,7 +52,7 @@ function NotificationItem({ notification, onMarkAsRead }) {
       </div>
       <Link
         to={to}
-        className={`${styles.action} ${read ? "" : styles.boxed}`}
+        className={styles.action}
         aria-label={`${actionLabel}: ${message}`}
         onClick={handleActionClick}
       >
