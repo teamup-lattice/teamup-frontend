@@ -293,7 +293,10 @@ function TeamHealth() {
                 {icon}
               </span>
               <span className={styles.statusKeyText}>
-                <strong>{text}</strong>: {STATUS_MEANINGS[status]}
+                <strong className={styles[STATUS_ICON_TONES[tone]]}>
+                  {text}
+                </strong>
+                : {STATUS_MEANINGS[status]}
               </span>
             </li>
           );
