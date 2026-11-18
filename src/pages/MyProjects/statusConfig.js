@@ -51,3 +51,14 @@ export const defaultStatusConfig = {
   actionLabel: "View project page",
   path: (id) => `/projects/${id}`,
 };
+
+export function normalizeStatus(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().toUpperCase().replace(/[\s-]+/g, "_");
+}
+
+const DELETABLE_STATUSES = new Set(["DRAFT", "OPEN", "IN_PROGRESS"]);
+
+export function isDeletableStatus(value) {
+  return DELETABLE_STATUSES.has(normalizeStatus(value));
+}

@@ -76,30 +76,39 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
-}
-
-.deleteConfirm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
   width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-control);
-  background: var(--color-canvas);
+}
+
+.deleteButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
+  width: var(--button-height);
+  height: var(--button-height);
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
 }
 
-.deletePrompt {
-  margin: 0;
-  color: var(--color-navy);
-  font-size: var(--font-size-label);
-  font-weight: 600;
-  line-height: var(--line-height-text);
+.deleteButton:hover:not(:disabled),
+.deleteButton:focus-visible {
+  background: var(--color-red-light);
+  color: var(--color-red);
 }
 
-.deleteActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+.deleteButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.deleteButton:disabled {
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
 }

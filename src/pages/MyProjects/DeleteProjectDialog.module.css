@@ -1,0 +1,71 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--color-navy) 40%, transparent);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - var(--space-6));
+  max-height: calc(100dvh - var(--space-6));
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.title:focus {
+  outline: none;
+}
+
+.intro {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-text);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-width: none;
+    max-height: 90dvh;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .actions {
+    gap: var(--space-3);
+  }
+}
