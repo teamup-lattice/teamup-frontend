@@ -72,6 +72,23 @@ function getNotificationAction(notification) {
         };
       }
       break;
+    case "JOIN_REQUEST_DECIDED": {
+      const requestId = data?.joinRequestId ?? entityId;
+      if (
+        notification.entityType === "joinRequest" &&
+        projectId &&
+        requestId
+      ) {
+        return {
+          actionLabel:
+            data?.decision === "ACCEPTED"
+              ? "Review commitment"
+              : "View request",
+          to: `/invitations/${encodeURIComponent(requestId)}/commitment?variant=request&project=${encodeURIComponent(projectId)}`,
+        };
+      }
+      break;
+    }
     case "MEMBER_JOINED":
     case "MEMBER_LEFT":
       if (notification.entityType === "membership" && projectId) {
