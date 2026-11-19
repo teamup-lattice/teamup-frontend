@@ -17,6 +17,7 @@ import {
   updateProjectTask,
   updateProjectTaskComment,
 } from "../../../../services/tasksService";
+import { normalizeHttpUrl } from "../../../../services/evidenceService";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   decideDateExtensionRequest,
@@ -948,32 +949,38 @@ function TaskDetail() {
       {task.contributions.length > 0 && (
         <div className={styles.panel}>
           <h3 className={styles.sectionTitle}>Contributions</h3>
-          {task.contributions.map((contribution, index) => (
-            <div className={styles.comment} key={contribution.id || index}>
-              <strong>{contribution.title || "Completed work"}</strong>
-              {contribution.completionNote && <p>{contribution.completionNote}</p>}
-              {contribution.artifactUrl && (
-                <p>
-                  <a href={contribution.artifactUrl} target="_blank" rel="noreferrer">
-                    View contribution
-                  </a>
-                </p>
-              )}
-              {contribution.fileUrl && (
-                <p>
-                  <a href={contribution.fileUrl} target="_blank" rel="noreferrer">
-                    View attached file
-                  </a>
-                </p>
-              )}
-              {contribution.evidence.length > 0 && (
-                <p className={styles.metaLine}>
-                  {contribution.evidence.length} evidence item
-                  {contribution.evidence.length === 1 ? "" : "s"}
-                </p>
-              )}
-            </div>
-          ))}
+          {task.contributions.map((contribution, index) => {
+            const safeArtifactUrl = normalizeHttpUrl(contribution.artifactUrl);
+            const safeFileUrl = normalizeHttpUrl(contribution.fileUrl);
+            return (
+              <div className={styles.comment} key={contribution.id || index}>
+                <strong>{contribution.title || "Completed work"}</strong>
+                {contribution.completionNote && (
+                  <p>{contribution.completionNote}</p>
+                )}
+                {safeArtifactUrl && (
+                  <p>
+                    <a href={safeArtifactUrl} target="_blank" rel="noreferrer">
+                      View contribution
+                    </a>
+                  </p>
+                )}
+                {safeFileUrl && (
+                  <p>
+                    <a href={safeFileUrl} target="_blank" rel="noreferrer">
+                      View attached file
+                    </a>
+                  </p>
+                )}
+                {contribution.evidence.length > 0 && (
+                  <p className={styles.metaLine}>
+                    {contribution.evidence.length} evidence item
+                    {contribution.evidence.length === 1 ? "" : "s"}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

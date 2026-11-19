@@ -59,7 +59,7 @@ function evidenceList(data) {
   return [];
 }
 
-function normalizeHttpUrl(value) {
+export function normalizeHttpUrl(value) {
   const trimmed = typeof value === "string" ? value.trim() : "";
   if (!trimmed) return "";
 
