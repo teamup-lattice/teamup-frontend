@@ -4,6 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import overviewImage from "../../../../assets/overview.png";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   getPrivateProjectPage,
   saveOwnProfileChoice,
@@ -44,7 +45,9 @@ function PrivateProjectPage() {
           setLoaded({
             key: requestKey,
             data: null,
-            error: error.message || "Something went wrong. Try again.",
+            error: getErrorMessage(error, {
+              fallback: "Something went wrong. Try again.",
+            }),
           });
         }
       });

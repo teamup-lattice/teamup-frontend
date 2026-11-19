@@ -2,6 +2,7 @@ import { useContext } from "react";
 import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
+import { getErrorMessage, getFieldErrors } from "../../services/errorMessage";
 import { formatDate } from "./formatDate";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./ReviewStep.module.css";
@@ -73,6 +74,7 @@ function ReviewStep() {
     skillsLoadStatus,
     draftId,
     saveStatus,
+    saveError,
     saveDraft,
     publishStatus,
     publishError,
@@ -85,7 +87,23 @@ function ReviewStep() {
   const isPublishing = publishStatus === "publishing";
   const isSaving = saveStatus === "saving";
   const isFailed = publishStatus === "failed";
-  const publishValidationErrors = formatValidationErrors(publishError?.errors);
+  const publishFieldErrors = getFieldErrors(publishError);
+  const publishFieldErrorLines = Object.entries(publishFieldErrors).map(
+    ([field, message]) => `${field}: ${message}`,
+  );
+  const publishValidationErrors =
+    publishFieldErrorLines.length > 0
+      ? publishFieldErrorLines
+      : formatValidationErrors(publishError?.errors);
+  const hasDetailedPublishErrors =
+    publishFieldErrorLines.length > 0 || Boolean(publishError?.errors);
+  const publishMessage = hasDetailedPublishErrors
+    ? publishError?.message && publishError.message !== "Something went wrong"
+      ? publishError.message
+      : ""
+    : getErrorMessage(publishError, {
+        fallback: "Publication failed. Try again.",
+      });
   const skillsById = new Map(
     availableSkills.map((skill) => [String(skill.id), skill.name]),
   );
@@ -177,7 +195,7 @@ function ReviewStep() {
 
       {isFailed && (
         <Alert variant="error" title="Project did not publish">
-          {[publishError?.message || "Publication failed. Try again.", ...publishValidationErrors]
+          {[publishMessage || "Publication failed. Try again.", ...publishValidationErrors]
             .filter(Boolean)
             .join(" — ")}
         </Alert>
@@ -214,7 +232,9 @@ function ReviewStep() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Draft did not save">
-          Save failed. Local entries retained; no saved draft yet.
+          {getErrorMessage(saveError, {
+            fallback: "Save failed. Local entries retained; no saved draft yet.",
+          })}
         </Alert>
       )}
 
