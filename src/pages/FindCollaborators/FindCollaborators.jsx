@@ -7,6 +7,7 @@ import EmptyState from "../../components/EmptyState";
 import Select from "../../components/Select";
 import Skeleton from "../../components/Skeleton";
 import { getMyProfile } from "../../services/dashboardService";
+import { getErrorMessage } from "../../services/errorMessage";
 import { getSkills } from "../../services/profileService";
 import {
   inviteCollaborator,
@@ -385,9 +386,12 @@ function FindCollaborators() {
       <div className={styles.page}>
         <h1 className={styles.heading}>Find Collaborators</h1>
         <Alert variant="error" title="Couldn't load collaborators">
-          {setup.error?.status === 403
-            ? "Only the project owner or a manager can find collaborators"
-            : "Please try again."}
+          {getErrorMessage(setup.error, {
+            fallback: "Couldn't load collaborators. Please try again.",
+            byStatus: {
+              403: "Only the project owner or a manager can find collaborators",
+            },
+          })}
         </Alert>
         <Button
           onClick={() => {
@@ -493,12 +497,15 @@ function FindCollaborators() {
         error: "",
       });
     } catch (requestError) {
-      const message =
-        requestError.status === 403
-          ? "Only the project owner or a manager can send invitations"
-          : requestError.status === 409
-            ? requestError.message || "Couldn't send the invitation. Try again."
-            : "Couldn't send the invitation. Try again.";
+      const message = getErrorMessage(requestError, {
+        fallback: "Couldn't send the invitation. Try again.",
+        byStatus: {
+          403: "Only the project owner or a manager can send invitations",
+          409:
+            requestError.message ||
+            "Couldn't send the invitation. Try again.",
+        },
+      });
       setInviteAction({
         status: "failed",
         userId: String(reviewedUser.id),
@@ -637,9 +644,12 @@ function FindCollaborators() {
           {error && (
             <>
               <Alert variant="error" title="Couldn't load collaborators">
-                {error.status === 403
-                  ? "Only the project owner or a manager can find collaborators"
-                  : "Please try again."}
+                {getErrorMessage(error, {
+                  fallback: "Couldn't load collaborators. Please try again.",
+                  byStatus: {
+                    403: "Only the project owner or a manager can find collaborators",
+                  },
+                })}
               </Alert>
               <Button
                 onClick={() => setRequestAttempt((attempt) => attempt + 1)}

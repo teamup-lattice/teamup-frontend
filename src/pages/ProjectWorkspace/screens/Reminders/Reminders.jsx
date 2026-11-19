@@ -6,6 +6,7 @@ import Input from "../../../../components/Input";
 import Textarea from "../../../../components/Textarea";
 import { createHandoverRequest } from "../../../../services/handoverService";
 import { requestNewDate } from "../../../../services/workspaceService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { useSimulate } from "../../useSimulate";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP, addDays, formatDate, shortDate } from "../../workspaceFormat";
@@ -117,7 +118,9 @@ function Reminders() {
         } else if (error?.status === 409) {
           setErrorMessage("This task already has a pending handover request.");
         } else {
-          setErrorMessage(error?.message || "Something went wrong.");
+          setErrorMessage(
+            getErrorMessage(error, { fallback: "Something went wrong." }),
+          );
         }
       }
       setStatus("error");

@@ -11,6 +11,7 @@ import {
   getWorkspaceProject,
 } from "../../services/workspaceMembersService";
 import { getAllProjectTasks } from "../../services/tasksService";
+import { getErrorMessage } from "../../services/errorMessage";
 import StatusTag from "./shared/StatusTag";
 import styles from "./ProjectWorkspace.module.css";
 import "./shared/workspaceVisuals.css";
@@ -182,7 +183,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: workspaceRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           project: null,
           currentUser: null,
         });
@@ -215,7 +216,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: membersRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -247,7 +248,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: milestonesRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -279,7 +280,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: updatesRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -317,7 +318,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: tasksRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           tasks: [],
           summary: null,
         });
@@ -377,7 +378,7 @@ function ProjectWorkspace() {
         projectId,
         retryCount: tasksRetryCount,
         loading: false,
-        error: error.message || "Something went wrong. Try again.",
+        error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
       }));
       throw error;
     }
@@ -407,7 +408,7 @@ function ProjectWorkspace() {
         projectId,
         retryCount: membersRetryCount,
         loading: false,
-        error: error.message || "Something went wrong. Try again.",
+        error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
       }));
       throw error;
     }

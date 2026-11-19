@@ -6,31 +6,10 @@ import Input from "../../../../components/Input";
 import Select from "../../../../components/Select";
 import Skeleton from "../../../../components/Skeleton";
 import { createProjectTask, getTaskApiStatus } from "../../../../services/tasksService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import styles from "./CreateTask.module.css";
-
-function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
-  if (!error) return fallback;
-  if (Array.isArray(error.errors) && error.errors.length > 0) {
-    const messages = error.errors
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  if (error.errors && typeof error.errors === "object") {
-    const messages = Object.values(error.errors)
-      .flat()
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  return error.message || fallback;
-}
 
 const defaultForm = {
   title: "",
@@ -139,7 +118,9 @@ function CreateTask() {
       }
       navigate(taskRoute);
     } catch (error) {
-      setSubmitError(formatErrorMessage(error, "Task could not be created."));
+      setSubmitError(
+        getErrorMessage(error, { fallback: "Task could not be created." }),
+      );
     } finally {
       setIsSubmitting(false);
     }

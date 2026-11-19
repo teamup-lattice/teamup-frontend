@@ -3,6 +3,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import { NO_VISIBILITY } from "../../data/profileData";
 import { getProfile } from "../../services/profileService";
+import { getErrorMessage } from "../../services/errorMessage";
 import { saveVisibility } from "../../services/visibilityService";
 import {
   CompletedProjectsCard,
@@ -16,6 +17,7 @@ import styles from "./Profile.module.css";
 function Profile() {
   const [profile, setProfile] = useState(null);
   const [loadStatus, setLoadStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [saved, setSaved] = useState(NO_VISIBILITY);
   const [draft, setDraft] = useState(NO_VISIBILITY);
@@ -33,10 +35,14 @@ function Profile() {
           setProfile(result);
           setSaved(visibility);
           setDraft(visibility);
+          setLoadError(null);
           setLoadStatus("ready");
         })
-        .catch(() => {
-          if (isMounted) setLoadStatus("error");
+        .catch((error) => {
+          if (isMounted) {
+            setLoadError(error);
+            setLoadStatus("error");
+          }
         });
     };
 
@@ -77,7 +83,9 @@ function Profile() {
     return (
       <>
         <Alert variant="error" title="Couldn't load your profile">
-          Please try again.
+          {getErrorMessage(loadError, {
+            fallback: "Couldn't load your profile. Please try again.",
+          })}
         </Alert>
         <Button
           onClick={() => {

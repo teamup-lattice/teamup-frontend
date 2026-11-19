@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import { clearToken } from "../../services/api";
+import { getErrorMessage } from "../../services/errorMessage";
 import { getSessions, logoutAllDevices } from "../../services/authService";
 import { updateProfileDetails } from "../../services/profileService";
 import {
@@ -128,6 +129,7 @@ function SettingsForm({ initialSettings }) {
     attempt: null,
     status: "loading",
     sessions: [],
+    error: null,
   });
   const [isShowingAllSessions, setIsShowingAllSessions] = useState(false);
   const [logoutAllStatus, setLogoutAllStatus] = useState("idle");
@@ -170,7 +172,9 @@ function SettingsForm({ initialSettings }) {
     } catch (error) {
       console.error("Failed to sign out of all devices:", error);
       setLogoutAllError(
-        "Couldn't sign out of all devices. Please try again.",
+        getErrorMessage(error, {
+          fallback: "Couldn't sign out of all devices. Please try again.",
+        }),
       );
       setLogoutAllStatus("confirm");
     }
@@ -186,6 +190,7 @@ function SettingsForm({ initialSettings }) {
             attempt: sessionsAttempt,
             status: "ready",
             sessions,
+            error: null,
           });
         }
       })
@@ -196,6 +201,7 @@ function SettingsForm({ initialSettings }) {
             attempt: sessionsAttempt,
             status: "error",
             sessions: [],
+            error,
           });
         }
       });
@@ -309,19 +315,40 @@ function SettingsForm({ initialSettings }) {
 
       const messages = getSaveErrorMessages(error);
       if (error.status === 401) {
-        setSaveErrorMessages(["You must be signed in to save changes."]);
+        setSaveErrorMessages([
+          getErrorMessage(error, {
+            fallback: "You must be signed in to save changes.",
+            byStatus: { 401: "You must be signed in to save changes." },
+          }),
+        ]);
       } else if (error.status === 400) {
         setSaveErrorMessages(
           messages.length
             ? messages
             : [
-                error.message ||
-                  "Invalid settings data provided. Please check your inputs.",
+                getErrorMessage(error, {
+                  fallback:
+                    "Invalid settings data provided. Please check your inputs.",
+                  byStatus: {
+                    400:
+                      error.message ||
+                      "Invalid settings data provided. Please check your inputs.",
+                  },
+                }),
               ],
         );
       } else {
+        const fallbackMessage = error.message
+          ? getErrorMessage(error, {
+              fallback: "Your changes did not save. Try again.",
+            })
+          : "";
         setSaveErrorMessages(
-          messages.length ? messages : error.message ? [error.message] : [],
+          messages.length
+            ? messages
+            : fallbackMessage
+              ? [fallbackMessage]
+              : [],
         );
       }
       setSaveStatus("error");
@@ -419,7 +446,9 @@ function SettingsForm({ initialSettings }) {
         {sessionsStatus === "error" && (
           <>
             <Alert variant="error" title="Devices could not load">
-              Check your connection and try again.
+              {getErrorMessage(sessionsResult.error, {
+                fallback: "Devices could not load. Please try again.",
+              })}
             </Alert>
             <Button
               onClick={() => setSessionsAttempt((attempt) => attempt + 1)}

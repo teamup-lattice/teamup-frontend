@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import { getSettings } from "../../services/settingsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import SettingsForm from "./SettingsForm";
 import styles from "./Settings.module.css";
 
@@ -72,12 +73,15 @@ function Settings() {
                   : "Settings could not load"
             }
           >
-            {loadError?.status === 401
-              ? "Please sign in to view and change your settings."
-              : loadError?.status === 400
-                ? loadError.message ||
-                  "Invalid settings request. Check your details and try again."
-                : "Check your connection and try again."}
+            {getErrorMessage(loadError, {
+              fallback: "Settings could not load. Please try again.",
+              byStatus: {
+                401: "Please sign in to view and change your settings.",
+                400:
+                  loadError?.message ||
+                  "Invalid settings request. Check your details and try again.",
+              },
+            })}
           </Alert>
           <Button onClick={() => setAttempt((count) => count + 1)}>
             Try again

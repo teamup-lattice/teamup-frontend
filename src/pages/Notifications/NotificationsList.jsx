@@ -7,13 +7,19 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../../services/notificationsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import NotificationItem from "./NotificationItem";
 import styles from "./Notifications.module.css";
 
 // Rendered once the list has loaded (or the refresh failed and we are showing
 // the last saved list). Mounted with a new `key` on each retry, so its state
 // starts from the freshly loaded list.
-function NotificationsList({ initialItems, refreshFailed, onRetry }) {
+function NotificationsList({
+  initialItems,
+  refreshFailed,
+  refreshError,
+  onRetry,
+}) {
   const navigate = useNavigate();
   const [items, setItems] = useState(initialItems);
   const [markStatus, setMarkStatus] = useState("idle"); // idle | saving | success | error
@@ -78,7 +84,9 @@ function NotificationsList({ initialItems, refreshFailed, onRetry }) {
           <Alert variant="error" title="Couldn't refresh notifications">
             {hasItems
               ? "Showing your last saved list. Nothing has changed."
-              : "Check your connection and try again."}
+              : getErrorMessage(refreshError, {
+                  fallback: "Couldn't refresh notifications. Try again.",
+                })}
           </Alert>
           <Button variant="secondary" onClick={onRetry}>
             Retry refresh

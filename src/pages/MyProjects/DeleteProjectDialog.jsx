@@ -3,6 +3,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { deleteProject } from "../../services/myProjectsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import { normalizeStatus } from "./statusConfig";
 import styles from "./DeleteProjectDialog.module.css";
 
@@ -115,9 +116,12 @@ function DeleteProjectDialog({ project = {}, onClose, onDeleted }) {
 
       setIsDeleting(false);
       setSubmitError(
-        status === 403
-          ? "Only the project owner can delete this project."
-          : "Couldn't delete the project. Check your connection and try again.",
+        getErrorMessage(error, {
+          fallback: "Couldn't delete the project. Try again.",
+          byStatus: {
+            403: "Only the project owner can delete this project.",
+          },
+        }),
       );
     }
   };

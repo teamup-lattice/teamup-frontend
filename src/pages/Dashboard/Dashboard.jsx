@@ -4,6 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getDashboard } from "../../services/dashboardService";
+import { getErrorMessage } from "../../services/errorMessage";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
 import NeedsAttentionCard from "./NeedsAttentionCard";
@@ -173,6 +174,7 @@ function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
 
   const refreshDashboard = useCallback(async () => {
     try {
@@ -206,11 +208,15 @@ function Dashboard() {
 
         setDashboard(result);
         setProfile(result.user);
+        setLoadError(null);
         setStatus(statusForView(result.view));
       })
       .catch((error) => {
         console.error("Failed to load dashboard data:", error);
-        if (isMountedRef.current) setStatus("error");
+        if (isMountedRef.current) {
+          setLoadError(error);
+          setStatus("error");
+        }
       });
 
     return () => {
@@ -279,8 +285,9 @@ function Dashboard() {
             <div className={styles.columns}>
               <div className={styles.column}>
                 <Alert variant="error" title="Dashboard could not refresh">
-                  We could not load your dashboard. Check your connection and
-                  try again.
+                  {getErrorMessage(loadError, {
+                    fallback: "We could not load your dashboard. Try again.",
+                  })}
                 </Alert>
                 <Button onClick={() => window.location.reload()}>
                   Retry refresh
