@@ -4,6 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Textarea from "../../../../components/Textarea";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { deleteProjectEvidence } from "../../../../services/evidenceService";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
@@ -147,7 +148,9 @@ function EvidenceCard({
     } catch (error) {
       console.error("Failed to remove deliverable:", error);
       setRemoveError(
-        error?.message || "Could not remove this deliverable. Try again.",
+        getErrorMessage(error, {
+          fallback: "Could not remove this deliverable. Try again.",
+        }),
       );
     } finally {
       setIsRemoving(false);

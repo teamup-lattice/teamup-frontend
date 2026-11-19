@@ -6,6 +6,7 @@ import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
 import ProjectSummaryCard from "../../components/collab/ProjectSummaryCard";
 import Select from "../../components/Select";
+import { getErrorMessage } from "../../services/errorMessage";
 import { getProjectById } from "../../services/projectService";
 import { sendJoinRequest } from "../../services/joinRequestsService";
 import styles from "./RequestRole.module.css";
@@ -19,7 +20,7 @@ function RequestRoleContent({ projectId }) {
   const requestedRoleId = queryRoleId || navigationRoleId || "";
 
   const [project, setProject] = useState(null);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedRoleId, setSelectedRoleId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +40,7 @@ function RequestRoleContent({ projectId }) {
       })
       .catch((error) => {
         console.error("Failed to load project for role request:", error);
-        if (isCurrent) setLoadError(true);
+        if (isCurrent) setLoadError(error);
       });
 
     return () => {
@@ -51,12 +52,14 @@ function RequestRoleContent({ projectId }) {
     return (
       <main className={styles.page}>
         <Alert variant="error" title="Couldn't load this project">
-          Try again to load the project and its open roles.
+          {getErrorMessage(loadError, {
+            fallback: "Try again to load the project and its open roles.",
+          })}
         </Alert>
         <Button
           fullWidth
           onClick={() => {
-            setLoadError(false);
+            setLoadError(null);
             setRetryCount((count) => count + 1);
           }}
         >
@@ -115,14 +118,15 @@ function RequestRoleContent({ projectId }) {
       setSentRequestId(requestId ?? null);
       setHasSentRequest(true);
     } catch (error) {
-      const messages = {
-        400: error.message || "Something went wrong. Try again.",
-        403: "You can't request a role on your own project.",
-        404: "We couldn't find that project or role.",
-        409: "You already have a pending request, an invitation, or a place on this project.",
-      };
       setSubmitError(
-        messages[error.status] ?? "Something went wrong. Try again.",
+        getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+          byStatus: {
+            403: "You can't request a role on your own project.",
+            404: "We couldn't find that project or role.",
+            409: "You already have a pending request, an invitation, or a place on this project.",
+          },
+        }),
       );
     } finally {
       setIsSubmitting(false);

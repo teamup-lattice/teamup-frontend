@@ -6,6 +6,7 @@ import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import Textarea from "../../../../components/Textarea";
 import teamHealthData from "../../../../data/teamHealthData";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { postProjectUpdate } from "../../../../services/projectUpdatesService";
 import { getProjectHealth } from "../../../../services/teamHealthService";
 import { useWorkspace } from "../../useWorkspace";
@@ -139,7 +140,9 @@ function TeamHealth() {
           projectId,
           status: "error",
           data: null,
-          error: error.message || teamHealthData.error.message,
+          error: getErrorMessage(error, {
+            fallback: teamHealthData.error.message,
+          }),
           notFound: error.status === 404,
           missingEndpoint: isMissingEndpoint(error),
         });
@@ -234,7 +237,11 @@ function TeamHealth() {
       setCheckInStatus("posted");
       setHealthRetry((count) => count + 1);
     } catch (error) {
-      setCheckInError(error?.message || "Something went wrong. Try again.");
+      setCheckInError(
+        getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+        }),
+      );
       setCheckInStatus("error");
     }
   };

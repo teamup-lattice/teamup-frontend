@@ -6,6 +6,7 @@ import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
 import Skeleton from "../../../../components/Skeleton";
 import Textarea from "../../../../components/Textarea";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { leaveWorkspaceProject } from "../../../../services/workspaceMembersService";
 import { useWorkspace } from "../../useWorkspace";
 import styles from "./Team.module.css";
@@ -43,14 +44,15 @@ function Team() {
       await leaveWorkspaceProject(projectId, { reason: leaveReason });
       navigate("/projects");
     } catch (error) {
-      let message = error.message || "Failed to leave project.";
-      if (error.status === 404) {
-        message =
-          "Project or membership not found. You may have already been removed.";
-      } else if (error.status === 409) {
-        message = "The project owner cannot leave the project.";
-      }
-      setLeaveError(message);
+      setLeaveError(
+        getErrorMessage(error, {
+          fallback: "Failed to leave project.",
+          byStatus: {
+            404: "Project or membership not found. You may have already been removed.",
+            409: "The project owner cannot leave the project.",
+          },
+        }),
+      );
       setIsLeaving(false);
     }
   };
