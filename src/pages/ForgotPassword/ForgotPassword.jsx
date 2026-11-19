@@ -5,6 +5,7 @@ import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { forgotPassword } from "../../services/authService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./ForgotPassword.module.css";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,11 +56,11 @@ function ForgotPassword() {
       if (error.status === 400 && emailError) {
         setErrors((current) => ({ ...current, email: emailError.message }));
         setStatus("idle");
-      } else if (error.message === "Network error") {
+      } else if (!error.status || error.message === "Network error") {
         setStatus("network-error");
       } else {
         setStatus("request-error");
-        setRequestError(error.message);
+        setRequestError(getErrorMessage(error));
       }
     }
   }

@@ -11,7 +11,16 @@ export async function signUp({ name, email, password }) {
     setToken(data.token);
     return { name: data.user.name, email: data.user.email };
   } catch (error) {
-    if (error.status === 409) error.code = "EMAIL_EXISTS";
+    const hasPasswordError = error.errors?.some(
+      (fieldError) => fieldError.field === "password",
+    );
+
+    if (error.status === 409) {
+      error.code = "EMAIL_EXISTS";
+    } else if (error.status === 400 && hasPasswordError) {
+      error.code = "PASSWORD_VALIDATION";
+    }
+
     throw error;
   }
 }
@@ -51,9 +60,14 @@ export async function resetPassword({ token, password }) {
       (fieldError) => fieldError.field === "password",
     );
 
+    const message = typeof error.message === "string" ? error.message : "";
+    const mentionsTokenOrLink = /token|link/i.test(message);
+
     if (error.status === 400 && hasPasswordError) {
       error.code = "PASSWORD_VALIDATION";
-    } else if ([400, 401, 404, 410].includes(error.status)) {
+    } else if ([401, 404, 410].includes(error.status)) {
+      error.code = "INVALID_TOKEN";
+    } else if (error.status === 400 && mentionsTokenOrLink) {
       error.code = "INVALID_TOKEN";
     }
 

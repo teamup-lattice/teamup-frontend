@@ -6,6 +6,7 @@ import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { resetPassword } from "../../services/authService";
+import { getErrorMessage } from "../../services/errorMessage";
 import { clearToken } from "../../services/api";
 import styles from "./ResetPassword.module.css";
 
@@ -99,10 +100,10 @@ function ResetPassword() {
         updateStatus("idle");
       } else if (error.code === "INVALID_TOKEN") {
         updateStatus("expired");
-      } else if (error.message === "Network error") {
+      } else if (!error.status || error.message === "Network error") {
         updateStatus("network-error");
       } else {
-        setRequestError(error.message);
+        setRequestError(getErrorMessage(error));
         updateStatus("request-error");
       }
     }
@@ -157,6 +158,7 @@ function ResetPassword() {
               type="password"
               label="New password"
               required
+              helperText="At least 8 characters."
               autoComplete="new-password"
               value={values.password}
               onChange={handleChange}
