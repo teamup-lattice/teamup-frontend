@@ -4,6 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Textarea from "../../../../components/Textarea";
 import { releaseWorkspaceMember } from "../../../../services/workspaceMembersService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
@@ -70,18 +71,23 @@ function ReleaseRole() {
       try {
         await refreshMembers();
       } catch (error) {
-        setRefreshError(error.message || "Members could not be refreshed.");
+        setRefreshError(
+          getErrorMessage(error, {
+            fallback: "Members could not be refreshed.",
+          }),
+        );
       }
     } catch (error) {
-      let message = error.message || "The member role could not be released.";
-      if (error.status === 403) {
-        message = "You don't have permission to release this member.";
-      } else if (error.status === 404) {
-        message = "Member not found. Please refresh the list.";
-      } else if (error.status === 409) {
-        message = "The project owner cannot be released.";
-      }
-      setActionError(message);
+      setActionError(
+        getErrorMessage(error, {
+          fallback: "The member role could not be released.",
+          byStatus: {
+            403: "You don't have permission to release this member.",
+            404: "Member not found. Please refresh the list.",
+            409: "The project owner cannot be released.",
+          },
+        }),
+      );
       setStatus("error");
     }
   }

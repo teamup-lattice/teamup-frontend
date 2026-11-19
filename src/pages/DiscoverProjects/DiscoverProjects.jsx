@@ -10,6 +10,7 @@ import {
   normalizeFilters,
 } from "../../data/discoverData";
 import { getOpenProjects } from "../../services/discoverService";
+import { getErrorMessage } from "../../services/errorMessage";
 import { getProfile } from "../../services/profileService";
 import FilterPanel from "./FilterPanel";
 import FilterSheet from "./FilterSheet";
@@ -91,6 +92,7 @@ function DiscoverProjects() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState("");
+  const [loadError, setLoadError] = useState(null);
 
   const fetchResults = useCallback(
     (nextQuery, nextFilters, source, page = 1, append = false) => {
@@ -126,6 +128,7 @@ function DiscoverProjects() {
           );
           setCurrentPage(pageNumber);
           setTotalPages(pageCount);
+          setLoadError(null);
           setStatus("ready");
 
           if (append) {
@@ -152,8 +155,13 @@ function DiscoverProjects() {
 
           if (append) {
             setIsLoadingMore(false);
-            setLoadMoreError("Couldn't load more projects. Try again.");
+            setLoadMoreError(
+              getErrorMessage(error, {
+                fallback: "Couldn't load more projects. Try again.",
+              }),
+            );
           } else {
+            setLoadError(error);
             setStatus("error");
           }
         });
@@ -321,10 +329,13 @@ function DiscoverProjects() {
     .map((filter) => `${filter.label}: ${filter.text}`)
     .join(" · ");
 
-  const errorMessage =
+  const retainedResults =
     appliedCount > 0
-      ? `Connection error. Your search and ${countWord(appliedCount)} ${filterWord(appliedCount)} are retained.`
-      : "Connection error. Your search is retained.";
+      ? `Your search and ${countWord(appliedCount)} ${filterWord(appliedCount)} are retained.`
+      : "Your search is retained.";
+  const errorMessage = `${getErrorMessage(loadError, {
+    fallback: "Projects could not load. Try again.",
+  })} ${retainedResults}`;
 
   return (
     <div className={styles.page} ref={pageRef}>

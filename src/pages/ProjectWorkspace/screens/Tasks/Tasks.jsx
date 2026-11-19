@@ -9,6 +9,7 @@ import {
   getAllProjectTasks,
   taskStatusOptions,
 } from "../../../../services/tasksService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { formatDate } from "../../../CreateProject/formatDate";
 import { useWorkspace } from "../../useWorkspace";
 import StatusTag from "../../shared/StatusTag";
@@ -102,7 +103,9 @@ function Tasks() {
         const errorMessage =
           error.status === 404 && /^Cannot GET\s+/i.test(error.message)
             ? "We couldn't load tasks. Try again."
-            : error.message || "Something went wrong. Try again.";
+            : getErrorMessage(error, {
+                fallback: "Something went wrong. Try again.",
+              });
         setTaskResult({
           projectId,
           search: location.search,

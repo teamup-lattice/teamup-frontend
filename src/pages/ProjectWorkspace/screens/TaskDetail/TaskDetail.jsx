@@ -17,6 +17,7 @@ import {
   updateProjectTask,
   updateProjectTaskComment,
 } from "../../../../services/tasksService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   decideDateExtensionRequest,
   getDateExtensionRequests,
@@ -35,44 +36,6 @@ const taskStatusOptions = [
   { value: "Done", label: "Done" },
   { value: "Blocked", label: "Blocked" },
 ];
-
-function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
-  if (!error) return fallback;
-  if (Array.isArray(error.errors) && error.errors.length > 0) {
-    const messages = error.errors
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  if (error.errors && typeof error.errors === "object") {
-    const messages = Object.values(error.errors)
-      .flat()
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  return error.message || fallback;
-}
-
-function getDecisionErrorMessage(error) {
-  switch (Number(error?.status)) {
-    case 409:
-      return "This request has already been handled.";
-    case 403:
-      return "You don't have permission to decide this request.";
-    case 404:
-      return "This request no longer exists.";
-    default:
-      return formatErrorMessage(
-        error,
-        "We couldn't save your decision. Try again.",
-      );
-  }
-}
 
 function TaskDetail() {
   const { projectId, taskId } = useParams();
@@ -190,7 +153,9 @@ function TaskDetail() {
           taskId,
           retryCount: detailRetryCount,
           loading: false,
-          error: formatErrorMessage(error, "Something went wrong. Try again."),
+          error: getErrorMessage(error, {
+            fallback: "Something went wrong. Try again.",
+          }),
           task: null,
         });
       });
@@ -232,7 +197,9 @@ function TaskDetail() {
           taskId,
           retryCount: detailRetryCount,
           loading: false,
-          error: formatErrorMessage(error, "Something went wrong. Try again."),
+          error: getErrorMessage(error, {
+            fallback: "Something went wrong. Try again.",
+          }),
           comments: [],
         });
       });
@@ -413,11 +380,13 @@ function TaskDetail() {
         await refreshTasks();
       } catch (refreshErr) {
         setStatusError(
-          `Task saved, but the task list could not be refreshed: ${formatErrorMessage(refreshErr)}`,
+          `Task saved, but the task list could not be refreshed: ${getErrorMessage(refreshErr, { fallback: "Something went wrong. Try again." })}`,
         );
       }
     } catch (error) {
-      setStatusError(formatErrorMessage(error, "Task status did not save."));
+      setStatusError(
+        getErrorMessage(error, { fallback: "Task status did not save." }),
+      );
     } finally {
       setStatusSaving(false);
     }
@@ -441,7 +410,9 @@ function TaskDetail() {
       await createProjectTaskComment(projectId, taskId, content);
       setDraftComment("");
     } catch (error) {
-      setCommentError(formatErrorMessage(error, "Comment could not be posted."));
+      setCommentError(
+        getErrorMessage(error, { fallback: "Comment could not be posted." }),
+      );
       setCommentSaving(false);
       return;
     }
@@ -460,10 +431,12 @@ function TaskDetail() {
       setCommentsState((current) => ({
         ...current,
         loading: false,
-        error: formatErrorMessage(error, "Comments could not be refreshed."),
+        error: getErrorMessage(error, {
+          fallback: "Comments could not be refreshed.",
+        }),
       }));
       setCommentError(
-        `Comment posted, but comments could not be refreshed: ${formatErrorMessage(error)}`,
+        `Comment posted, but comments could not be refreshed: ${getErrorMessage(error, { fallback: "Something went wrong. Try again." })}`,
       );
     } finally {
       setCommentSaving(false);
@@ -484,7 +457,7 @@ function TaskDetail() {
       navigate(taskRoute);
     } catch (error) {
       setDeleteTaskError(
-        formatErrorMessage(error, "Task could not be deleted."),
+        getErrorMessage(error, { fallback: "Task could not be deleted." }),
       );
       setIsDeletingTask(false);
     }
@@ -558,7 +531,7 @@ function TaskDetail() {
       setEditingCommentText("");
     } catch (error) {
       setCommentActionError(
-        formatErrorMessage(error, "Comment could not be updated."),
+        getErrorMessage(error, { fallback: "Comment could not be updated." }),
       );
     } finally {
       setCommentActionLoadingId(null);
@@ -606,7 +579,7 @@ function TaskDetail() {
       setDeletingCommentId(null);
     } catch (error) {
       setCommentActionError(
-        formatErrorMessage(error, "Comment could not be deleted."),
+        getErrorMessage(error, { fallback: "Comment could not be deleted." }),
       );
     } finally {
       setCommentActionLoadingId(null);
@@ -690,7 +663,16 @@ function TaskDetail() {
         setDecisionSuccess("Request declined.");
       }
     } catch (error) {
-      setDecisionError(getDecisionErrorMessage(error));
+      setDecisionError(
+        getErrorMessage(error, {
+          fallback: "We couldn't save your decision. Try again.",
+          byStatus: {
+            409: "This request has already been handled.",
+            403: "You don't have permission to decide this request.",
+            404: "This request no longer exists.",
+          },
+        }),
+      );
       if (Number(error?.status) === 409) {
         await refetchPendingRequests();
       }

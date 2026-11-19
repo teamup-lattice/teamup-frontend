@@ -4,6 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import { getCompletion } from "../../../../services/completionService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   completeProject,
   getProjectEvidence,
@@ -33,16 +34,17 @@ import styles from "./ProjectCompletion.module.css";
 const LOAD_VARIANTS = ["eligible", "loadfail"];
 
 function completionErrorMessage(error) {
-  if (error?.status === 403) {
-    return "Only the Owner can complete this project.";
-  }
   if (error?.status === 409) {
     const checks = Array.isArray(error.checks) ? error.checks : [];
-    return checks.length > 0
-      ? checks.join(" ")
-      : error.message || "Project cannot be completed yet.";
+    if (checks.length > 0) return checks.join(" ");
   }
-  return error?.message || "Something went wrong. Try again.";
+  return getErrorMessage(error, {
+    fallback: "Something went wrong. Try again.",
+    byStatus: {
+      403: "Only the Owner can complete this project.",
+      409: error.message || "Project cannot be completed yet.",
+    },
+  });
 }
 
 function ProjectCompletion() {
@@ -102,7 +104,9 @@ function ProjectCompletion() {
           setLoaded({
             key: requestKey,
             data: null,
-            error: error.message || "Something went wrong. Try again.",
+            error: getErrorMessage(error, {
+              fallback: "Something went wrong. Try again.",
+            }),
           });
         }
       });

@@ -4,6 +4,7 @@ import Alert from "../../components/Alert";
 import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
 import { declineInvitation, getInvitationById } from "../../services/invitationsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./InvitationDetails.module.css";
 
 const NOT_PENDING_MESSAGE =
@@ -63,10 +64,12 @@ function InvitationDetails() {
       if (error.status === 409 || error.status === 410) {
         setLoadState((current) => ({ ...current, status: "missing" }));
       } else {
-        const message =
-          error.status === 404
-            ? "We couldn't find this invitation."
-            : "Something went wrong. Try again.";
+        const message = getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+          byStatus: {
+            404: "We couldn't find this invitation.",
+          },
+        });
         setActionState({ status: "error", error: message });
       }
     } finally {
@@ -105,7 +108,9 @@ function InvitationDetails() {
       <main className={styles.page}>
         <h1 className={styles.heading}>Invitation details</h1>
         <Alert variant="error" title="Invitation could not load">
-          Something went wrong. Try again.
+          {getErrorMessage(loadState.error, {
+            fallback: "Something went wrong. Try again.",
+          })}
         </Alert>
         <Button
           onClick={() => {

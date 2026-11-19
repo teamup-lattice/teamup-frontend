@@ -6,6 +6,7 @@ import EmptyState from "../../../../components/EmptyState";
 import Input from "../../../../components/Input";
 import Skeleton from "../../../../components/Skeleton";
 import { patchProjectMilestone } from "../../../../services/milestonesService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP, formatDate, shortDate } from "../../workspaceFormat";
 import shared from "../shared.module.css";
@@ -134,7 +135,11 @@ function Milestones() {
       setEditingId(null);
       setStatus("saved");
     } catch (error) {
-      setSaveError(error.message || "Something went wrong. Try again.");
+      setSaveError(
+        getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+        }),
+      );
       setStatus("error");
     }
   }

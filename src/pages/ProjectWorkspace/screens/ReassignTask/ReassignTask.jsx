@@ -11,36 +11,17 @@ import {
   getHandoverRequests,
 } from "../../../../services/handoverService";
 import { getProjectTask, updateProjectTask } from "../../../../services/tasksService";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import { useWorkspace } from "../../useWorkspace";
 import StateNotice from "../../shared/StateNotice";
 import TaskSummaryCard from "../../shared/TaskSummaryCard";
 import styles from "./ReassignTask.module.css";
 
-function formatErrorMessage(error, fallback = "Something went wrong. Try again.") {
-  if (!error) return fallback;
-  if (Array.isArray(error.errors) && error.errors.length > 0) {
-    const messages = error.errors
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  if (error.errors && typeof error.errors === "object") {
-    const messages = Object.values(error.errors)
-      .flat()
-      .map((entry) =>
-        typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry),
-      )
-      .filter(Boolean);
-    if (messages.length > 0) return messages.join(" ");
-  }
-  return error.message || fallback;
-}
-
 function getActionErrorMessage(error, fallback) {
-  if (error?.status === 409) return "This request has already been decided.";
-  return formatErrorMessage(error, fallback);
+  return getErrorMessage(error, {
+    fallback,
+    byStatus: { 409: "This request has already been decided." },
+  });
 }
 
 function extractHandoverRequests(response) {
@@ -205,7 +186,9 @@ function ReassignTask() {
           taskId,
           retryCount: retryFetchCount,
           loading: false,
-          error: formatErrorMessage(requestError, "Failed to load task."),
+          error: getErrorMessage(requestError, {
+            fallback: "Failed to load task.",
+          }),
           task: null,
         });
       });
@@ -251,10 +234,9 @@ function ReassignTask() {
           taskId,
           retryCount: handoverRetryCount,
           loading: false,
-          error: formatErrorMessage(
-            requestError,
-            "Couldn't load pending handover requests.",
-          ),
+          error: getErrorMessage(requestError, {
+            fallback: "Couldn't load pending handover requests.",
+          }),
           request: null,
         });
       });
@@ -345,7 +327,7 @@ function ReassignTask() {
       await refreshTasks();
     } catch (refreshError) {
       setError(
-        `The change was saved, but the task list could not be refreshed: ${formatErrorMessage(refreshError)}`,
+        `The change was saved, but the task list could not be refreshed: ${getErrorMessage(refreshError, { fallback: "Something went wrong. Try again." })}`,
       );
       return;
     }

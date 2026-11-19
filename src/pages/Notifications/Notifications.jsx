@@ -8,14 +8,19 @@ import styles from "./Notifications.module.css";
 
 function Notifications() {
   const [attempt, setAttempt] = useState(0);
-  const [result, setResult] = useState({ key: null, status: "loading", items: [] });
+  const [result, setResult] = useState({
+    key: null,
+    status: "loading",
+    items: [],
+    error: null,
+  });
 
   useEffect(() => {
     let isMounted = true;
 
     getNotifications()
       .then((items) => {
-        if (isMounted) setResult({ key: attempt, status: "ready", items });
+        if (isMounted) setResult({ key: attempt, status: "ready", items, error: null });
       })
       .catch((error) => {
         console.error("Failed to load notifications:", error);
@@ -24,6 +29,7 @@ function Notifications() {
             key: attempt,
             status: "error",
             items: getLastSavedNotifications(),
+            error,
           });
         }
       });
@@ -60,6 +66,7 @@ function Notifications() {
           key={attempt}
           initialItems={result.items}
           refreshFailed={status === "error"}
+          refreshError={status === "error" ? result.error : null}
           onRetry={() => setAttempt((count) => count + 1)}
         />
       )}
