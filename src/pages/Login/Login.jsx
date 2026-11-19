@@ -34,6 +34,8 @@ function Login() {
     location.state?.message === "Password changed, please sign in"
       ? location.state.message
       : "";
+  const redirectTo =
+    typeof location.state?.from === "string" ? location.state.from : "";
   const [values, setValues] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
@@ -87,6 +89,7 @@ function Login() {
 
   if (status === "success") {
     const complete = user.profileComplete;
+    const nextPath = complete ? redirectTo || "/dashboard" : "/profile/setup";
 
     return (
       <AuthLayout
@@ -111,11 +114,12 @@ function Login() {
             ? "View your projects and tasks."
             : "Tell us what you bring so we can match you to projects."}
         </p>
-        <Button
-          fullWidth
-          onClick={() => navigate(complete ? "/dashboard" : "/profile/setup")}
-        >
-          {complete ? "Open dashboard" : "Continue required profile"}
+        <Button fullWidth onClick={() => navigate(nextPath)}>
+          {complete
+            ? redirectTo
+              ? "Continue"
+              : "Open dashboard"
+            : "Continue required profile"}
         </Button>
       </AuthLayout>
     );
