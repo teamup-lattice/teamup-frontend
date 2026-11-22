@@ -36,11 +36,9 @@ import SharingPrivacy from "./pages/SharingPrivacy/SharingPrivacy";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
 import Notifications from "./pages/Notifications/Notifications";
 import ProjectCompletion from "./pages/ProjectWorkspace/screens/ProjectCompletion/ProjectCompletion";
+import ContributionSummary from "./pages/ProjectWorkspace/screens/ContributionSummary/ContributionSummary";
+import TeammateConfirmation from "./pages/ProjectWorkspace/screens/TeammateConfirmation/TeammateConfirmation";
 import PrivateProjectPage from "./pages/ProjectWorkspace/screens/PrivateProjectPage/PrivateProjectPage";
-
-function ContributionsPlaceholder() {
-  return <h2>Contributions</h2>;
-}
 
 function App() {
   return (
@@ -99,7 +97,8 @@ function App() {
         <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
         <Route path="team" element={<Team />} />
         <Route path="team/release-role" element={<ReleaseRole />} />
-        <Route path="contributions" element={<ContributionsPlaceholder />} />
+        <Route path="contributions" element={<ContributionSummary />} />
+        <Route path="contributions/review/:member" element={<TeammateConfirmation />} />
         <Route path="completion" element={<ProjectCompletion />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="updates" element={<ProjectUpdates />} />
