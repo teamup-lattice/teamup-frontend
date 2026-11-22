@@ -135,9 +135,17 @@ function ProjectCompletion() {
     savedWorkLoading;
   const data = isLoading ? null : loaded.data;
 
-  const viewContribution = useCallback(() => {
-    navigate(`/projects/${projectId}/workspace/contributions${search}`);
-  }, [navigate, projectId, search]);
+ const viewContribution = useCallback(
+  (memberName) => {
+    const base = `/projects/${projectId}/workspace/contributions`;
+    if (!memberName || memberName === currentUser.name) {
+      navigate(`${base}${search}`);
+    } else {
+      navigate(`${base}/review/${memberName.toLowerCase()}${search}`);
+    }
+  },
+  [navigate, projectId, search, currentUser.name],
+);
 
   async function handleSave({ deliverable }) {
     setSaveStatus("saving");
@@ -250,7 +258,7 @@ function ProjectCompletion() {
                 ? `${ownerName} completed this project. The page is private and team-only.`
                 : `You can view evidence and review your own contribution. ${ownerName} saves final evidence and completes the project.`}
             </Alert>
-            <Button variant="secondary" fullWidth onClick={viewContribution}>
+            <Button variant="secondary" fullWidth onClick={() => viewContribution()}>
               Review my contribution
             </Button>
           </div>
