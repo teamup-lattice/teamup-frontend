@@ -13,7 +13,7 @@ import shared from "../shared.module.css";
 import ReviewCard from "./ReviewCard";
 import styles from "./ContributionSummary.module.css";
 
-const LOAD_VARIANTS = ["loadfail", "empty", "reviewed", "confirmed"];
+const LOAD_VARIANTS = ["loadfail", "empty"];
 
 // "My contribution summary": a member reviews the wording of their own
 // contribution (built from their saved Done tasks) and saves it as Reviewed.
@@ -100,6 +100,10 @@ function ContributionSummary() {
   const taskCount = data.tasks.length;
   const isReviewed = Boolean(data.reviewedOn);
   const isConfirmed = Boolean(data.confirmedBy);
+  // GAP: there is no edit endpoint. Once saved and acknowledged the wording is
+  // read-only; editing waits for a backend PATCH.
+  const isLocked = isConfirmed || isReviewed;
+  const lockedReason = isConfirmed ? "confirmed" : "reviewed";
 
   if (taskCount === 0) {
     return (
@@ -168,7 +172,8 @@ function ContributionSummary() {
           <ReviewCard
             key={formVersion}
             saved={{ summary: data.summary, note: data.note }}
-            locked={isConfirmed}
+            locked={isLocked}
+            lockedReason={lockedReason}
             taskCount={taskCount}
             reviewer={data.reviewer}
             status={saveStatus}

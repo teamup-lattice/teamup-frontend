@@ -11,12 +11,22 @@ export const SUMMARY_MAX = 140;
 export const NOTE_MAX = 280;
 
 // The member's own contribution wording.
-//   saved     { summary, note } last saved values
-//   locked    true once a teammate has confirmed (wording is then read only)
-//   status    "idle" | "saving" | "error" (owned by the screen)
-//   onSave    called with { summary, note }
-//   onCancel  leaves without saving; saved wording stays unchanged
-function ReviewCard({ saved, locked, taskCount, reviewer, status, onSave, onCancel }) {
+//   saved        { summary, note } last saved values
+//   locked       true once the wording is reviewed or confirmed (read only)
+//   lockedReason "reviewed" | "confirmed"
+//   status       "idle" | "saving" | "error" (owned by the screen)
+//   onSave       called with { summary, note }
+//   onCancel     leaves without saving; saved wording stays unchanged
+function ReviewCard({
+  saved,
+  locked,
+  lockedReason = "confirmed",
+  taskCount,
+  reviewer,
+  status,
+  onSave,
+  onCancel,
+}) {
   const [summary, setSummary] = useState(saved.summary);
   const [note, setNote] = useState(saved.note);
   const [errors, setErrors] = useState({});
@@ -45,15 +55,20 @@ function ReviewCard({ saved, locked, taskCount, reviewer, status, onSave, onCanc
   }
 
   if (locked) {
+    const reason = lockedReason === "confirmed" ? "confirmed" : "reviewed";
     return (
       <section className={shared.card} aria-labelledby="own-wording-title">
         <h3 id="own-wording-title" className={shared.cardTitle}>
           Your contribution wording
         </h3>
-        <ReadOnlyBox label="Summary (confirmed, read only)">{saved.summary}</ReadOnlyBox>
-        {saved.note && <ReadOnlyBox label="Note (confirmed, read only)">{saved.note}</ReadOnlyBox>}
+        <ReadOnlyBox label={`Summary (${reason}, read only)`}>{saved.summary}</ReadOnlyBox>
+        {saved.note && (
+          <ReadOnlyBox label={`Note (${reason}, read only)`}>{saved.note}</ReadOnlyBox>
+        )}
         <p className={shared.small}>
-          Confirmed wording is locked. Saved task ownership and history are unchanged.
+          {lockedReason === "confirmed"
+            ? "Confirmed wording is locked. Saved task ownership and history are unchanged."
+            : "Your wording is saved and waiting for a teammate."}
         </p>
       </section>
     );

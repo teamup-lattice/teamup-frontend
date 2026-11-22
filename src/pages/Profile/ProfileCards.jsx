@@ -112,17 +112,24 @@ export function CompletedProjectsCard({ project, shownOnProfile }) {
       <h2 id="completed-title" className={styles.title}>
         Completed projects
       </h2>
-      <p className={styles.small}>Completed {project.completedOn}</p>
-      <h3 className={styles.projectTitle}>{project.title}</h3>
-      <p className={styles.body}>{project.roleAndDates}</p>
-      <p className={styles.body}>Contribution: {project.contribution}</p>
+      {project.completedOn && (
+        <p className={styles.small}>Completed {project.completedOn}</p>
+      )}
+      {project.title && <h3 className={styles.projectTitle}>{project.title}</h3>}
+      {project.roleAndDates && <p className={styles.body}>{project.roleAndDates}</p>}
+      {project.contribution && (
+        <p className={styles.body}>Contribution: {project.contribution}</p>
+      )}
+      {/* GAP: showProject has no backend field; this line stays local. */}
       <p className={styles.helper}>
         {shownOnProfile ? "Shown on your profile" : "Private on your profile"} ·
         Team-page sharing unchanged
       </p>
-      <Button fullWidth variant="secondary" onClick={() => navigate(project.pageTo)}>
-        View private project page
-      </Button>
+      {project.pageTo && (
+        <Button fullWidth variant="secondary" onClick={() => navigate(project.pageTo)}>
+          View private project page
+        </Button>
+      )}
     </Card>
   );
 }
