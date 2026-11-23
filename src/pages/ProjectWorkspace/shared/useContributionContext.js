@@ -31,6 +31,10 @@ export function useContributionContext() {
         userId: asText(item.userId ?? item.user?.id),
         name: item.name ?? item.user?.name ?? "Member",
         role: item.role ?? "",
+        user: {
+          id: asText(item.userId ?? item.user?.id),
+          name: item.name ?? item.user?.name ?? "Member",
+        },
       })),
     [rawMembers],
   );
@@ -72,5 +76,14 @@ export function useContributionContext() {
     [tasks],
   );
 
-  return { loading, members, tasks, me, ownerName, doneTasksOf };
+  return {
+    loading,
+    members,
+    tasks,
+    me,
+    ownerName,
+    doneTasksOf,
+    isOwner: workspace.isOwner,
+    canManageMembers: workspace.canManageMembers,
+  };
 }

@@ -59,7 +59,7 @@ function MemberConfirmations({ confirmations, onViewContribution }) {
             <div className={styles.actions}>
               <Button
                 variant="secondary"
-                onClick={() => onViewContribution(item.member)}
+                onClick={() => onViewContribution(item.user?.id || item.userId || item.member)}
                 aria-label={`View ${item.member}${APOS}s contribution`}
               >
                 View contribution

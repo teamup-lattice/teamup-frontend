@@ -589,6 +589,14 @@ function ProjectWorkspace() {
           >
             Project completion
           </NavLink>
+          {isOwner && (
+            <NavLink
+              to={navigationTarget(`${workspacePath}/sharing-privacy`)}
+              className={navClassName}
+            >
+              Sharing settings
+            </NavLink>
+          )}
         </div>
       </nav>
 

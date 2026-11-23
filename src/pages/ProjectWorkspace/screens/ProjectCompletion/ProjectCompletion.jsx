@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
@@ -10,6 +10,8 @@ import {
   getProjectEvidence,
   saveEvidenceDeliverable,
 } from "../../../../services/evidenceService";
+import { getProjectContributions } from "../../../../services/contributionsService";
+import { getAllProjectTasks } from "../../../../services/tasksService";
 import { useSimulate } from "../../useSimulate";
 import { useWorkspace } from "../../useWorkspace";
 import shared from "../shared.module.css";
@@ -75,25 +77,42 @@ function ProjectCompletion() {
 
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
   const [completeStatus, setCompleteStatus] = useState("idle"); // idle | completing
-  const [completeError, setCompleteError] = useState("");
-  const [completeChecks, setCompleteChecks] = useState([]);
+  const [actionBanner, setActionBanner] = useState(null);
+  const bannerTimerRef = useRef(null);
   const [evidenceVersion, setEvidenceVersion] = useState(0);
   const [dirty, setDirty] = useState(false);
-  const [savedNote, setSavedNote] = useState("");
   const [outcome, setOutcome] = useState("");
   const [result, setResult] = useState(null); // { visibility, audience } after completing
+
+  useEffect(() => {
+    if (actionBanner?.variant === "success") {
+      bannerTimerRef.current = setTimeout(() => {
+        setActionBanner(null);
+      }, 5000);
+      return () => {
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+      };
+    }
+  }, [actionBanner]);
 
   useEffect(() => {
     let isCurrent = true;
     Promise.all([
       getCompletion(projectId, { variant, members, tasks }),
       getProjectEvidence(projectId),
+      getProjectContributions(projectId),
+      getAllProjectTasks(projectId, {}, { memberships: members, milestones }),
     ])
-      .then(([completion, deliverables]) => {
+      .then(([completion, deliverables, contributions, tasksResult]) => {
         if (isCurrent) {
           setLoaded({
             key: requestKey,
-            data: { confirmations: completion.confirmations, deliverables },
+            data: {
+              confirmations: completion.confirmations,
+              deliverables,
+              contributions,
+              tasks: tasksResult?.tasks ?? [],
+            },
             error: "",
           });
         }
@@ -113,7 +132,7 @@ function ProjectCompletion() {
     return () => {
       isCurrent = false;
     };
-  }, [projectId, variant, requestKey, members, tasks]);
+  }, [projectId, variant, requestKey, members, milestones, tasks]);
 
   const hasContextProject =
     !workspaceLoading &&
@@ -138,21 +157,30 @@ function ProjectCompletion() {
     savedWorkLoading;
   const data = isLoading ? null : loaded.data;
 
- const viewContribution = useCallback(
-  (memberName) => {
-    const base = `/projects/${projectId}/workspace/contributions`;
-    if (!memberName || memberName === currentUser.name) {
-      navigate(`${base}${search}`);
-    } else {
-      navigate(`${base}/review/${memberName.toLowerCase()}${search}`);
-    }
-  },
-  [navigate, projectId, search, currentUser.name],
-);
+  const viewContribution = useCallback(
+    (memberTarget) => {
+      const base = `/projects/${projectId}/workspace/contributions`;
+      const targetUserId =
+        memberTarget?.user?.id ??
+        memberTarget?.userId ??
+        (typeof memberTarget === "object" ? memberTarget.id : memberTarget);
+      const isCurrent =
+        !targetUserId ||
+        String(targetUserId) === String(currentUser.id) ||
+        String(targetUserId) === String(currentUser.userId) ||
+        memberTarget === currentUser.name;
+      if (isCurrent) {
+        navigate(`${base}${search}`);
+      } else {
+        navigate(`${base}/review/${targetUserId}${search}`);
+      }
+    },
+    [navigate, projectId, search, currentUser],
+  );
 
   async function handleSave({ deliverable }) {
+    setActionBanner(null);
     setSaveStatus("saving");
-    setSavedNote("");
     try {
       const saved = await saveEvidenceDeliverable(projectId, deliverable);
       setLoaded((current) => ({
@@ -165,37 +193,103 @@ function ProjectCompletion() {
       setEvidenceVersion((version) => version + 1);
       setDirty(false);
       setSaveStatus("idle");
-      setSavedNote("Deliverable saved.");
+      setActionBanner({
+        variant: "success",
+        title: "Evidence saved",
+        message: "Deliverable saved.",
+      });
     } catch (error) {
       console.error("Failed to save deliverable:", error);
       setSaveStatus("error");
+      setActionBanner({
+        variant: "error",
+        title: "Couldn't save deliverable",
+        message: getErrorMessage(error, {
+          fallback: "Failed to save deliverable. Try again.",
+        }),
+      });
     }
   }
 
   async function handleComplete() {
-    setCompleteError("");
-    setCompleteChecks([]);
+    setActionBanner(null);
     setCompleteStatus("completing");
     try {
       await completeProject(projectId, outcome);
+      retryWorkspace();
       setResult({ visibility: VISIBILITY, audience: AUDIENCE });
       setCompleteStatus("idle");
     } catch (error) {
       console.error("Failed to complete project:", error);
-      setCompleteError(completionErrorMessage(error));
-      setCompleteChecks(
-        error?.status === 409 && Array.isArray(error.checks)
-          ? error.checks
-          : [],
-      );
       setCompleteStatus("idle");
+
+      if (error?.status === 409) {
+        const backendMessage =
+          error.message || "Project cannot be completed yet.";
+        const checks = Array.isArray(error.checks) ? error.checks : [];
+        const titles = [];
+
+        checks.forEach((check) => {
+          if (!check) return;
+          const msg = typeof check === "string" ? check : check.message;
+          const code = (typeof check === "object" && check.code) || "";
+          const type = (typeof check === "object" && check.type) || "";
+          const text = `${code} ${type} ${msg || ""}`.toLowerCase();
+          const isTaskOrContribCheck =
+            text.includes("task") ||
+            text.includes("contribution") ||
+            text.includes("member");
+
+          if (isTaskOrContribCheck && msg && !titles.includes(msg)) {
+            titles.push(msg);
+          }
+
+          if (Array.isArray(check?.contributions)) {
+            check.contributions.forEach((c) => {
+              const title = typeof c === "string" ? c : c?.title;
+              if (title && !titles.includes(title)) {
+                titles.push(title);
+              }
+            });
+          }
+        });
+
+        const hasContributionTitle =
+          Array.isArray(readiness?.pendingContributions) &&
+          readiness.pendingContributions.some((c) => titles.includes(c.title));
+
+        if (
+          !hasContributionTitle &&
+          Array.isArray(readiness?.pendingContributions)
+        ) {
+          readiness.pendingContributions.forEach((c) => {
+            if (c.title && !titles.includes(c.title)) {
+              titles.push(c.title);
+            }
+          });
+        }
+
+        setActionBanner({
+          variant: "error",
+          is409: true,
+          title: "Project can't be completed yet",
+          message: backendMessage,
+          titles,
+        });
+      } else {
+        setActionBanner({
+          variant: "error",
+          title: "Project did not complete",
+          message: completionErrorMessage(error),
+        });
+      }
     }
   }
 
   function handleCancel() {
+    setActionBanner(null);
     setDirty(false);
     setSaveStatus("idle");
-    setSavedNote("");
   }
 
   if (isLoading) {
@@ -223,14 +317,25 @@ function ProjectCompletion() {
     );
   }
 
-  const { confirmations, deliverables } = data;
+  const {
+    confirmations,
+    deliverables,
+    contributions = [],
+    tasks: loadedTasks,
+  } = data;
   const project = workspaceProject ?? {};
-  const savedWork = { milestones: buildSavedWork(milestones, tasks) };
+  const currentTasks = (loadedTasks !== undefined ? loadedTasks : tasks) ?? [];
+  const savedWork = { milestones: buildSavedWork(milestones, currentTasks) };
   const evidence = {
     outcome,
     deliverable: Array.isArray(deliverables) ? (deliverables[0] ?? null) : null,
   };
-  const readiness = getReadiness(evidence, confirmations);
+  const readiness = getReadiness(
+    evidence,
+    confirmations,
+    contributions,
+    currentTasks,
+  );
   const isCompleted = project.status === "Completed" || Boolean(result);
   const ownerName = project.ownerName;
   const dates = projectDatesLine(project);
@@ -284,6 +389,47 @@ function ProjectCompletion() {
         Outcome, at least one deliverable and all {readiness.total} member confirmations saved.
       </Alert>
     );
+  } else if (readiness.evidenceComplete && readiness.openTasks.length > 0) {
+    const count = readiness.openTasks.length;
+    banner = (
+      <Alert
+        variant="info"
+        title={`${count} ${count === 1 ? "task" : "tasks"} still open`}
+      >
+        <ul className={styles.plainList}>
+          {readiness.openTasks.map((task) => (
+            <li key={task.id || task.title}>
+              {task.title || task.name || "Untitled task"}
+            </li>
+          ))}
+        </ul>
+      </Alert>
+    );
+  } else if (readiness.evidenceComplete && readiness.pendingContributions.length > 0) {
+    const count = readiness.pendingContributions.length;
+    banner = (
+      <Alert
+        variant="info"
+        title={`${count} ${count === 1 ? "contribution" : "contributions"} still waiting for review`}
+      >
+        <ul className={styles.plainList}>
+          {readiness.pendingContributions.map((contrib) => {
+            const targetUserId =
+              contrib.member?.user?.id ??
+              contrib.member?.userId ??
+              contrib.member?.id;
+            const reviewUrl = `/projects/${projectId}/workspace/contributions/review/${targetUserId}${search}`;
+            return (
+              <li key={contrib.id}>
+                <Link to={reviewUrl} className={styles.contribLink}>
+                  {contrib.title || "Untitled contribution"}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </Alert>
+    );
   } else if (readiness.eligible) {
     banner = (
       <Alert variant="info" title="Ready to complete">
@@ -322,30 +468,40 @@ function ProjectCompletion() {
       <h2 className={shared.title}>Project completion</h2>
       <p className={shared.small}>{dates}</p>
 
-      {savedNote && saveStatus === "idle" && !isCompleted && (
+      {actionBanner ? (
         <div className={styles.banner}>
-          <Alert variant="success" title="Evidence saved">
-            {savedNote}
-          </Alert>
-        </div>
-      )}
-
-      {completeError && (
-        <div className={styles.banner}>
-          <Alert variant="error" title="Project did not complete">
-            {completeError}
-            {completeChecks.length > 0 && (
-              <ul className={styles.checkList}>
-                {completeChecks.map((check, index) => (
-                  <li key={`${index}-${check}`}>{check}</li>
-                ))}
-              </ul>
+          <div className={styles.alertWrap}>
+            <Alert variant={actionBanner.variant} title={actionBanner.title}>
+              {actionBanner.message && (
+                <p className={shared.text}>{actionBanner.message}</p>
+              )}
+              {actionBanner.is409 &&
+                Array.isArray(actionBanner.titles) &&
+                actionBanner.titles.length > 0 && (
+                  <ul className={styles.plainList}>
+                    {actionBanner.titles.map((title, index) => (
+                      <li key={`${index}-${title}`}>{title}</li>
+                    ))}
+                  </ul>
+                )}
+            </Alert>
+            {actionBanner.variant === "error" && (
+              <button
+                type="button"
+                className={styles.dismissButton}
+                onClick={() => setActionBanner(null)}
+                aria-label="Close error alert"
+              >
+                &times;
+              </button>
             )}
-          </Alert>
+          </div>
         </div>
+      ) : (
+        !(isCompleted && result) && (
+          <div className={styles.banner}>{banner}</div>
+        )
       )}
-
-      {!(isCompleted && result) && <div className={styles.banner}>{banner}</div>}
 
       {isCompleted && result && (
         <div className={styles.banner}>

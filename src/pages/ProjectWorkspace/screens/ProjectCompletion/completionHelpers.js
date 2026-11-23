@@ -1,4 +1,8 @@
 import { SEP, formatDate, shortDate } from "../../workspaceFormat";
+import { api } from "../../../../services/api";
+import { getCompletion } from "../../../../services/completionService";
+import { getProjectEvidence } from "../../../../services/evidenceService";
+import { getProjectContributions } from "../../../../services/contributionsService";
 
 export const APOS = "’";
 // Visibility facts shown after completion. A completed project page is always
@@ -69,23 +73,88 @@ export function buildSavedWork(milestones, tasks) {
 }
 
 // What is saved and what still blocks completion.
-export function getReadiness(evidence, confirmations) {
-  const hasOutcome = evidence.outcome.trim() !== "";
-  const hasDeliverable = Boolean(evidence.deliverable);
-  const confirmed = confirmations.filter((item) => item.confirmedBy);
-  const pending = confirmations.filter((item) => !item.confirmedBy);
+export function getReadiness(
+  evidence,
+  confirmations,
+  contributions = [],
+  tasks = [],
+) {
+  if (typeof evidence === "string") {
+    const projectId = evidence;
+    return Promise.all([
+      getProjectEvidence(projectId).catch(() => null),
+      getCompletion(projectId).catch(() => ({ confirmations: [] })),
+      getProjectContributions(projectId).catch(() => []),
+      api
+        .get(`/api/projects/${encodeURIComponent(projectId)}/tasks`)
+        .catch(() => ({ tasks: [] })),
+    ]).then(([evidenceData, completionData, contribsData, tasksData]) => {
+      const rawTasks = Array.isArray(tasksData)
+        ? tasksData
+        : Array.isArray(tasksData?.tasks)
+          ? tasksData.tasks
+          : [];
+      return getReadiness(
+        evidenceData,
+        completionData?.confirmations ?? [],
+        contribsData,
+        rawTasks,
+      );
+    });
+  }
+
+  if (typeof tasks === "string") {
+    const projectId = tasks;
+    return api
+      .get(`/api/projects/${encodeURIComponent(projectId)}/tasks`)
+      .catch(() => ({ tasks: [] }))
+      .then((tasksData) => {
+        const rawTasks = Array.isArray(tasksData)
+          ? tasksData
+          : Array.isArray(tasksData?.tasks)
+            ? tasksData.tasks
+            : [];
+        return getReadiness(evidence, confirmations, contributions, rawTasks);
+      });
+  }
+
+  const hasOutcome = evidence?.outcome ? evidence.outcome.trim() !== "" : false;
+  const hasDeliverable = Boolean(evidence?.deliverable);
+  const confirmed = (confirmations || []).filter((item) => item.confirmedBy);
+  const pending = (confirmations || []).filter((item) => !item.confirmedBy);
   const evidenceComplete = hasOutcome && hasDeliverable;
-  const allConfirmed = confirmations.length > 0 && pending.length === 0;
+  const allConfirmed = (confirmations || []).length > 0 && pending.length === 0;
+
+  const contributionList = Array.isArray(contributions) ? contributions : [];
+  const pendingContributions = contributionList.filter(
+    (item) => item.status !== "CONFIRMED",
+  );
+  const allContributionsConfirmed = pendingContributions.length === 0;
+
+  const taskList = Array.isArray(tasks) ? tasks : [];
+  const openTasks = taskList.filter((task) => {
+    const status = task?.status;
+    return status !== "Done" && status !== "COMPLETED";
+  });
+  const allTasksDone = openTasks.length === 0;
 
   return {
     hasOutcome,
     hasDeliverable,
     confirmed,
     pending,
-    total: confirmations.length,
+    total: (confirmations || []).length,
     evidenceComplete,
     allConfirmed,
-    eligible: evidenceComplete && allConfirmed,
+    pendingContributions,
+    allContributionsConfirmed,
+    openTasks,
+    allTasksDone,
+    eligible:
+      evidenceComplete &&
+      allConfirmed &&
+      allContributionsConfirmed &&
+      allTasksDone,
   };
 }
 

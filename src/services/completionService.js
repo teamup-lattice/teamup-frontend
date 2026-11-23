@@ -1,4 +1,4 @@
-import { getProjectContributions, pickReviewer } from "./contributionsService";
+import { getProjectContributions } from "./contributionsService";
 
 function toDateOnly(value) {
   if (typeof value !== "string" || !value) return "";
@@ -56,10 +56,11 @@ function buildConfirmations(members, contributions, tasks) {
       memberContributions.find((item) => item.status === "CONFIRMED") ?? null;
     const shown = confirmed ?? memberContributions[0] ?? null;
     const review = confirmed ? latestReview(confirmed, "CONFIRMED") : null;
-    const reviewer = pickReviewer(members, member.id);
 
     return {
       member: member.name,
+      userId: member.userId,
+      user: { id: member.userId, name: member.name },
       role: member.role,
       summary: shown?.title ?? "",
       doneTasks: doneTaskCount(tasks, member),
@@ -67,7 +68,7 @@ function buildConfirmations(members, contributions, tasks) {
         ? review?.reviewer?.name || "A teammate"
         : null,
       confirmedOn: confirmed ? toDateOnly(confirmed.confirmedAt) : null,
-      awaiting: confirmed ? null : reviewer?.name ?? null,
+      awaiting: confirmed ? null : "a teammate",
     };
   });
 }
