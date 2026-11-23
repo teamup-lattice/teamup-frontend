@@ -11,7 +11,7 @@ function formatNames(names) {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-function ActiveProjectCard({ activeProject }) {
+function ActiveProjectCard({ activeProject, switcher }) {
   const navigate = useNavigate();
   const totalTasks = Math.max(activeProject.tasksTotal, 0);
   const completedTasks = Math.min(
@@ -22,7 +22,14 @@ function ActiveProjectCard({ activeProject }) {
 
   return (
     <article className={styles.card}>
-      <p className={styles.label}>ACTIVE PROJECT</p>
+      {switcher ? (
+        <div className={styles.header}>
+          <p className={styles.label}>ACTIVE PROJECT</p>
+          <div className={styles.switcher}>{switcher}</div>
+        </div>
+      ) : (
+        <p className={styles.label}>ACTIVE PROJECT</p>
+      )}
 
       <div className={styles.projectHeading}>
         <span className={styles.status}>{activeProject.status}</span>

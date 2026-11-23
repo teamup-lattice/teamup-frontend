@@ -158,6 +158,15 @@ function ProjectWorkspace() {
   const updatesError = isUpdatesRequestCurrent ? updatesState.error : "";
 
   useEffect(() => {
+    if (!projectId) return;
+    try {
+      localStorage.setItem("teamup_dashboard_project_id", projectId);
+    } catch {
+      return;
+    }
+  }, [projectId]);
+
+  useEffect(() => {
     let isCurrent = true;
 
     Promise.all([

@@ -23,7 +23,9 @@ function TeamCard({ team }) {
           </li>
         ))}
       </ul>
-      <p className={shared.small}>All joined {formatDate(team.joinedOn)}.</p>
+      {team.joinedOn && (
+        <p className={shared.small}>All joined {formatDate(team.joinedOn)}.</p>
+      )}
     </section>
   );
 }

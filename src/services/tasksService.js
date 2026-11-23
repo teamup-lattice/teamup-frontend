@@ -141,6 +141,7 @@ function mapTask(taskData, memberships = [], milestones = []) {
     API_TO_UI_STATUS[apiStatus] ??
     (typeof task.status === "string" ? task.status : "To do");
   const dueDate = toDateInput(task.dueDate);
+  const completedAt = toDateInput(task.completedAt);
 
   return {
     id:
@@ -153,6 +154,7 @@ function mapTask(taskData, memberships = [], milestones = []) {
     assigneeMemberId,
     assigneeUserId,
     dueDate,
+    completedAt,
     milestoneId,
     milestoneTitle,
     milestoneName: milestoneTitle,
