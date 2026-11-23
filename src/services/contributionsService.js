@@ -90,9 +90,10 @@ function mapContribution(contribution) {
         ? contribution.confirmedAt
         : "",
     memberAcknowledgedAt:
-      typeof contribution.memberAcknowledgedAt === "string"
+      typeof contribution.memberAcknowledgedAt === "string" &&
+      contribution.memberAcknowledgedAt
         ? contribution.memberAcknowledgedAt
-        : "",
+        : null,
     createdAt:
       typeof contribution.createdAt === "string"
         ? contribution.createdAt
@@ -115,6 +116,16 @@ function mapContribution(contribution) {
       name: typeof user?.name === "string" ? user.name : "",
       avatarUrl: user?.avatarUrl ?? null,
       role: typeof member?.role === "string" ? member.role : "",
+      user: user
+        ? {
+            id:
+              typeof user.id === "string" || typeof user.id === "number"
+                ? String(user.id)
+                : "",
+            name: typeof user.name === "string" ? user.name : "",
+            avatarUrl: user.avatarUrl ?? null,
+          }
+        : null,
     },
     task: contribution.task ?? null,
     evidence: Array.isArray(contribution.evidence)
@@ -170,6 +181,16 @@ function mapSummaryContribution(contribution) {
       name: typeof user?.name === "string" ? user.name : "",
       avatarUrl: user?.avatarUrl ?? null,
       role: typeof member?.role === "string" ? member.role : "",
+      user: user
+        ? {
+            id:
+              typeof user.id === "string" || typeof user.id === "number"
+                ? String(user.id)
+                : "",
+            name: typeof user.name === "string" ? user.name : "",
+            avatarUrl: user.avatarUrl ?? null,
+          }
+        : null,
     },
     task: contribution.task ?? null,
     evidence: Array.isArray(contribution.evidence)
@@ -249,12 +270,20 @@ function latestReview(contribution, decision) {
   );
 }
 
-// GAP: the backend has no reviewer assignment. This round-robin picker is a
-// temporary stand-in until contributions carry a reviewer field.
-export function pickReviewer(members, memberId) {
-  if (members.length < 2) return null;
-  const index = members.findIndex((item) => item.id === memberId);
-  return members[(index + 1) % members.length];
+export function canReview(
+  contribution,
+  currentUserId,
+  { isOwner = false, canManageMembers = false } = {},
+) {
+  if (!contribution) return false;
+  const isOwnerOrManager = Boolean(isOwner || canManageMembers);
+  if (!isOwnerOrManager) return false;
+  if (!currentUserId) return false;
+  const authorUserId =
+    contribution.member?.user?.id ??
+    contribution.member?.userId ??
+    contribution.memberId;
+  return String(authorUserId) !== String(currentUserId);
 }
 
 export async function getContribution(projectId, input, { variant = null } = {}) {
@@ -264,7 +293,6 @@ export async function getContribution(projectId, input, { variant = null } = {})
   const tasks = variant === "empty" ? [] : input.tasks;
   const contributions = await getProjectContributions(projectId);
   const current = findLatestContribution(contributions, member.userId);
-  const reviewer = pickReviewer(members, member.id);
 
   const isConfirmed = current?.status === "CONFIRMED";
   const confirmedReview = isConfirmed ? latestReview(current, "CONFIRMED") : null;
@@ -296,9 +324,10 @@ export async function getContribution(projectId, input, { variant = null } = {})
       : "",
     confirmedById: isConfirmed ? confirmedReview?.reviewer?.id ?? null : null,
     confirmedOn: isConfirmed ? toDateOnly(current?.confirmedAt) : null,
-    reviewer: reviewer?.name ?? "a teammate",
-    reviewerId: reviewer?.id ?? null,
+    reviewer: "a teammate",
+    reviewerId: null,
     team: { confirmedOthers, total: members.length, ownerName },
+    reviews: current?.reviews ?? [],
   };
 }
 
@@ -335,40 +364,108 @@ export async function saveOwnReview(
     pendingAcknowledges.set(key, contributionId);
   }
 
-  const acknowledged = await api.post(
-    `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/acknowledge`,
-  );
-  pendingAcknowledges.delete(key);
-  const contribution = acknowledged?.contribution ?? acknowledged;
-  const memberAcknowledgedAt =
-    typeof contribution?.memberAcknowledgedAt === "string"
-      ? contribution.memberAcknowledgedAt
-      : "";
+  try {
+    const acknowledged = await api.post(
+      `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/acknowledge`,
+    );
+    pendingAcknowledges.delete(key);
+    const contribution = acknowledged?.contribution ?? acknowledged;
+    const memberAcknowledgedAt =
+      typeof contribution?.memberAcknowledgedAt === "string"
+        ? contribution.memberAcknowledgedAt
+        : "";
 
-  return {
-    contributionId,
-    summary: review.summary,
-    note: review.note,
-    acknowledged: true,
-    reviewedOn: toDateOnly(memberAcknowledgedAt) || today(),
-    memberAcknowledgedAt,
-  };
+    return {
+      contributionId,
+      summary: review.summary,
+      note: review.note,
+      acknowledged: true,
+      reviewedOn: toDateOnly(memberAcknowledgedAt) || today(),
+      memberAcknowledgedAt,
+    };
+  } catch (acknowledgeError) {
+    // If acknowledge fails after creation, preserve contributionId so retry re-acknowledges rather than re-creating.
+    pendingAcknowledges.set(key, contributionId);
+    acknowledgeError.contributionId = contributionId;
+    throw acknowledgeError;
+  }
+}
+
+// Submits a review decision (CONFIRMED or CHANGES_REQUESTED).
+export async function reviewContribution(
+  projectId,
+  contributionId,
+  { decision, note } = {},
+  { simulateFail = false, authorName = "" } = {},
+) {
+  if (simulateFail) throw new Error("Request failed");
+  if (!contributionId) throw new Error("Contribution is missing an id.");
+
+  const body = { decision };
+  if (note !== undefined && note !== null) {
+    body.note = note;
+  }
+
+  try {
+    const response = await api.post(
+      `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/review`,
+      body,
+    );
+    return mapContribution(response?.contribution ?? response);
+  } catch (error) {
+    if (error?.status === 403) {
+      const friendlyError = new Error(
+        "Only the project owner or a manager can review contributions.",
+      );
+      friendlyError.status = 403;
+      throw friendlyError;
+    }
+    if (error?.status === 409) {
+      const msg = typeof error?.message === "string" ? error.message : "";
+      const text = `${error?.code || ""} ${msg}`.toLowerCase();
+      if (
+        text.includes("has not acknowledged") ||
+        text.includes("not acknowledged") ||
+        text.includes("not yet acknowledged") ||
+        error?.code === "NOT_ACKNOWLEDGED"
+      ) {
+        const match = msg.match(
+          /(?:Member|User)?\s*([A-Za-z0-9_-]+)\s+has not acknowledged/i,
+        );
+        const name =
+          authorName ||
+          error?.authorName ||
+          error?.data?.authorName ||
+          (match ? match[1] : null) ||
+          "the author";
+        const friendlyError = new Error(
+          `Waiting for ${name} to acknowledge this summary`,
+        );
+        friendlyError.status = 409;
+        throw friendlyError;
+      }
+      const friendlyError = new Error(
+        "This contribution was already reviewed. Please refetch to see latest updates.",
+      );
+      friendlyError.status = 409;
+      throw friendlyError;
+    }
+    throw error;
+  }
 }
 
 // A teammate confirms the member's contribution wording (not impact).
 export async function confirmContribution(
   projectId,
   contributionId,
-  { simulateFail = false } = {},
+  options = {},
 ) {
-  if (simulateFail) throw new Error("Request failed");
-  if (!contributionId) throw new Error("Contribution is missing an id.");
-
-  const response = await api.post(
-    `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/review`,
+  const contribution = await reviewContribution(
+    projectId,
+    contributionId,
     { decision: "CONFIRMED" },
+    options,
   );
-  const contribution = mapContribution(response?.contribution ?? response);
   const review = latestReview(contribution, "CONFIRMED");
 
   return {
@@ -378,5 +475,6 @@ export async function confirmContribution(
     confirmedById: review?.reviewer?.id ?? null,
     confirmedOn: toDateOnly(contribution.confirmedAt),
     reviews: contribution.reviews,
+    contribution,
   };
 }

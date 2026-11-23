@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Checkbox from "../../../../components/Checkbox";
+import { useWorkspace } from "../../useWorkspace";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import styles from "./PrivateProjectPage.module.css";
@@ -16,6 +17,7 @@ function listText(items) {
 //   sharing       { savedVisibility, displayOnProfile } (saved values)
 //   onSave        async (displayOnProfile) => void, rejects on failure
 function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSharing }) {
+  const { isOwner } = useWorkspace();
   const [savedValue, setSavedValue] = useState(sharing.displayOnProfile);
   const [value, setValue] = useState(sharing.displayOnProfile);
   const [status, setStatus] = useState("idle"); // idle | saving | error | success
@@ -54,9 +56,11 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
         Team page sharing{SEP}
         {sharing.savedVisibility} (saved)
       </p>
-      <Button variant="secondary" fullWidth onClick={onOpenSharing}>
-        Sharing settings
-      </Button>
+      {isOwner && (
+        <Button variant="secondary" fullWidth onClick={onOpenSharing}>
+          Sharing settings
+        </Button>
+      )}
 
       <div className={styles.profileBox}>
         <h4 className={styles.memberName}>Your profile{SEP}{viewerName}</h4>

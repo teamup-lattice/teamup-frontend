@@ -24,6 +24,7 @@ function ReviewCard({
   taskCount,
   reviewer,
   status,
+  errorMessage,
   onSave,
   onCancel,
 }) {
@@ -124,7 +125,7 @@ function ReviewCard({
           className={`${shared.errorWrap} ${styles.errorSpace}`}
         >
           <Alert variant="error" title="Couldn't save your review">
-            Your wording is still here. Check your connection and try again.
+            {errorMessage || "Your wording is still here. Check your connection and try again."}
           </Alert>
         </div>
       )}

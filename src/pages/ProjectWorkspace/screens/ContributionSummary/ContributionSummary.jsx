@@ -5,6 +5,7 @@ import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import { saveOwnReview } from "../../../../services/contributionsService";
 import DoneTaskList from "../../shared/DoneTaskList";
+import StatusTag, { getContributionStatusLabel } from "../../shared/StatusTag";
 import { useContribution } from "../../shared/useContribution";
 import { useContributionContext } from "../../shared/useContributionContext";
 import { useSimulate } from "../../useSimulate";
@@ -46,6 +47,7 @@ function ContributionSummary() {
   });
 
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const [formVersion, setFormVersion] = useState(0);
   const savingRef = useRef(false);
@@ -60,6 +62,7 @@ function ContributionSummary() {
     if (savingRef.current) return;
     savingRef.current = true;
     setSaveStatus("saving");
+    setSaveErrorMessage("");
     setJustSaved(false);
     const shouldFail = failNextSave;
     setFailNextSave(false);
@@ -74,6 +77,10 @@ function ContributionSummary() {
       setJustSaved(true);
     } catch (saveError) {
       console.error("Failed to save own review:", saveError);
+      if (saveError?.contributionId) {
+        update({ contributionId: saveError.contributionId });
+      }
+      setSaveErrorMessage(saveError.message || "Couldn't save your review");
       setSaveStatus("error");
       savingRef.current = false;
     }
@@ -114,6 +121,15 @@ function ContributionSummary() {
   const isLocked = isConfirmed || isReviewed;
   const lockedReason = isConfirmed ? "confirmed" : "reviewed";
 
+  const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+  const latestReview = [...reviews].sort((a, b) => {
+    const aTime = Date.parse(a.createdAt);
+    const bTime = Date.parse(b.createdAt);
+    return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+  })[0] ?? null;
+
+  const isChangesRequested = latestReview?.decision === "CHANGES_REQUESTED";
+
   if (taskCount === 0) {
     return (
       <div>
@@ -140,7 +156,16 @@ function ContributionSummary() {
   }
 
   let banner = null;
-  if (isConfirmed) {
+  if (isChangesRequested) {
+    banner = (
+      <Alert
+        variant="warning"
+        title={`Changes requested${latestReview?.reviewer?.name ? ` by ${latestReview.reviewer.name}` : ""}`}
+      >
+        {latestReview?.note || "A teammate requested changes to your contribution wording."}
+      </Alert>
+    );
+  } else if (isConfirmed) {
     banner = (
       <Alert variant="success" title={`Confirmed by ${data.confirmedBy}`}>
         {data.confirmedBy} confirmed your contribution wording on {formatDate(data.confirmedOn)}.
@@ -155,10 +180,6 @@ function ContributionSummary() {
     );
   }
 
-  const statusLabel = isReviewed
-      ? `Reviewed${SEP}Awaiting ${data.reviewer}`
-      : "Not reviewed yet";
-
   return (
     <div>
       <h2 className={shared.title}>My contribution summary</h2>
@@ -172,7 +193,12 @@ function ContributionSummary() {
 
       {!isConfirmed && (
         <p className={styles.statusRow}>
-          <span className={styles.chip}>{statusLabel}</span>
+          <StatusTag
+            status={getContributionStatusLabel({
+              status: isConfirmed ? "CONFIRMED" : "PENDING_REVIEW",
+              reviews,
+            })}
+          />
         </p>
       )}
 
@@ -186,6 +212,7 @@ function ContributionSummary() {
             taskCount={taskCount}
             reviewer={data.reviewer}
             status={saveStatus}
+            errorMessage={saveErrorMessage}
             onSave={handleSave}
             onCancel={() => navigate(completionPath)}
           />

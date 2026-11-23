@@ -86,9 +86,20 @@ export function typeFromFile(file) {
 function normalizeChecks(checks) {
   if (!Array.isArray(checks)) return [];
   return checks
-    .map((check) =>
-      typeof check === "string" ? check : typeof check?.message === "string" ? check.message : "",
-    )
+    .map((check) => {
+      if (typeof check === "string") {
+        return { message: check, contributions: [] };
+      }
+      if (check && typeof check === "object") {
+        const message =
+          typeof check.message === "string" ? check.message : "";
+        const contributions = Array.isArray(check.contributions)
+          ? check.contributions
+          : [];
+        return { message, contributions };
+      }
+      return null;
+    })
     .filter(Boolean);
 }
 
