@@ -94,13 +94,15 @@ function DoneTaskList({ tasks, taskPath, projectId }) {
                 </>
               )}
             </article>
-            <Link
-              to={taskPath(task.id)}
-              className={styles.centered}
-              aria-label={`View task evidence for ${task.title}`}
-            >
-              View task evidence
-            </Link>
+            {!evidence && (
+              <Link
+                to={taskPath(task.id)}
+                className={styles.centered}
+                aria-label={`View task evidence for ${task.title}`}
+              >
+                View task evidence
+              </Link>
+            )}
           </li>
         );
       })}
