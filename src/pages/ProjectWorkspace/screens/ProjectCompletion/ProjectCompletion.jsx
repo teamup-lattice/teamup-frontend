@@ -138,17 +138,26 @@ function ProjectCompletion() {
     savedWorkLoading;
   const data = isLoading ? null : loaded.data;
 
- const viewContribution = useCallback(
-  (memberName) => {
-    const base = `/projects/${projectId}/workspace/contributions`;
-    if (!memberName || memberName === currentUser.name) {
-      navigate(`${base}${search}`);
-    } else {
-      navigate(`${base}/review/${memberName.toLowerCase()}${search}`);
-    }
-  },
-  [navigate, projectId, search, currentUser.name],
-);
+  const viewContribution = useCallback(
+    (memberTarget) => {
+      const base = `/projects/${projectId}/workspace/contributions`;
+      const targetUserId =
+        memberTarget?.user?.id ??
+        memberTarget?.userId ??
+        (typeof memberTarget === "object" ? memberTarget.id : memberTarget);
+      const isCurrent =
+        !targetUserId ||
+        String(targetUserId) === String(currentUser.id) ||
+        String(targetUserId) === String(currentUser.userId) ||
+        memberTarget === currentUser.name;
+      if (isCurrent) {
+        navigate(`${base}${search}`);
+      } else {
+        navigate(`${base}/review/${targetUserId}${search}`);
+      }
+    },
+    [navigate, projectId, search, currentUser],
+  );
 
   async function handleSave({ deliverable }) {
     setSaveStatus("saving");
@@ -337,9 +346,31 @@ function ProjectCompletion() {
             {completeError}
             {completeChecks.length > 0 && (
               <ul className={styles.checkList}>
-                {completeChecks.map((check, index) => (
-                  <li key={`${index}-${check}`}>{check}</li>
-                ))}
+                {completeChecks.map((check, index) => {
+                  const message =
+                    typeof check === "string" ? check : check.message;
+                  const contributions = Array.isArray(check.contributions)
+                    ? check.contributions
+                    : [];
+                  return (
+                    <li key={`${index}-${message}`}>
+                      <span>{message}</span>
+                      {contributions.length > 0 && (
+                        <ul className={styles.checkList}>
+                          {contributions.map((c, cIndex) => {
+                            const title =
+                              typeof c === "string"
+                                ? c
+                                : c.title || "Untitled contribution";
+                            return (
+                              <li key={c.id || `${cIndex}-${title}`}>{title}</li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Alert>

@@ -96,7 +96,7 @@ function CompleteCard({
       )}
       <div className={shared.stack}>
         {firstPending && (
-          <Button variant="secondary" fullWidth onClick={() => onViewPending(firstPending.member)}>
+          <Button variant="secondary" fullWidth onClick={() => onViewPending(firstPending.user?.id || firstPending.userId || firstPending.member)}>
             {pendingNames.length === 1
               ? `View ${firstPending.member}${APOS}s contribution`
               : `View ${listText(pendingNames)} contributions`}

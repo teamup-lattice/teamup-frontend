@@ -1,87 +1,161 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
-import { confirmContribution } from "../../../../services/contributionsService";
+import Textarea from "../../../../components/Textarea";
+import StatusTag from "../../shared/StatusTag";
+import {
+  getProjectContributions,
+  reviewContribution,
+} from "../../../../services/contributionsService";
 import DoneTaskList from "../../shared/DoneTaskList";
-import { useContribution } from "../../shared/useContribution";
 import { useContributionContext } from "../../shared/useContributionContext";
 import { useSimulate } from "../../useSimulate";
-import { SEP, formatDate, numberWord } from "../../workspaceFormat";
+import { SEP, formatDate } from "../../workspaceFormat";
 import { APOS } from "../ProjectCompletion/completionHelpers";
 import shared from "../shared.module.css";
 import styles from "./TeammateConfirmation.module.css";
 
 const LOAD_VARIANTS = ["loadfail", "empty"];
 
-// "Review David's contribution": the assigned teammate checks a member's
-// reviewed contribution wording against their saved Done tasks and confirms
-// it. Confirmation covers wording only; it is not a verified impact claim.
+// "Review Teammate's contribution": lists all of a teammate's contributions,
+// each as its own card with details, reviews, and Confirm / Request changes actions.
 function TeammateConfirmation() {
-  const { loading, members, me, ownerName, doneTasksOf } = useContributionContext();
+  const { loading, members, me, doneTasksOf } = useContributionContext();
   const { projectId, member: memberParam } = useParams();
   const { search } = useLocation();
   const navigate = useNavigate();
   const simulate = useSimulate();
   const variant = LOAD_VARIANTS.includes(simulate) ? simulate : null;
 
-  // The route param is the member id (a lowercase name also works).
+  // The route param is member.user.id (fallback to id or name for robustness).
   const member = members.find(
     (item) =>
+      item.userId === String(memberParam) ||
+      item.user?.id === String(memberParam) ||
       item.id === String(memberParam) ||
       item.name.toLowerCase() === String(memberParam).toLowerCase(),
   );
   const memberName = member?.name ?? "this member";
+  const memberUserId = member?.user?.id ?? member?.userId ?? member?.id;
+  const currentUserId = me?.user?.id ?? me?.userId ?? me?.id;
 
-  const input = useMemo(
-    () =>
-      loading || !member
-        ? null
-        : { member, members, tasks: doneTasksOf(member), ownerName },
-    [loading, member, members, doneTasksOf, ownerName],
-  );
+  const [contributions, setContributions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionStatus, setActionStatus] = useState({}); // { [id]: "confirming" | "requesting" }
+  const [actionError, setActionError] = useState({}); // { [id]: string }
+  const [openRequestId, setOpenRequestId] = useState(null);
+  const [requestNotes, setRequestNotes] = useState({});
+  const [requestNoteErrors, setRequestNoteErrors] = useState({});
 
-  const { isLoading, data, error, retry, update } = useContribution({
-    projectId,
-    input,
-    variant,
-  });
-
-  const [status, setStatus] = useState("idle"); // idle | confirming | error
-  const [justConfirmed, setJustConfirmed] = useState(false);
-  const [failNext, setFailNext] = useState(simulate === "fail");
-  const errorRef = useRef(null);
+  const fetchContributions = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      if (variant === "loadfail") throw new Error("Request failed");
+      const list = await getProjectContributions(projectId);
+      setContributions(list);
+    } catch (err) {
+      console.error("Failed to load contributions:", err);
+      setError(err.message || "Something went wrong. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, variant]);
 
   useEffect(() => {
-    if (status === "error" && errorRef.current) errorRef.current.focus();
-  }, [status]);
+    fetchContributions();
+  }, [fetchContributions]);
 
+  const teammateContributions = useMemo(() => {
+    if (!memberUserId) return [];
+    return contributions.filter((c) => {
+      const cUserId = c.member?.user?.id ?? c.member?.userId ?? c.member?.id;
+      return String(cUserId) === String(memberUserId);
+    });
+  }, [contributions, memberUserId]);
+
+  const tasks = useMemo(() => {
+    if (variant === "empty" || !member) return [];
+    return doneTasksOf(member);
+  }, [variant, member, doneTasksOf]);
+
+  const taskCount = tasks.length;
   const workspacePath = `/projects/${projectId}/workspace`;
   const completionPath = `${workspacePath}/completion${search}`;
-  const title = `Review ${memberName}${APOS}s contribution`;
+  const title = `Review ${memberName}${APOS}s contributions`;
 
-  async function handleConfirm() {
-    setStatus("confirming");
-    const shouldFail = failNext;
-    setFailNext(false);
+  async function handleConfirm(contributionId) {
+    setActionStatus((prev) => ({ ...prev, [contributionId]: "confirming" }));
+    setActionError((prev) => ({ ...prev, [contributionId]: "" }));
     try {
-      const saved = await confirmContribution(projectId, data.contributionId, {
-        simulateFail: shouldFail,
+      await reviewContribution(projectId, contributionId, {
+        decision: "CONFIRMED",
       });
-      update(saved);
-      setStatus("idle");
-      setJustConfirmed(true);
-    } catch (confirmError) {
-      console.error("Failed to confirm contribution:", confirmError);
-      setStatus("error");
+      await fetchContributions();
+      setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
+    } catch (err) {
+      console.error("Failed to confirm contribution:", err);
+      setActionError((prev) => ({
+        ...prev,
+        [contributionId]:
+          err.message || "Couldn't confirm contribution. Please try again.",
+      }));
+      setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
+      if (err?.status === 409) {
+        fetchContributions();
+      }
+    }
+  }
+
+  async function handleRequestChangesSubmit(contributionId) {
+    const note = (requestNotes[contributionId] || "").trim();
+    if (!note) {
+      setRequestNoteErrors((prev) => ({
+        ...prev,
+        [contributionId]: "A note explaining the requested changes is required.",
+      }));
+      return;
+    }
+    if (note.length > 1000) {
+      setRequestNoteErrors((prev) => ({
+        ...prev,
+        [contributionId]: "Keep the note to 1000 characters or fewer.",
+      }));
+      return;
+    }
+
+    setActionStatus((prev) => ({ ...prev, [contributionId]: "requesting" }));
+    setActionError((prev) => ({ ...prev, [contributionId]: "" }));
+    try {
+      await reviewContribution(projectId, contributionId, {
+        decision: "CHANGES_REQUESTED",
+        note,
+      });
+      setOpenRequestId(null);
+      setRequestNotes((prev) => ({ ...prev, [contributionId]: "" }));
+      await fetchContributions();
+      setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
+    } catch (err) {
+      console.error("Failed to request changes:", err);
+      setActionError((prev) => ({
+        ...prev,
+        [contributionId]:
+          err.message || "Couldn't submit changes request. Please try again.",
+      }));
+      setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
+      if (err?.status === 409) {
+        fetchContributions();
+      }
     }
   }
 
   if (!loading && !member) {
     return (
       <div>
-        <h2 className={shared.title}>Review contribution</h2>
+        <h2 className={shared.title}>Review contributions</h2>
         <Alert variant="error" title="Member not found">
           This person is not a member of this project.
         </Alert>
@@ -94,26 +168,26 @@ function TeammateConfirmation() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div>
         <h2 className={shared.title}>{title}</h2>
-        <p role="status">Loading contribution…</p>
+        <p role="status">Loading contributions…</p>
         <Skeleton />
         <Skeleton />
       </div>
     );
   }
 
-  if (error || !data) {
+  if (error) {
     return (
       <div>
         <h2 className={shared.title}>{title}</h2>
-        <Alert variant="error" title="Couldn't load this contribution">
-          {error || "Something went wrong. Try again."}
+        <Alert variant="error" title="Couldn't load contributions">
+          {error}
         </Alert>
         <div className={styles.actions}>
-          <Button onClick={retry}>Retry</Button>
+          <Button onClick={fetchContributions}>Retry</Button>
           <Button variant="secondary" onClick={() => navigate(completionPath)}>
             Back to Project completion
           </Button>
@@ -122,169 +196,241 @@ function TeammateConfirmation() {
     );
   }
 
-  const taskCount = data.tasks.length;
-  const isConfirmed = Boolean(data.confirmedBy);
-  const isReviewed = Boolean(
-    data.reviewedOn || data.acknowledged || data.memberAcknowledgedAt,
-  );
-  const isOwnContribution = data.memberId === me.id;
-  const isAssignedReviewer = data.reviewerId === me.id;
-  const canConfirm =
-    !isOwnContribution &&
-    isAssignedReviewer &&
-    isReviewed &&
-    !isConfirmed &&
-    taskCount > 0 &&
-    Boolean(data.contributionId);
-
-  const confirmedCount = data.team.confirmedOthers + (isConfirmed ? 1 : 0);
-  const allConfirmed = confirmedCount === data.team.total;
-
-  // One notice at the top says why the viewer can or cannot confirm.
-  let banner;
-  if (justConfirmed) {
-    banner = (
-      <Alert variant="success" title="Contribution confirmed">
-        {allConfirmed
-          ? `All ${numberWord(data.team.total)} member confirmations are saved. ${data.team.ownerName} can now complete the project.`
-          : `${confirmedCount}/${data.team.total} member confirmations saved.`}
-      </Alert>
-    );
-  } else if (isConfirmed) {
-    banner = (
-      <Alert variant="success" title={`Confirmed by ${data.confirmedBy}`}>
-        {data.confirmedBy} confirmed {data.member}
-        {APOS}s contribution wording on {formatDate(data.confirmedOn)}.
-      </Alert>
-    );
-  } else if (isOwnContribution) {
-    banner = (
-      <Alert variant="info" title="You can't confirm your own contribution">
-        {data.reviewer} confirms your wording. You can review and edit it from your own summary.
-      </Alert>
-    );
-  } else if (!isAssignedReviewer) {
-    banner = (
-      <Alert variant="info" title={`Only ${data.reviewer} can confirm this`}>
-        {data.reviewer} is the assigned teammate for {data.member}
-        {APOS}s contribution. You can read it, but you can{APOS}t confirm it.
-      </Alert>
-    );
-  } else if (!isReviewed) {
-    banner = (
-      <Alert variant="info" title={`${data.member} needs to review their own wording first`}>
-        You can confirm once {data.member} saves their own contribution as Reviewed.
-      </Alert>
-    );
-  } else if (taskCount === 0) {
-    banner = (
-      <Alert variant="info" title="No Done tasks to check">
-        {data.member} has no saved Done tasks yet, so there is nothing to confirm.
-      </Alert>
-    );
-  }
-
-  const backButton = (
-    <Button variant="secondary" onClick={() => navigate(completionPath)}>
-      {justConfirmed || !canConfirm ? "Back to Project completion" : "Cancel"}
-    </Button>
-  );
-
   return (
     <div>
       <h2 className={shared.title}>{title}</h2>
       <p className={shared.small}>
-        {data.role}
+        {member.role}
         {SEP}
         {taskCount} saved Done {taskCount === 1 ? "task" : "tasks"}
       </p>
 
-      {banner && <div className={styles.banner}>{banner}</div>}
-
       <div className={styles.layout}>
         <div className={styles.column}>
-          <section className={shared.card} aria-labelledby="review-wording-title">
-            <h3 id="review-wording-title" className={shared.cardTitle}>
-              {data.member}
-              {APOS}s reviewed wording
-            </h3>
-            <p className={styles.person}>
-              <span className={shared.avatar} aria-hidden="true">
-                {data.member.charAt(0)}
-              </span>
-              <span>
-                {data.member}
-                {SEP}
-                {data.role}
-              </span>
-            </p>
-            {isReviewed ? (
-              <>
-                <div className={styles.noteBox}>
-                  <p>
-                    <strong>{data.summary}</strong>
-                  </p>
-                </div>
-                {data.note && <p className={shared.text}>{data.note}</p>}
-                <p className={shared.small}>
-                  Reviewed by {data.member} on {formatDate(data.reviewedOn)}.
-                </p>
-              </>
-            ) : (
-              <p className={shared.text}>{data.member} has not saved their own wording yet.</p>
-            )}
-          </section>
+          {teammateContributions.length === 0 ? (
+            <section className={shared.card}>
+              <p className={shared.text}>
+                No contributions found for {memberName}.
+              </p>
+            </section>
+          ) : (
+            teammateContributions.map((contribution) => {
+              const isConfirmed = contribution.status === "CONFIRMED";
+              const authorUserId =
+                contribution.member?.user?.id ??
+                contribution.member?.userId ??
+                memberUserId;
+              const isAuthor =
+                Boolean(currentUserId) &&
+                String(authorUserId) === String(currentUserId);
+              const isBusy = Boolean(actionStatus[contribution.id]);
+              const buttonsDisabled = isConfirmed || isAuthor || isBusy;
 
-          {(canConfirm || justConfirmed) && (
-            <section className={shared.card} aria-labelledby="your-confirmation-title">
-              <h3 id="your-confirmation-title" className={shared.cardTitle}>
-                Your confirmation
-              </h3>
-              {justConfirmed ? (
-                <p className={shared.text}>
-                  You confirmed this wording. Saved task ownership and history are unchanged.
-                </p>
-              ) : (
-                <>
-                  <p className={shared.text}>
-                    Confirm that {data.member}
-                    {APOS}s wording fairly describes their saved Done tasks. This is a teammate
-                    confirmation of wording, not a verified impact claim.
-                  </p>
-                  {status === "error" && (
+              const sortedReviews = [
+                ...(Array.isArray(contribution.reviews)
+                  ? contribution.reviews
+                  : []),
+              ].sort((a, b) => {
+                const aTime = Date.parse(a.createdAt);
+                const bTime = Date.parse(b.createdAt);
+                return (
+                  (Number.isNaN(bTime) ? 0 : bTime) -
+                  (Number.isNaN(aTime) ? 0 : aTime)
+                );
+              });
+
+              const isRequestFormOpen = openRequestId === contribution.id;
+
+              return (
+                <article key={contribution.id} className={shared.card}>
+                  <div className={styles.statusRow}>
+                    <h3 className={shared.cardTitle}>
+                      {contribution.title || "Untitled contribution"}
+                    </h3>
+                    {contribution.status && (
+                      <StatusTag status={contribution.status} />
+                    )}
+                  </div>
+
+                  {contribution.description && (
+                    <p className={shared.text}>{contribution.description}</p>
+                  )}
+
+                  {contribution.task && (
+                    <p className={shared.small}>
+                      <strong>Task: </strong>
+                      {contribution.task.title ||
+                        contribution.task.name ||
+                        (typeof contribution.task === "string"
+                          ? contribution.task
+                          : "Assigned task")}
+                    </p>
+                  )}
+
+                  {Array.isArray(contribution.evidence) &&
+                    contribution.evidence.length > 0 && (
+                      <div className={styles.evidenceBlock}>
+                        <p className={shared.small}>
+                          <strong>Evidence:</strong>
+                        </p>
+                        <ul className={styles.evidenceList}>
+                          {contribution.evidence.map((item, idx) => (
+                            <li key={item.id || idx}>
+                              {item.url ? (
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {item.title ||
+                                    item.label ||
+                                    item.name ||
+                                    item.url}
+                                </a>
+                              ) : (
+                                <span>
+                                  {item.title ||
+                                    item.label ||
+                                    item.name ||
+                                    "Evidence"}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  {sortedReviews.length > 0 && (
+                    <div className={styles.reviewsList}>
+                      <h4 className={styles.reviewsHeading}>Reviews</h4>
+                      {sortedReviews.map((rev, revIdx) => (
+                        <div
+                          key={rev.id || `${revIdx}-${rev.createdAt}`}
+                          className={styles.reviewItem}
+                        >
+                          <div className={styles.reviewMeta}>
+                            <strong>
+                              {rev.reviewer?.name || "A teammate"}
+                            </strong>
+                            <span className={styles.reviewDecision}>
+                              {rev.decision}
+                            </span>
+                            {rev.createdAt && (
+                              <span>{formatDate(rev.createdAt)}</span>
+                            )}
+                          </div>
+                          {rev.note && (
+                            <p className={styles.noteText}>{rev.note}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {actionError[contribution.id] && (
                     <div
-                      ref={errorRef}
-                      tabIndex={-1}
-                      className={`${shared.errorWrap} ${styles.errorSpace}`}
+                      className={styles.errorSpace}
+                      style={{ marginTop: "0.75rem" }}
                     >
-                      <Alert variant="error" title="Couldn't save your confirmation">
-                        Nothing was changed. Check your connection and try again.
+                      <Alert variant="error" title="Review failed">
+                        {actionError[contribution.id]}
                       </Alert>
                     </div>
                   )}
+
+                  {isAuthor && (
+                    <p className={shared.small}>
+                      You cannot review your own contribution.
+                    </p>
+                  )}
+
                   <div className={styles.actions}>
                     <Button
-                      loading={status === "confirming"}
+                      disabled={buttonsDisabled}
+                      loading={actionStatus[contribution.id] === "confirming"}
                       loadingText="Confirming…"
-                      onClick={handleConfirm}
+                      onClick={() => handleConfirm(contribution.id)}
                     >
-                      {status === "error" ? "Retry confirmation" : "Confirm contribution"}
+                      Confirm
                     </Button>
                     <Button
                       variant="secondary"
-                      disabled={status === "confirming"}
-                      onClick={() => navigate(completionPath)}
+                      disabled={buttonsDisabled}
+                      onClick={() =>
+                        setOpenRequestId((curr) =>
+                          curr === contribution.id ? null : contribution.id,
+                        )
+                      }
                     >
-                      Cancel
+                      Request changes
                     </Button>
                   </div>
-                  <p className={shared.small}>Cancel leaves everything unchanged.</p>
-                </>
-              )}
-            </section>
+
+                  {isRequestFormOpen && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleRequestChangesSubmit(contribution.id);
+                      }}
+                      className={styles.formStack}
+                      style={{ marginTop: "1rem" }}
+                    >
+                      <Textarea
+                        id={`request-changes-note-${contribution.id}`}
+                        label="Reason for requested changes"
+                        required
+                        rows={3}
+                        maxLength={1000}
+                        value={requestNotes[contribution.id] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setRequestNotes((prev) => ({
+                            ...prev,
+                            [contribution.id]: val,
+                          }));
+                          setRequestNoteErrors((prev) => ({
+                            ...prev,
+                            [contribution.id]: undefined,
+                          }));
+                        }}
+                        error={requestNoteErrors[contribution.id]}
+                        helperText={`${(requestNotes[contribution.id] || "").length}/1000 characters`}
+                        disabled={actionStatus[contribution.id] === "requesting"}
+                      />
+                      <div className={styles.actions}>
+                        <Button
+                          type="submit"
+                          loading={actionStatus[contribution.id] === "requesting"}
+                          loadingText="Submitting…"
+                          disabled={actionStatus[contribution.id] === "requesting"}
+                        >
+                          Submit request
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={actionStatus[contribution.id] === "requesting"}
+                          onClick={() => setOpenRequestId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </article>
+              );
+            })
           )}
 
-          {(!canConfirm || justConfirmed) && <div className={styles.actions}>{backButton}</div>}
+          <div className={styles.actions}>
+            <Button
+              variant="secondary"
+              onClick={() => navigate(completionPath)}
+            >
+              Back to Project completion
+            </Button>
+          </div>
         </div>
 
         <section className={styles.column} aria-labelledby="review-tasks-title">
@@ -296,7 +442,7 @@ function TeammateConfirmation() {
             <p className={shared.text}>No saved Done tasks.</p>
           ) : (
             <DoneTaskList
-              tasks={data.tasks}
+              tasks={tasks}
               projectId={projectId}
               taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}
             />

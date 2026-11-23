@@ -114,6 +114,15 @@ function ContributionSummary() {
   const isLocked = isConfirmed || isReviewed;
   const lockedReason = isConfirmed ? "confirmed" : "reviewed";
 
+  const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+  const latestReview = [...reviews].sort((a, b) => {
+    const aTime = Date.parse(a.createdAt);
+    const bTime = Date.parse(b.createdAt);
+    return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+  })[0] ?? null;
+
+  const isChangesRequested = latestReview?.decision === "CHANGES_REQUESTED";
+
   if (taskCount === 0) {
     return (
       <div>
@@ -140,7 +149,16 @@ function ContributionSummary() {
   }
 
   let banner = null;
-  if (isConfirmed) {
+  if (isChangesRequested) {
+    banner = (
+      <Alert
+        variant="warning"
+        title={`Changes requested${latestReview?.reviewer?.name ? ` by ${latestReview.reviewer.name}` : ""}`}
+      >
+        {latestReview?.note || "A teammate requested changes to your contribution wording."}
+      </Alert>
+    );
+  } else if (isConfirmed) {
     banner = (
       <Alert variant="success" title={`Confirmed by ${data.confirmedBy}`}>
         {data.confirmedBy} confirmed your contribution wording on {formatDate(data.confirmedOn)}.
