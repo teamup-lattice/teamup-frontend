@@ -297,6 +297,7 @@ function TeammateConfirmation() {
           ) : (
             <DoneTaskList
               tasks={data.tasks}
+              projectId={projectId}
               taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}
             />
           )}

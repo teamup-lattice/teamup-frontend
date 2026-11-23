@@ -34,10 +34,6 @@ import styles from "./ProjectCompletion.module.css";
 const LOAD_VARIANTS = ["loadfail"];
 
 function completionErrorMessage(error) {
-  if (error?.status === 409) {
-    const checks = Array.isArray(error.checks) ? error.checks : [];
-    if (checks.length > 0) return checks.join(" ");
-  }
   return getErrorMessage(error, {
     fallback: "Something went wrong. Try again.",
     byStatus: {
@@ -80,6 +76,7 @@ function ProjectCompletion() {
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
   const [completeStatus, setCompleteStatus] = useState("idle"); // idle | completing
   const [completeError, setCompleteError] = useState("");
+  const [completeChecks, setCompleteChecks] = useState([]);
   const [evidenceVersion, setEvidenceVersion] = useState(0);
   const [dirty, setDirty] = useState(false);
   const [savedNote, setSavedNote] = useState("");
@@ -177,6 +174,7 @@ function ProjectCompletion() {
 
   async function handleComplete() {
     setCompleteError("");
+    setCompleteChecks([]);
     setCompleteStatus("completing");
     try {
       await completeProject(projectId, outcome);
@@ -185,6 +183,11 @@ function ProjectCompletion() {
     } catch (error) {
       console.error("Failed to complete project:", error);
       setCompleteError(completionErrorMessage(error));
+      setCompleteChecks(
+        error?.status === 409 && Array.isArray(error.checks)
+          ? error.checks
+          : [],
+      );
       setCompleteStatus("idle");
     }
   }
@@ -331,6 +334,13 @@ function ProjectCompletion() {
         <div className={styles.banner}>
           <Alert variant="error" title="Project did not complete">
             {completeError}
+            {completeChecks.length > 0 && (
+              <ul className={styles.checkList}>
+                {completeChecks.map((check, index) => (
+                  <li key={`${index}-${check}`}>{check}</li>
+                ))}
+              </ul>
+            )}
           </Alert>
         </div>
       )}

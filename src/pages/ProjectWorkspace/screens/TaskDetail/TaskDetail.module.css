@@ -73,6 +73,43 @@
   gap: 12px;
 }
 
+.hiddenInput {
+  display: none;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-canvas);
+}
+
+.fileName {
+  min-width: 0;
+  color: var(--color-navy);
+  overflow-wrap: anywhere;
+}
+
+.removeFile {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #c92a2a;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.removeFile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .commentList {
   display: flex;
   flex-direction: column;

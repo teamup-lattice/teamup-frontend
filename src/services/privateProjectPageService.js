@@ -57,11 +57,19 @@ function buildMemberships(project) {
 function tasksForMember(tasks, member) {
   return tasks.filter((task) => {
     if (String(task.status).toLowerCase() !== "done") return false;
+    const byMemberId =
+      member.id &&
+      task.assigneeMemberId &&
+      String(task.assigneeMemberId) === String(member.id);
     const byUserId =
       member.userId &&
       task.assigneeUserId &&
       String(task.assigneeUserId) === String(member.userId);
-    return byUserId || (!task.assigneeMemberId && task.assignee === member.name);
+    return (
+      byMemberId ||
+      byUserId ||
+      (!task.assigneeMemberId && task.assignee === member.name)
+    );
   });
 }
 
@@ -113,8 +121,8 @@ export async function getPrivateProjectPage(projectId, { variant = null } = {}) 
     project: {
       name: typeof project.title === "string" ? project.title : "",
       status: variant === "notcompleted" ? "In Progress" : status,
-      visibility: "PRIVATE",
-      audience: "Team-only",
+      visibility: project.isShared ? "VISIBLE TO SIGNED-IN USERS" : "PRIVATE",
+      audience: project.isShared ? "Shared" : "Team-only",
       startDate: toDateInput(project.startDate),
       endDate: toDateInput(project.targetEndDate),
       completedOn: toDateInput(project.completedAt),
