@@ -198,6 +198,7 @@ function ContributionSummary() {
           </h3>
           <DoneTaskList
             tasks={data.tasks}
+            projectId={projectId}
             taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}
           />
         </section>

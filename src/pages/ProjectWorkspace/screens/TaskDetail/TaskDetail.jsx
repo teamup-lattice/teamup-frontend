@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
@@ -17,7 +17,11 @@ import {
   updateProjectTask,
   updateProjectTaskComment,
 } from "../../../../services/tasksService";
-import { normalizeHttpUrl } from "../../../../services/evidenceService";
+import {
+  normalizeHttpUrl,
+  typeFromFile,
+  uploadEvidenceFile,
+} from "../../../../services/evidenceService";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   decideDateExtensionRequest,
@@ -75,6 +79,11 @@ function TaskDetail() {
   const [blockerNote, setBlockerNote] = useState("");
   const [completionNote, setCompletionNote] = useState("");
   const [artifactUrl, setArtifactUrl] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
+  const [uploadedFileType, setUploadedFileType] = useState("");
+  const [fileError, setFileError] = useState("");
+  const [fileUploading, setFileUploading] = useState(false);
   const [statusError, setStatusError] = useState("");
   const [statusSaving, setStatusSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -96,6 +105,7 @@ function TaskDetail() {
   const [decidingRequestId, setDecidingRequestId] = useState(null);
   const [decisionError, setDecisionError] = useState("");
   const [decisionSuccess, setDecisionSuccess] = useState("");
+  const fileInputRef = useRef(null);
 
   const isTaskCurrent =
     taskState.projectId === projectId &&
@@ -132,6 +142,10 @@ function TaskDetail() {
         setBlockerNote(loadedTask.blockerNote);
         setCompletionNote("");
         setArtifactUrl("");
+        setEvidenceFile(null);
+        setUploadedFileUrl("");
+        setUploadedFileType("");
+        setFileError("");
         setStatusError("");
         setSuccessMessage("");
         setNoChangesNotice(false);
@@ -294,12 +308,48 @@ function TaskDetail() {
     ? milestones.find((item) => String(item.id) === String(task.milestoneId))
     : null;
 
+  const clearFileSelection = () => {
+    setEvidenceFile(null);
+    setUploadedFileUrl("");
+    setUploadedFileType("");
+    setFileError("");
+  };
+
   const resetStatusForm = () => {
     setStatus(task.status);
     setBlockerNote(task.blockerNote);
     setCompletionNote("");
     setArtifactUrl("");
+    clearFileSelection();
     setStatusError("");
+    setSuccessMessage("");
+    setNoChangesNotice(false);
+  };
+
+  const openFilePicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleFilePicked = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setFileError("Files must be 10 MB or smaller.");
+      return;
+    }
+
+    setEvidenceFile(file);
+    setUploadedFileUrl("");
+    setUploadedFileType("");
+    setFileError("");
+    setSuccessMessage("");
+    setNoChangesNotice(false);
+  };
+
+  const removeFile = () => {
+    clearFileSelection();
     setSuccessMessage("");
     setNoChangesNotice(false);
   };
@@ -323,41 +373,72 @@ function TaskDetail() {
       }
     }
 
-    const changes = {};
-    if (status !== task.status) {
-      changes.status = getTaskApiStatus(status);
-    }
-    if (status === "Blocked") {
-      if (changes.status === "BLOCKED" || blockerNote.trim() !== task.blockerNote) {
-        changes.blockerNote = blockerNote.trim();
-      }
-    }
-    if (status === "Done") {
-      const contribution = {};
-      if (completionNote.trim()) {
-        contribution.completionNote = completionNote.trim();
-      }
-      if (artifactUrl.trim()) {
-        contribution.artifactUrl = artifactUrl.trim();
-      }
-      if (Object.keys(contribution).length > 0) {
-        contribution.title = (task.title || "").slice(0, 200);
-        changes.contribution = contribution;
-      }
-    }
-
-    if (Object.keys(changes).length === 0) {
-      setSuccessMessage("");
-      setNoChangesNotice(true);
-      setStatusError("");
-      return;
-    }
+    const savingToDone = status === "Done" && task.status !== "Done";
 
     setStatusSaving(true);
     setStatusError("");
     setSuccessMessage("");
     setNoChangesNotice(false);
+    setFileError("");
     try {
+      let fileUrl = uploadedFileUrl;
+      let fileType = uploadedFileType;
+
+      if (savingToDone && evidenceFile && !fileUrl) {
+        setFileUploading(true);
+        try {
+          fileUrl = await uploadEvidenceFile(evidenceFile);
+          fileType = typeFromFile(evidenceFile);
+          setUploadedFileUrl(fileUrl);
+          setUploadedFileType(fileType);
+        } catch (error) {
+          setFileError(
+            getErrorMessage(error, { fallback: "File could not be uploaded." }),
+          );
+          return;
+        } finally {
+          setFileUploading(false);
+        }
+      }
+
+      const changes = {};
+      if (status !== task.status) {
+        changes.status = getTaskApiStatus(status);
+      }
+      if (status === "Blocked") {
+        if (
+          changes.status === "BLOCKED" ||
+          blockerNote.trim() !== task.blockerNote
+        ) {
+          changes.blockerNote = blockerNote.trim();
+        }
+      }
+      // GAP: a contribution is only sent when this save moves the task to Done.
+      // Resending one for an already Done task depends on the backend PATCH
+      // behaviour and may create a duplicate contribution row.
+      if (savingToDone) {
+        const contribution = {};
+        if (completionNote.trim()) {
+          contribution.completionNote = completionNote.trim();
+        }
+        if (artifactUrl.trim()) {
+          contribution.artifactUrl = artifactUrl.trim();
+        }
+        if (fileUrl) {
+          contribution.fileUrl = fileUrl;
+          contribution.fileType = fileType || "DOCUMENT";
+        }
+        if (Object.keys(contribution).length > 0) {
+          contribution.title = (task.title || "").slice(0, 200);
+          changes.contribution = contribution;
+        }
+      }
+
+      if (Object.keys(changes).length === 0) {
+        setNoChangesNotice(true);
+        return;
+      }
+
       await updateProjectTask(projectId, taskId, changes);
       const updatedTask = await getProjectTask(projectId, taskId, {
         memberships: project.memberships,
@@ -367,6 +448,7 @@ function TaskDetail() {
       setBlockerNote(updatedTask.blockerNote);
       setCompletionNote("");
       setArtifactUrl("");
+      clearFileSelection();
       setTaskState({
         projectId,
         taskId,
@@ -627,6 +709,7 @@ function TaskDetail() {
           setBlockerNote(updatedTask.blockerNote);
           setCompletionNote("");
           setArtifactUrl("");
+          clearFileSelection();
           setStatusError("");
           setSuccessMessage("");
           setNoChangesNotice(false);
@@ -776,6 +859,7 @@ function TaskDetail() {
             options={taskStatusOptions}
             onChange={(event) => {
               setStatus(event.target.value);
+              if (event.target.value !== "Done") clearFileSelection();
               setStatusError("");
               setSuccessMessage("");
               setNoChangesNotice(false);
@@ -809,9 +893,56 @@ function TaskDetail() {
                 }}
                 placeholder="https://example.org"
               />
-              <Button type="button" variant="secondary" fullWidth disabled>
-                File attachments not available yet
-              </Button>
+              {task.status !== "Done" && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className={styles.hiddenInput}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    onChange={handleFilePicked}
+                  />
+                  {evidenceFile ? (
+                    <div className={styles.fileRow}>
+                      <span className={styles.fileName}>
+                        {evidenceFile.name}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.removeFile}
+                        disabled={fileUploading || statusSaving}
+                        onClick={removeFile}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      fullWidth
+                      disabled={fileUploading || statusSaving}
+                      onClick={openFilePicker}
+                    >
+                      Choose file
+                    </Button>
+                  )}
+                  {uploadedFileUrl && !fileUploading && (
+                    <p className={styles.metaLine}>
+                      File uploaded. It is saved with this task status.
+                    </p>
+                  )}
+                  {fileError && (
+                    <Alert variant="error" title="File could not be uploaded">
+                      {fileError}
+                    </Alert>
+                  )}
+                  <p className={styles.metaLine}>
+                    Files up to 10 MB. Images, PDF, docs and zip are accepted.
+                  </p>
+                </>
+              )}
               <Input
                 label="Completion note"
                 multiline
@@ -824,8 +955,7 @@ function TaskDetail() {
                 }}
               />
               <p className={styles.metaLine}>
-                Completion notes and links are optional. Attachments are not
-                wired yet.
+                Completion notes, links and files are optional.
               </p>
             </>
           )}
