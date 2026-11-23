@@ -192,6 +192,16 @@ function PrivateProjectPage() {
 
       <div className={`${styles.column} ${styles.below}`}>
         <DeliverablesCard deliverables={deliverables} />
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              navigate(`/projects/${projectId}/workspace/contributions`)
+            }
+          >
+            My contribution
+          </Button>
+        </div>
         <ContributionsSection
           contributions={contributions}
           taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}

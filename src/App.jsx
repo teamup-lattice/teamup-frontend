@@ -64,9 +64,7 @@ function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route
             path="/sharing-privacy"
-            element={
-              <Navigate to="/projects/1/workspace/sharing-privacy" replace />
-            }
+            element={<Navigate to="/projects" replace />}
           />
           <Route
             path="/settings/account-deletion"

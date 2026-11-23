@@ -178,6 +178,7 @@ function ProjectCompletion() {
     setCompleteStatus("completing");
     try {
       await completeProject(projectId, outcome);
+      retryWorkspace();
       setResult({ visibility: VISIBILITY, audience: AUDIENCE });
       setCompleteStatus("idle");
     } catch (error) {
