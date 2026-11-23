@@ -5,6 +5,7 @@ import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import { saveOwnReview } from "../../../../services/contributionsService";
 import DoneTaskList from "../../shared/DoneTaskList";
+import StatusTag, { getContributionStatusLabel } from "../../shared/StatusTag";
 import { useContribution } from "../../shared/useContribution";
 import { useContributionContext } from "../../shared/useContributionContext";
 import { useSimulate } from "../../useSimulate";
@@ -179,10 +180,6 @@ function ContributionSummary() {
     );
   }
 
-  const statusLabel = isReviewed
-      ? `Reviewed${SEP}Awaiting ${data.reviewer}`
-      : "Not reviewed yet";
-
   return (
     <div>
       <h2 className={shared.title}>My contribution summary</h2>
@@ -196,7 +193,12 @@ function ContributionSummary() {
 
       {!isConfirmed && (
         <p className={styles.statusRow}>
-          <span className={styles.chip}>{statusLabel}</span>
+          <StatusTag
+            status={getContributionStatusLabel({
+              status: isConfirmed ? "CONFIRMED" : "PENDING_REVIEW",
+              reviews,
+            })}
+          />
         </p>
       )}
 

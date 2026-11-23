@@ -4,7 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import Textarea from "../../../../components/Textarea";
-import StatusTag from "../../shared/StatusTag";
+import StatusTag, { getContributionStatusLabel } from "../../shared/StatusTag";
 import {
   getProjectContributions,
   reviewContribution,
@@ -88,21 +88,32 @@ function TeammateConfirmation() {
   const completionPath = `${workspacePath}/completion${search}`;
   const title = `Review ${memberName}${APOS}s contributions`;
 
-  async function handleConfirm(contributionId) {
+  async function handleConfirm(contributionId, authorName) {
     setActionStatus((prev) => ({ ...prev, [contributionId]: "confirming" }));
     setActionError((prev) => ({ ...prev, [contributionId]: "" }));
     try {
-      await reviewContribution(projectId, contributionId, {
-        decision: "CONFIRMED",
-      });
+      await reviewContribution(
+        projectId,
+        contributionId,
+        {
+          decision: "CONFIRMED",
+        },
+        { authorName },
+      );
       await fetchContributions();
       setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
     } catch (err) {
       console.error("Failed to confirm contribution:", err);
+      const isNotAck =
+        err?.status === 409 &&
+        (err.message?.toLowerCase().includes("not acknowledged") ||
+          err.message?.toLowerCase().includes("has not acknowledged") ||
+          err.code === "NOT_ACKNOWLEDGED");
       setActionError((prev) => ({
         ...prev,
-        [contributionId]:
-          err.message || "Couldn't confirm contribution. Please try again.",
+        [contributionId]: isNotAck
+          ? `Waiting for ${authorName} to acknowledge this summary`
+          : err.message || "Couldn't confirm contribution. Please try again.",
       }));
       setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
       if (err?.status === 409) {
@@ -111,7 +122,7 @@ function TeammateConfirmation() {
     }
   }
 
-  async function handleRequestChangesSubmit(contributionId) {
+  async function handleRequestChangesSubmit(contributionId, authorName) {
     const note = (requestNotes[contributionId] || "").trim();
     if (!note) {
       setRequestNoteErrors((prev) => ({
@@ -131,20 +142,31 @@ function TeammateConfirmation() {
     setActionStatus((prev) => ({ ...prev, [contributionId]: "requesting" }));
     setActionError((prev) => ({ ...prev, [contributionId]: "" }));
     try {
-      await reviewContribution(projectId, contributionId, {
-        decision: "CHANGES_REQUESTED",
-        note,
-      });
+      await reviewContribution(
+        projectId,
+        contributionId,
+        {
+          decision: "CHANGES_REQUESTED",
+          note,
+        },
+        { authorName },
+      );
       setOpenRequestId(null);
       setRequestNotes((prev) => ({ ...prev, [contributionId]: "" }));
       await fetchContributions();
       setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
     } catch (err) {
       console.error("Failed to request changes:", err);
+      const isNotAck =
+        err?.status === 409 &&
+        (err.message?.toLowerCase().includes("not acknowledged") ||
+          err.message?.toLowerCase().includes("has not acknowledged") ||
+          err.code === "NOT_ACKNOWLEDGED");
       setActionError((prev) => ({
         ...prev,
-        [contributionId]:
-          err.message || "Couldn't submit changes request. Please try again.",
+        [contributionId]: isNotAck
+          ? `Waiting for ${authorName} to acknowledge this summary`
+          : err.message || "Couldn't submit changes request. Please try again.",
       }));
       setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
       if (err?.status === 409) {
@@ -225,6 +247,14 @@ function TeammateConfirmation() {
                 Boolean(currentUserId) &&
                 String(authorUserId) === String(currentUserId);
               const canReview = isOwnerOrManager && !isAuthor;
+              const authorName =
+                contribution.member?.user?.name ||
+                contribution.member?.name ||
+                memberName;
+              const isAcknowledged =
+                contribution.memberAcknowledgedAt !== null &&
+                contribution.memberAcknowledgedAt !== undefined &&
+                contribution.memberAcknowledgedAt !== "";
               const isBusy = Boolean(actionStatus[contribution.id]);
               const buttonsDisabled = isConfirmed || isBusy;
 
@@ -249,9 +279,9 @@ function TeammateConfirmation() {
                     <h3 className={shared.cardTitle}>
                       {contribution.title || "Untitled contribution"}
                     </h3>
-                    {contribution.status && (
-                      <StatusTag status={contribution.status} />
-                    )}
+                    <StatusTag
+                      status={getContributionStatusLabel(contribution)}
+                    />
                   </div>
 
                   {contribution.description && (
@@ -316,7 +346,11 @@ function TeammateConfirmation() {
                               {rev.reviewer?.name || "A teammate"}
                             </strong>
                             <span className={styles.reviewDecision}>
-                              {rev.decision}
+                              {rev.decision === "CONFIRMED"
+                                ? "Confirmed"
+                                : rev.decision === "CHANGES_REQUESTED"
+                                  ? "Changes requested"
+                                  : rev.decision}
                             </span>
                             {rev.createdAt && (
                               <span>{formatDate(rev.createdAt)}</span>
@@ -341,13 +375,17 @@ function TeammateConfirmation() {
                     </div>
                   )}
 
-                  {canReview ? (
+                  {!isAcknowledged ? (
+                    <p className={shared.small}>
+                      Waiting for {authorName} to acknowledge this summary
+                    </p>
+                  ) : canReview ? (
                     <div className={styles.actions}>
                       <Button
                         disabled={buttonsDisabled}
                         loading={actionStatus[contribution.id] === "confirming"}
                         loadingText="Confirming…"
-                        onClick={() => handleConfirm(contribution.id)}
+                        onClick={() => handleConfirm(contribution.id, authorName)}
                       >
                         Confirm
                       </Button>
@@ -369,11 +407,11 @@ function TeammateConfirmation() {
                     </p>
                   )}
 
-                  {canReview && isRequestFormOpen && (
+                  {canReview && isAcknowledged && isRequestFormOpen && (
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        handleRequestChangesSubmit(contribution.id);
+                        handleRequestChangesSubmit(contribution.id, authorName);
                       }}
                       className={styles.formStack}
                       style={{ marginTop: "1rem" }}

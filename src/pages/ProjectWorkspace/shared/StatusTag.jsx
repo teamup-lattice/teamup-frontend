@@ -1,5 +1,32 @@
 import styles from "./StatusTag.module.css";
 
+// Returns a human-readable label for a contribution based on its latest review.
+// Latest review (by createdAt) wins: CHANGES_REQUESTED → "Changes requested",
+// CONFIRMED → "Confirmed", anything else → "Pending review".
+// eslint-disable-next-line react-refresh/only-export-components
+export function getContributionStatusLabel(contribution) {
+  if (!contribution) return "Pending review";
+  const reviews = Array.isArray(contribution.reviews)
+    ? contribution.reviews
+    : [];
+  const latest = [...reviews].sort((a, b) => {
+    const aTime = Date.parse(a.createdAt);
+    const bTime = Date.parse(b.createdAt);
+    return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+  })[0] ?? null;
+
+  if (
+    latest?.decision === "CHANGES_REQUESTED" ||
+    (!latest && contribution.status === "CHANGES_REQUESTED")
+  ) {
+    return "Changes requested";
+  }
+  if (latest?.decision === "CONFIRMED" || contribution.status === "CONFIRMED") {
+    return "Confirmed";
+  }
+  return "Pending review";
+}
+
 function StatusTag({ status, overdueDays = 0, className = "" }) {
   const classes = [styles.tag, styles[statusToVariant(status)], className]
     .filter(Boolean)
@@ -71,6 +98,7 @@ function StatusTag({ status, overdueDays = 0, className = "" }) {
 function statusToVariant(status) {
   switch (status) {
     case "Done":
+    case "Confirmed":
       return "done";
     case "Blocked":
       return "blocked";
@@ -81,6 +109,10 @@ function statusToVariant(status) {
       return "inProgress";
     case "To do":
       return "toDo";
+    case "Changes requested":
+      return "overdue";
+    case "Pending review":
+      return "neutral";
     default:
       return "neutral";
   }

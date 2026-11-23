@@ -90,9 +90,10 @@ function mapContribution(contribution) {
         ? contribution.confirmedAt
         : "",
     memberAcknowledgedAt:
-      typeof contribution.memberAcknowledgedAt === "string"
+      typeof contribution.memberAcknowledgedAt === "string" &&
+      contribution.memberAcknowledgedAt
         ? contribution.memberAcknowledgedAt
-        : "",
+        : null,
     createdAt:
       typeof contribution.createdAt === "string"
         ? contribution.createdAt
@@ -395,7 +396,7 @@ export async function reviewContribution(
   projectId,
   contributionId,
   { decision, note } = {},
-  { simulateFail = false } = {},
+  { simulateFail = false, authorName = "" } = {},
 ) {
   if (simulateFail) throw new Error("Request failed");
   if (!contributionId) throw new Error("Contribution is missing an id.");
@@ -420,6 +421,29 @@ export async function reviewContribution(
       throw friendlyError;
     }
     if (error?.status === 409) {
+      const msg = typeof error?.message === "string" ? error.message : "";
+      const text = `${error?.code || ""} ${msg}`.toLowerCase();
+      if (
+        text.includes("has not acknowledged") ||
+        text.includes("not acknowledged") ||
+        text.includes("not yet acknowledged") ||
+        error?.code === "NOT_ACKNOWLEDGED"
+      ) {
+        const match = msg.match(
+          /(?:Member|User)?\s*([A-Za-z0-9_-]+)\s+has not acknowledged/i,
+        );
+        const name =
+          authorName ||
+          error?.authorName ||
+          error?.data?.authorName ||
+          (match ? match[1] : null) ||
+          "the author";
+        const friendlyError = new Error(
+          `Waiting for ${name} to acknowledge this summary`,
+        );
+        friendlyError.status = 409;
+        throw friendlyError;
+      }
       const friendlyError = new Error(
         "This contribution was already reviewed. Please refetch to see latest updates.",
       );
