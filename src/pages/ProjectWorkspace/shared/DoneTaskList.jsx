@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { SEP, formatDate } from "../workspaceFormat";
+import { SEP, formatDate, isValidDate } from "../workspaceFormat";
 import shared from "../screens/shared.module.css";
 import styles from "./DoneTaskList.module.css";
 
@@ -26,6 +26,9 @@ function DoneTaskList({ tasks, taskPath }) {
               Due: {task.dueDate ? formatDate(task.dueDate) : "No due date"}
               {task.milestoneName ? `${SEP}${task.milestoneName}` : ""}
             </p>
+            {isValidDate(task.completedAt) && (
+              <p className={styles.meta}>Completed {formatDate(task.completedAt)}</p>
+            )}
           </article>
           <Link
             to={taskPath(task.id)}

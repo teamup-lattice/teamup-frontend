@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
@@ -13,7 +13,7 @@ import shared from "../shared.module.css";
 import ReviewCard from "./ReviewCard";
 import styles from "./ContributionSummary.module.css";
 
-const LOAD_VARIANTS = ["loadfail", "empty", "reviewed", "confirmed"];
+const LOAD_VARIANTS = ["loadfail", "empty"];
 
 // "My contribution summary": a member reviews the wording of their own
 // contribution (built from their saved Done tasks) and saves it as Reviewed.
@@ -48,6 +48,7 @@ function ContributionSummary() {
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
   const [justSaved, setJustSaved] = useState(false);
   const [formVersion, setFormVersion] = useState(0);
+  const savingRef = useRef(false);
   // In dev, ?simulate=fail makes the FIRST save fail so the retry path can be
   // tried; the next attempt succeeds. A state initialiser keeps it per visit.
   const [failNextSave, setFailNextSave] = useState(simulate === "fail");
@@ -56,12 +57,17 @@ function ContributionSummary() {
   const completionPath = `${workspacePath}/completion${search}`;
 
   async function handleSave(review) {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaveStatus("saving");
     setJustSaved(false);
     const shouldFail = failNextSave;
     setFailNextSave(false);
     try {
-      const saved = await saveOwnReview(projectId, me.id, review, { simulateFail: shouldFail });
+      const saved = await saveOwnReview(projectId, me.id, review, {
+        simulateFail: shouldFail,
+        existingId: data.contributionId,
+      });
       update(saved);
       setFormVersion((version) => version + 1);
       setSaveStatus("idle");
@@ -69,6 +75,7 @@ function ContributionSummary() {
     } catch (saveError) {
       console.error("Failed to save own review:", saveError);
       setSaveStatus("error");
+      savingRef.current = false;
     }
   }
 
@@ -98,8 +105,14 @@ function ContributionSummary() {
   }
 
   const taskCount = data.tasks.length;
-  const isReviewed = Boolean(data.reviewedOn);
+  const isReviewed = Boolean(
+    data.reviewedOn || data.acknowledged || data.memberAcknowledgedAt,
+  );
   const isConfirmed = Boolean(data.confirmedBy);
+  // GAP: there is no edit endpoint. Once saved and acknowledged the wording is
+  // read-only; editing waits for a backend PATCH.
+  const isLocked = isConfirmed || isReviewed;
+  const lockedReason = isConfirmed ? "confirmed" : "reviewed";
 
   if (taskCount === 0) {
     return (
@@ -168,7 +181,8 @@ function ContributionSummary() {
           <ReviewCard
             key={formVersion}
             saved={{ summary: data.summary, note: data.note }}
-            locked={isConfirmed}
+            locked={isLocked}
+            lockedReason={lockedReason}
             taskCount={taskCount}
             reviewer={data.reviewer}
             status={saveStatus}

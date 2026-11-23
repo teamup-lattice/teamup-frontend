@@ -31,7 +31,7 @@ import {
 import { SEP } from "../../workspaceFormat";
 import styles from "./ProjectCompletion.module.css";
 
-const LOAD_VARIANTS = ["eligible", "loadfail"];
+const LOAD_VARIANTS = ["loadfail"];
 
 function completionErrorMessage(error) {
   if (error?.status === 409) {
@@ -52,10 +52,13 @@ function ProjectCompletion() {
     isOwner,
     currentUser,
     project: workspaceProject,
+    members,
     milestones,
     tasks,
     workspaceLoading,
     workspaceError,
+    membersLoading,
+    membersError,
     milestonesLoading,
     milestonesError,
     tasksLoading,
@@ -86,7 +89,7 @@ function ProjectCompletion() {
   useEffect(() => {
     let isCurrent = true;
     Promise.all([
-      getCompletion(projectId, { variant }),
+      getCompletion(projectId, { variant, members, tasks }),
       getProjectEvidence(projectId),
     ])
       .then(([completion, deliverables]) => {
@@ -113,7 +116,7 @@ function ProjectCompletion() {
     return () => {
       isCurrent = false;
     };
-  }, [projectId, variant, requestKey]);
+  }, [projectId, variant, requestKey, members, tasks]);
 
   const hasContextProject =
     !workspaceLoading &&
@@ -121,17 +124,20 @@ function ProjectCompletion() {
     workspaceProject.id != null &&
     workspaceProject.id !== "";
   const savedWorkLoading = milestonesLoading || tasksLoading;
-  const loadError = workspaceError || milestonesError || tasksError || loaded.error;
+  const loadError =
+    workspaceError || membersError || milestonesError || tasksError || loaded.error;
 
   const retryLoad = () => {
     setAttempt((count) => count + 1);
     if (workspaceError) retryWorkspace();
+    if (membersError) retryWorkspace();
     if (milestonesError) retryMilestones();
     if (tasksError) retryTasks();
   };
   const isLoading =
     loaded.key !== requestKey ||
     (!workspaceError && !hasContextProject) ||
+    membersLoading ||
     savedWorkLoading;
   const data = isLoading ? null : loaded.data;
 

@@ -13,7 +13,7 @@ import { APOS } from "../ProjectCompletion/completionHelpers";
 import shared from "../shared.module.css";
 import styles from "./TeammateConfirmation.module.css";
 
-const LOAD_VARIANTS = ["loadfail", "empty", "reviewed", "notreviewed", "confirmed"];
+const LOAD_VARIANTS = ["loadfail", "empty"];
 
 // "Review David's contribution": the assigned teammate checks a member's
 // reviewed contribution wording against their saved Done tasks and confirms
@@ -66,7 +66,7 @@ function TeammateConfirmation() {
     const shouldFail = failNext;
     setFailNext(false);
     try {
-      const saved = await confirmContribution(projectId, member.id, me, {
+      const saved = await confirmContribution(projectId, data.contributionId, {
         simulateFail: shouldFail,
       });
       update(saved);
@@ -124,11 +124,18 @@ function TeammateConfirmation() {
 
   const taskCount = data.tasks.length;
   const isConfirmed = Boolean(data.confirmedBy);
-  const isReviewed = Boolean(data.reviewedOn);
+  const isReviewed = Boolean(
+    data.reviewedOn || data.acknowledged || data.memberAcknowledgedAt,
+  );
   const isOwnContribution = data.memberId === me.id;
   const isAssignedReviewer = data.reviewerId === me.id;
   const canConfirm =
-    !isOwnContribution && isAssignedReviewer && isReviewed && !isConfirmed && taskCount > 0;
+    !isOwnContribution &&
+    isAssignedReviewer &&
+    isReviewed &&
+    !isConfirmed &&
+    taskCount > 0 &&
+    Boolean(data.contributionId);
 
   const confirmedCount = data.team.confirmedOthers + (isConfirmed ? 1 : 0);
   const allConfirmed = confirmedCount === data.team.total;
