@@ -222,7 +222,10 @@ function submittedTime(contribution) {
 export function findLatestContribution(contributions, userId) {
   return (
     contributions
-      .filter((item) => String(item.member.userId) === String(userId))
+      .filter(
+        (item) =>
+          item.task === null && String(item.member.userId) === String(userId),
+      )
       .sort((a, b) => submittedTime(b) - submittedTime(a))[0] ?? null
   );
 }
@@ -280,6 +283,9 @@ export async function getContribution(projectId, input, { variant = null } = {})
     summary: current?.title ?? draftSummary(tasks),
     note: current?.description ?? "",
     tasks,
+    acknowledged:
+      Boolean(current?.memberAcknowledgedAt) ||
+      current?.status === "ACKNOWLEDGED",
     reviewedOn: toDateOnly(current?.memberAcknowledgedAt),
     confirmedBy: isConfirmed
       ? confirmedReview?.reviewer?.name || "A teammate"
@@ -302,12 +308,13 @@ export async function saveOwnReview(
   projectId,
   memberId,
   review,
-  { simulateFail = false } = {},
+  { simulateFail = false, existingId = null } = {},
 ) {
   if (simulateFail) throw new Error("Request failed");
 
   const key = contributionKey(projectId, memberId);
-  let contributionId = pendingAcknowledges.get(key) ?? null;
+  let contributionId =
+    existingId ?? pendingAcknowledges.get(key) ?? null;
 
   if (!contributionId) {
     const body = { title: review.summary };
@@ -329,16 +336,18 @@ export async function saveOwnReview(
   );
   pendingAcknowledges.delete(key);
   const contribution = acknowledged?.contribution ?? acknowledged;
+  const memberAcknowledgedAt =
+    typeof contribution?.memberAcknowledgedAt === "string"
+      ? contribution.memberAcknowledgedAt
+      : "";
 
   return {
     contributionId,
     summary: review.summary,
     note: review.note,
-    reviewedOn: toDateOnly(contribution?.memberAcknowledgedAt) || today(),
-    memberAcknowledgedAt:
-      typeof contribution?.memberAcknowledgedAt === "string"
-        ? contribution.memberAcknowledgedAt
-        : "",
+    acknowledged: true,
+    reviewedOn: toDateOnly(memberAcknowledgedAt) || today(),
+    memberAcknowledgedAt,
   };
 }
 
