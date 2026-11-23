@@ -159,6 +159,10 @@ function mapSummaryContribution(contribution) {
         ? contribution.confirmedAt
         : "",
     member: {
+      id:
+        typeof member?.id === "string" || typeof member?.id === "number"
+          ? String(member.id)
+          : "",
       userId:
         typeof user?.id === "string" || typeof user?.id === "number"
           ? String(user.id)

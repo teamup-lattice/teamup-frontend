@@ -173,6 +173,36 @@ function mapTask(taskData, memberships = [], milestones = []) {
   };
 }
 
+function fileNameFromUrl(url) {
+  if (!url) return "";
+  try {
+    const { pathname } = new URL(url);
+    const segment = pathname.split("/").filter(Boolean).pop() || "";
+    return decodeURIComponent(segment);
+  } catch {
+    return "";
+  }
+}
+
+function mapEvidenceItem(item) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+  const url = normalizeHttpUrl(item.url);
+  const title = typeof item.title === "string" ? item.title.trim() : "";
+  if (!title && !url) return null;
+
+  return {
+    id:
+      typeof item.id === "string" || typeof item.id === "number"
+        ? String(item.id)
+        : "",
+    title,
+    name: title || fileNameFromUrl(url) || url,
+    url,
+    type: typeof item.type === "string" ? item.type : "",
+  };
+}
+
 function mapContribution(contribution) {
   if (
     !contribution ||
@@ -199,7 +229,7 @@ function mapContribution(contribution) {
     fileType:
       typeof contribution.fileType === "string" ? contribution.fileType : "",
     evidence: Array.isArray(contribution.evidence)
-      ? contribution.evidence
+      ? contribution.evidence.map(mapEvidenceItem).filter(Boolean)
       : [],
   };
 }
