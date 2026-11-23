@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { normalizeHttpUrl } from "./evidenceService";
 
 const API_TO_UI_STATUS = {
   TODO: "To do",
@@ -193,12 +194,8 @@ function mapContribution(contribution) {
       typeof contribution.completionNote === "string"
         ? contribution.completionNote
         : "",
-    artifactUrl:
-      typeof contribution.artifactUrl === "string"
-        ? contribution.artifactUrl
-        : "",
-    fileUrl:
-      typeof contribution.fileUrl === "string" ? contribution.fileUrl : "",
+    artifactUrl: normalizeHttpUrl(contribution.artifactUrl),
+    fileUrl: normalizeHttpUrl(contribution.fileUrl),
     fileType:
       typeof contribution.fileType === "string" ? contribution.fileType : "",
     evidence: Array.isArray(contribution.evidence)
