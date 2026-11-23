@@ -134,6 +134,7 @@ function ReviewCard({
           type="submit"
           loading={isSaving}
           loadingText="Saving…"
+          disabled={isSaving}
         >
           {hasError ? "Retry save" : "Save as Reviewed"}
         </Button>

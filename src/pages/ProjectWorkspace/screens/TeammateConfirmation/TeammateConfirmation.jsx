@@ -124,7 +124,9 @@ function TeammateConfirmation() {
 
   const taskCount = data.tasks.length;
   const isConfirmed = Boolean(data.confirmedBy);
-  const isReviewed = Boolean(data.reviewedOn);
+  const isReviewed = Boolean(
+    data.reviewedOn || data.acknowledged || data.memberAcknowledgedAt,
+  );
   const isOwnContribution = data.memberId === me.id;
   const isAssignedReviewer = data.reviewerId === me.id;
   const canConfirm =
