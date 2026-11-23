@@ -76,5 +76,14 @@ export function useContributionContext() {
     [tasks],
   );
 
-  return { loading, members, tasks, me, ownerName, doneTasksOf };
+  return {
+    loading,
+    members,
+    tasks,
+    me,
+    ownerName,
+    doneTasksOf,
+    isOwner: workspace.isOwner,
+    canManageMembers: workspace.canManageMembers,
+  };
 }

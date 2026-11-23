@@ -22,12 +22,13 @@ const LOAD_VARIANTS = ["loadfail", "empty"];
 // "Review Teammate's contribution": lists all of a teammate's contributions,
 // each as its own card with details, reviews, and Confirm / Request changes actions.
 function TeammateConfirmation() {
-  const { loading, members, me, doneTasksOf } = useContributionContext();
+  const { loading, members, me, doneTasksOf, isOwner, canManageMembers } = useContributionContext();
   const { projectId, member: memberParam } = useParams();
   const { search } = useLocation();
   const navigate = useNavigate();
   const simulate = useSimulate();
   const variant = LOAD_VARIANTS.includes(simulate) ? simulate : null;
+  const isOwnerOrManager = Boolean(isOwner || canManageMembers);
 
   // The route param is member.user.id (fallback to id or name for robustness).
   const member = members.find(
@@ -223,8 +224,9 @@ function TeammateConfirmation() {
               const isAuthor =
                 Boolean(currentUserId) &&
                 String(authorUserId) === String(currentUserId);
+              const canReview = isOwnerOrManager && !isAuthor;
               const isBusy = Boolean(actionStatus[contribution.id]);
-              const buttonsDisabled = isConfirmed || isAuthor || isBusy;
+              const buttonsDisabled = isConfirmed || isBusy;
 
               const sortedReviews = [
                 ...(Array.isArray(contribution.reviews)
@@ -339,35 +341,35 @@ function TeammateConfirmation() {
                     </div>
                   )}
 
-                  {isAuthor && (
+                  {canReview ? (
+                    <div className={styles.actions}>
+                      <Button
+                        disabled={buttonsDisabled}
+                        loading={actionStatus[contribution.id] === "confirming"}
+                        loadingText="Confirming…"
+                        onClick={() => handleConfirm(contribution.id)}
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={buttonsDisabled}
+                        onClick={() =>
+                          setOpenRequestId((curr) =>
+                            curr === contribution.id ? null : contribution.id,
+                          )
+                        }
+                      >
+                        Request changes
+                      </Button>
+                    </div>
+                  ) : (
                     <p className={shared.small}>
-                      You cannot review your own contribution.
+                      Only the project owner or a manager can review contributions.
                     </p>
                   )}
 
-                  <div className={styles.actions}>
-                    <Button
-                      disabled={buttonsDisabled}
-                      loading={actionStatus[contribution.id] === "confirming"}
-                      loadingText="Confirming…"
-                      onClick={() => handleConfirm(contribution.id)}
-                    >
-                      Confirm
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      disabled={buttonsDisabled}
-                      onClick={() =>
-                        setOpenRequestId((curr) =>
-                          curr === contribution.id ? null : contribution.id,
-                        )
-                      }
-                    >
-                      Request changes
-                    </Button>
-                  </div>
-
-                  {isRequestFormOpen && (
+                  {canReview && isRequestFormOpen && (
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();

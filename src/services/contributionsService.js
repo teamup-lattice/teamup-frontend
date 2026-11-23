@@ -269,8 +269,15 @@ function latestReview(contribution, decision) {
   );
 }
 
-export function canReview(contribution, currentUserId) {
-  if (!contribution || !currentUserId) return false;
+export function canReview(
+  contribution,
+  currentUserId,
+  { isOwner = false, canManageMembers = false } = {},
+) {
+  if (!contribution) return false;
+  const isOwnerOrManager = Boolean(isOwner || canManageMembers);
+  if (!isOwnerOrManager) return false;
+  if (!currentUserId) return false;
   const authorUserId =
     contribution.member?.user?.id ??
     contribution.member?.userId ??
@@ -356,24 +363,31 @@ export async function saveOwnReview(
     pendingAcknowledges.set(key, contributionId);
   }
 
-  const acknowledged = await api.post(
-    `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/acknowledge`,
-  );
-  pendingAcknowledges.delete(key);
-  const contribution = acknowledged?.contribution ?? acknowledged;
-  const memberAcknowledgedAt =
-    typeof contribution?.memberAcknowledgedAt === "string"
-      ? contribution.memberAcknowledgedAt
-      : "";
+  try {
+    const acknowledged = await api.post(
+      `/api/projects/${encodeURIComponent(projectId)}/contributions/${encodeURIComponent(contributionId)}/acknowledge`,
+    );
+    pendingAcknowledges.delete(key);
+    const contribution = acknowledged?.contribution ?? acknowledged;
+    const memberAcknowledgedAt =
+      typeof contribution?.memberAcknowledgedAt === "string"
+        ? contribution.memberAcknowledgedAt
+        : "";
 
-  return {
-    contributionId,
-    summary: review.summary,
-    note: review.note,
-    acknowledged: true,
-    reviewedOn: toDateOnly(memberAcknowledgedAt) || today(),
-    memberAcknowledgedAt,
-  };
+    return {
+      contributionId,
+      summary: review.summary,
+      note: review.note,
+      acknowledged: true,
+      reviewedOn: toDateOnly(memberAcknowledgedAt) || today(),
+      memberAcknowledgedAt,
+    };
+  } catch (acknowledgeError) {
+    // If acknowledge fails after creation, preserve contributionId so retry re-acknowledges rather than re-creating.
+    pendingAcknowledges.set(key, contributionId);
+    acknowledgeError.contributionId = contributionId;
+    throw acknowledgeError;
+  }
 }
 
 // Submits a review decision (CONFIRMED or CHANGES_REQUESTED).
@@ -399,7 +413,9 @@ export async function reviewContribution(
     return mapContribution(response?.contribution ?? response);
   } catch (error) {
     if (error?.status === 403) {
-      const friendlyError = new Error("You can't review your own contribution.");
+      const friendlyError = new Error(
+        "Only the project owner or a manager can review contributions.",
+      );
       friendlyError.status = 403;
       throw friendlyError;
     }

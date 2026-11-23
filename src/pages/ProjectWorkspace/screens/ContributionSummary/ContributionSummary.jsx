@@ -46,6 +46,7 @@ function ContributionSummary() {
   });
 
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | error
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const [formVersion, setFormVersion] = useState(0);
   const savingRef = useRef(false);
@@ -60,6 +61,7 @@ function ContributionSummary() {
     if (savingRef.current) return;
     savingRef.current = true;
     setSaveStatus("saving");
+    setSaveErrorMessage("");
     setJustSaved(false);
     const shouldFail = failNextSave;
     setFailNextSave(false);
@@ -74,6 +76,10 @@ function ContributionSummary() {
       setJustSaved(true);
     } catch (saveError) {
       console.error("Failed to save own review:", saveError);
+      if (saveError?.contributionId) {
+        update({ contributionId: saveError.contributionId });
+      }
+      setSaveErrorMessage(saveError.message || "Couldn't save your review");
       setSaveStatus("error");
       savingRef.current = false;
     }
@@ -204,6 +210,7 @@ function ContributionSummary() {
             taskCount={taskCount}
             reviewer={data.reviewer}
             status={saveStatus}
+            errorMessage={saveErrorMessage}
             onSave={handleSave}
             onCancel={() => navigate(completionPath)}
           />
