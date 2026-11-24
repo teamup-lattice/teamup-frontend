@@ -29,9 +29,20 @@
 }
 
 .personText {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-regular);
+  display: flex;
+  flex-direction: column;
+  color: var(--color-navy);
+}
+
+.personName {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+}
+
+.personRole {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
   line-height: var(--line-height-text);
 }
 
@@ -39,7 +50,7 @@
   margin: 0 0 var(--space-4);
   color: var(--color-navy);
   font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
 }
 
@@ -59,6 +70,33 @@
   line-height: var(--line-height-text);
 }
 
+.skills {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.detail {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.detailLabel {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-bold);
+}
+
+.note {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+}
+
 .small {
   margin: 0 0 var(--space-3);
   color: var(--color-text-secondary);
@@ -70,7 +108,7 @@
 .helper {
   margin: 0 0 var(--space-4);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }

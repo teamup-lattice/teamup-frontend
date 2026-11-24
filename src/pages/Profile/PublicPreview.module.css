@@ -11,7 +11,7 @@
 
 .label {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-navy);
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-text);
@@ -21,22 +21,27 @@
   margin: 0;
   color: var(--color-navy);
   font-size: var(--font-size-title);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
 }
 
 .line {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
+  font-size: var(--font-size-body);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
+}
+
+.lineLabel {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-bold);
 }
 
 .helper {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }

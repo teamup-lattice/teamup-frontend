@@ -23,19 +23,34 @@ function PublicPreview({ visibility, profile }) {
           <h3 className={styles.heading}>
             {visibility.name ? profile.name : "Public profile"}
           </h3>
-          {roleAndLevel && <p className={styles.line}>{roleAndLevel}</p>}
-          {visibility.skills && (
-            <p className={styles.line}>{profile.skills.join(" · ")}</p>
+          {roleAndLevel && (
+            <p className={styles.line}>
+              <strong className={styles.lineLabel}>Role:</strong>{" "}
+              {roleAndLevel}
+            </p>
           )}
-          {visibility.goals && <p className={styles.line}>{profile.goals}</p>}
+          {visibility.skills && profile.skills.length > 0 && (
+            <p className={styles.line}>
+              <strong className={styles.lineLabel}>Skills:</strong>{" "}
+              {profile.skills.join(" · ")}
+            </p>
+          )}
+          {visibility.goals && profile.goals && (
+            <p className={styles.line}>
+              <strong className={styles.lineLabel}>Goal:</strong>{" "}
+              {profile.goals}
+            </p>
+          )}
           {visibility.availability && (
             <p className={styles.line}>
-              Availability: {profile.availabilityHours} hours/week
+              <strong className={styles.lineLabel}>Availability:</strong>{" "}
+              {profile.availabilityHours} hours/week
             </p>
           )}
           {visibility.duration && (
             <p className={styles.line}>
-              Preferred duration: {profile.durationWeeks} weeks
+              <strong className={styles.lineLabel}>Preferred duration:</strong>{" "}
+              {profile.durationWeeks} weeks
             </p>
           )}
           {!allPublic && (

@@ -21,29 +21,44 @@ export function ProfileDetailsCard({ profile }) {
           </span>
         )}
         <span className={styles.personText}>
-          {[name, profile.role].filter(Boolean).join(" · ")}
+          {name && <span className={styles.personName}>{name}</span>}
+          {profile.role && (
+            <span className={styles.personRole}>{profile.role}</span>
+          )}
         </span>
       </div>
       <h2 id="details-title" className={styles.title}>
         Your profile details
       </h2>
       {profile.skills.length > 0 && (
-        <p className={styles.body}>{profile.skills.join(" · ")}</p>
-      )}
-      {profile.skillLevel && (
-        <p className={styles.small}>
-          Skill level: {profile.skillLevel} · self-reported
+        <p className={styles.skills}>
+          <strong className={styles.detailLabel}>Skills:</strong>{" "}
+          {profile.skills.join(" · ")}
         </p>
       )}
-      {profile.goals && <p className={styles.body}>{profile.goals}</p>}
+      {profile.skillLevel && (
+        <p className={styles.detail}>
+          <strong className={styles.detailLabel}>Skill level:</strong>{" "}
+          {profile.skillLevel}{" "}
+          <span className={styles.note}>(self-reported)</span>
+        </p>
+      )}
+      {profile.goals && (
+        <p className={styles.body}>
+          <strong className={styles.detailLabel}>Goal:</strong>{" "}
+          {profile.goals}
+        </p>
+      )}
       {profile.availabilityHours != null && (
-        <p className={styles.small}>
-          Availability: {profile.availabilityHours} hours/week
+        <p className={styles.detail}>
+          <strong className={styles.detailLabel}>Availability:</strong>{" "}
+          {profile.availabilityHours} hours/week
         </p>
       )}
       {profile.durationWeeks != null && (
-        <p className={styles.small}>
-          Preferred duration: {profile.durationWeeks} weeks
+        <p className={styles.detail}>
+          <strong className={styles.detailLabel}>Preferred duration:</strong>{" "}
+          {profile.durationWeeks} weeks
         </p>
       )}
     </Card>
