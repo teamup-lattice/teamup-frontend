@@ -4,6 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { clearToken } from "../../services/api";
+import { getErrorMessage } from "../../services/errorMessage";
 import { getMyProjects } from "../../services/myProjectsService";
 import { deleteAccount } from "../../services/settingsService";
 import styles from "./Settings.module.css";
@@ -65,21 +66,49 @@ function AccountDeletion() {
       await deleteAccount();
       clearToken();
       sessionStorage.removeItem(DRAFT_BACKUP_KEY);
-      navigate("/", { replace: true });
+      navigate("/login", {
+        replace: true,
+        state: {
+          title: "Account deleted",
+          message: "Your account has been deleted.",
+          variant: "success",
+        },
+      });
     } catch (deleteError) {
       if (deleteError?.status === 401) {
         clearToken();
-        navigate("/login", { replace: true });
+        sessionStorage.removeItem(DRAFT_BACKUP_KEY);
+        navigate("/login", {
+          replace: true,
+          state: {
+            title: "Session expired",
+            message: "Your session expired. Please sign in again.",
+            variant: "error",
+          },
+        });
         return;
       }
       if (deleteError?.status === 404) {
         clearToken();
         sessionStorage.removeItem(DRAFT_BACKUP_KEY);
-        navigate("/", { replace: true });
+        navigate("/login", {
+          replace: true,
+          state: {
+            title: "Account not found",
+            message:
+              "We couldn't find your account. It may already have been deleted.",
+            variant: "error",
+          },
+        });
         return;
       }
       console.error("Failed to delete account:", deleteError);
-      setError("Couldn't delete your account. Check your connection and try again.");
+      setError(
+        getErrorMessage(deleteError, {
+          fallback: "Couldn't delete your account. Please try again.",
+        }),
+      );
+    } finally {
       setIsDeleting(false);
     }
   };

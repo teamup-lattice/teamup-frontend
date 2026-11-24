@@ -43,7 +43,14 @@ function refreshToken() {
   return refreshPromise;
 }
 
-async function request(method, path, body, isRetry = false, tokenOverride) {
+async function request(
+  method,
+  path,
+  body,
+  isRetry = false,
+  tokenOverride,
+  options = {},
+) {
   const headers = {};
   const token = tokenOverride ?? getToken();
   const isFormData =
@@ -83,6 +90,7 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
     if (
       response.status === 401 &&
       token &&
+      !options.skipAuthRefresh &&
       !path.startsWith("/api/auth/login") &&
       !path.startsWith("/api/auth/signup") &&
       !path.startsWith("/api/auth/refresh")
@@ -99,7 +107,7 @@ async function request(method, path, body, isRetry = false, tokenOverride) {
           error.status = 401;
           throw error;
         }
-        return request(method, path, body, true, newToken);
+        return request(method, path, body, true, newToken, options);
       }
     }
 
@@ -119,5 +127,6 @@ export const api = {
   post: (path, body) => request("POST", path, body),
   put: (path, body) => request("PUT", path, body),
   patch: (path, body) => request("PATCH", path, body),
-  delete: (path) => request("DELETE", path),
+  delete: (path, options) =>
+    request("DELETE", path, undefined, false, undefined, options),
 };

@@ -34,6 +34,19 @@ function Login() {
     location.state?.message === "Password changed, please sign in"
       ? location.state.message
       : "";
+  const stateNotice =
+    typeof location.state?.message === "string" && !passwordChangedMessage
+      ? {
+          title:
+            typeof location.state.title === "string" && location.state.title
+              ? location.state.title
+              : location.state.variant === "error"
+                ? "Please sign in"
+                : "Done",
+          message: location.state.message,
+          variant: location.state.variant === "error" ? "error" : "success",
+        }
+      : null;
   const redirectTo =
     typeof location.state?.from === "string" ? location.state.from : "";
   const [values, setValues] = useState({ email: "", password: "" });
@@ -140,6 +153,11 @@ function Login() {
       {passwordChangedMessage && (
         <Alert variant="success" title="Password changed">
           {passwordChangedMessage}
+        </Alert>
+      )}
+      {stateNotice && (
+        <Alert variant={stateNotice.variant} title={stateNotice.title}>
+          {stateNotice.message}
         </Alert>
       )}
       {status === "invalid" && (
