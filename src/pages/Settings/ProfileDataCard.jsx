@@ -136,6 +136,14 @@ function ProfileDataCard({ values, disabled, onChange }) {
               )}
             </div>
 
+            <p className={styles.avatarHelper}>Image types only, max 2MB.</p>
+
+            {uploadError && (
+              <p className={styles.avatarError} role="alert">
+                {uploadError}
+              </p>
+            )}
+
             {Boolean(avatarUrl) && isConfirmingRemove && (
               <div className={styles.removeConfirm}>
                 <p className={styles.removePrompt}>Remove your photo?</p>
@@ -168,16 +176,8 @@ function ProfileDataCard({ values, disabled, onChange }) {
                 )}
               </div>
             )}
-
-            <p className={styles.helper}>Image types only, max 2MB.</p>
           </div>
         </div>
-
-        {uploadError && (
-          <Alert variant="error" title="Photo upload error">
-            {uploadError}
-          </Alert>
-        )}
 
         <div>
           <Input
