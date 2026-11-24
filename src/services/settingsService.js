@@ -194,7 +194,8 @@ export async function saveSettings(
   return Promise.all(promises);
 }
 
-export const requestAccountDeletion = () => api.delete("/api/profile/users/me");
+export const deleteAccount = () =>
+  api.delete("/api/profile/users/me", { skipAuthRefresh: true });
 
 export async function uploadAvatar(file) {
   const formData = new FormData();
