@@ -8,7 +8,9 @@ function ProjectResultCard({ project }) {
 
   return (
     <article className={styles.card} aria-labelledby={titleId}>
-      <span className={styles.badge}>Open</span>
+      <span className={styles.badge}>
+        {project.roleStatus === "CLOSED" ? "Role closed" : "Open"}
+      </span>
       <h3 className={styles.title} id={titleId}>
         {project.title}
       </h3>
