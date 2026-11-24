@@ -25,6 +25,10 @@ function FilterSheet({
   const skillLabel =
     skillField?.options.find((option) => option.value === values.skill)?.label ??
     values.skill;
+  const roleField = fields.find((field) => field.key === "role");
+  const roleLabel =
+    roleField?.options.find((option) => option.value === values.role)?.label ??
+    values.role;
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -106,19 +110,34 @@ function FilterSheet({
             onRetrySkills={onRetrySkills}
           />
 
-          {values.skill && (
+          {(values.skill || values.role) && (
             <div className={styles.chips}>
-              <span className={styles.chip}>
-                {skillLabel}
-                <button
-                  type="button"
-                  className={styles.chipRemove}
-                  aria-label={`Remove ${skillLabel} filter`}
-                  onClick={() => onChange("skill", "")}
-                >
-                  Remove ×
-                </button>
-              </span>
+              {values.skill && (
+                <span className={styles.chip}>
+                  {skillLabel}
+                  <button
+                    type="button"
+                    className={styles.chipRemove}
+                    aria-label={`Remove ${skillLabel} filter`}
+                    onClick={() => onChange("skill", "")}
+                  >
+                    Remove ×
+                  </button>
+                </span>
+              )}
+              {values.role && (
+                <span className={styles.chip}>
+                  Role: {roleLabel}
+                  <button
+                    type="button"
+                    className={styles.chipRemove}
+                    aria-label={`Remove ${roleLabel} filter`}
+                    onClick={() => onChange("role", "")}
+                  >
+                    Remove ×
+                  </button>
+                </span>
+              )}
             </div>
           )}
 
