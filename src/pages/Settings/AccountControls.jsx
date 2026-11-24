@@ -13,8 +13,8 @@ function AccountControls() {
     try {
       await signOut();
     } catch (error) {
-      // signOut clears the local token even when the request fails.
-      console.error("Sign out request failed:", error);
+      // signOut clears the local token even when the sign-out call fails.
+      console.error("Sign out failed:", error);
     }
     navigate("/login");
   }
@@ -35,10 +35,10 @@ function AccountControls() {
           variant="danger"
           onClick={() => navigate("/settings/account-deletion")}
         >
-          Request account deletion
+          Delete account
         </Button>
         <p className={styles.helper}>
-          You&apos;ll review and confirm before a request is sent.
+          This happens immediately and can&apos;t be undone from the app.
         </p>
       </div>
 
