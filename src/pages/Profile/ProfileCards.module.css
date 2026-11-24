@@ -16,7 +16,7 @@
   background: var(--color-purple-light);
   color: var(--color-purple);
   font-size: var(--font-size-label);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .avatarImg {
@@ -31,21 +31,23 @@
 .personText {
   color: var(--color-text-secondary);
   font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
 }
 
 .title {
   margin: 0 0 var(--space-4);
   color: var(--color-navy);
-  font-size: calc(var(--font-size-body) * 1.25);
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-heading);
 }
 
 .projectTitle {
   margin: var(--space-3) 0;
   color: var(--color-navy);
-  font-size: calc(var(--font-size-body) * 1.25);
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-heading);
 }
 
@@ -53,6 +55,7 @@
   margin: 0 0 var(--space-3);
   color: var(--color-navy);
   font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }
 
@@ -60,6 +63,7 @@
   margin: 0 0 var(--space-3);
   color: var(--color-text-secondary);
   font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }
 
@@ -67,6 +71,7 @@
   margin: 0 0 var(--space-4);
   color: var(--color-text-secondary);
   font-size: var(--font-size-helper);
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }
 
@@ -90,8 +95,9 @@
 .emptyTitle {
   margin: 0 0 var(--space-3);
   color: var(--color-navy);
-  font-size: calc(var(--font-size-body) * 1.25);
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
 }
 
 .emptyAction {
