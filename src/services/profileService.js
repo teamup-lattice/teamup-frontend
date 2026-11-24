@@ -19,6 +19,7 @@ function mapVisibilitySettings(settings = {}) {
     goals: Boolean(visibility.showGoals),
     availability: Boolean(visibility.showAvailability),
     duration: Boolean(visibility.showPreferredDuration),
+    // GAP: completed-project display has no backend field; do not reuse showProfile.
     showProject: false,
   };
 }
@@ -38,6 +39,58 @@ function mapSkillLevel(skills) {
   return level.charAt(0).toUpperCase() + level.slice(1);
 }
 
+function completedProjectsPath(userId, page) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  return `/api/profile/users/${encodeURIComponent(userId)}/completed-projects?${params.toString()}`;
+}
+
+// GAP: the completed-projects item shape is not confirmed. Only id and title
+// are mapped; completion date, role/dates and contribution wording are left
+// empty until the backend documents them.
+function mapCompletedProject(item) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+  const id =
+    typeof item.id === "string" || typeof item.id === "number"
+      ? String(item.id)
+      : "";
+  const title = typeof item.title === "string" ? item.title : "";
+  if (!id && !title) return null;
+
+  return {
+    id,
+    title,
+    completedOn: "",
+    roleAndDates: "",
+    contribution: "",
+    pageTo: id ? `/projects/${id}/page` : "",
+  };
+}
+
+export async function getCompletedProjects(userId) {
+  const first = await api.get(completedProjectsPath(userId, 1));
+  if (!Array.isArray(first?.projects)) {
+    throw new Error("Completed projects response is missing projects.");
+  }
+
+  const projects = first.projects.map(mapCompletedProject).filter(Boolean);
+  const totalPages =
+    Number.isInteger(first?.pagination?.totalPages) &&
+    first.pagination.totalPages > 0
+      ? first.pagination.totalPages
+      : 1;
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const next = await api.get(completedProjectsPath(userId, page));
+    if (Array.isArray(next?.projects)) {
+      projects.push(...next.projects.map(mapCompletedProject).filter(Boolean));
+    }
+  }
+
+  return projects;
+}
+
 export async function getProfile() {
   const response = await fetchMyProfile();
   const user = response?.user;
@@ -53,7 +106,15 @@ export async function getProfile() {
     .map((entry) => entry?.skill?.id)
     .filter((id) => id !== undefined && id !== null);
 
+  const completedProjects = await getCompletedProjects(user.id).catch(
+    (error) => {
+      console.error("Failed to load completed projects:", error);
+      return [];
+    },
+  );
+
   return {
+    id: user.id,
     name: user.name ?? "",
     role: user.headline ?? "",
     avatarUrl: user.avatarUrl ?? "",
@@ -64,7 +125,7 @@ export async function getProfile() {
     availabilityHours: user.weeklyAvailabilityHours ?? null,
     durationWeeks: user.preferredProjectDurationWeeks ?? null,
     email: user.email ?? "",
-    completedProjects: [],
+    completedProjects,
     visibilitySettings: mapVisibilitySettings(user.visibilitySettings),
   };
 }

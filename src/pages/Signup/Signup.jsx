@@ -4,6 +4,10 @@ import AuthLayout from "../../layouts/AuthLayout";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { signUp } from "../../services/authService";
+import {
+  getErrorMessage,
+  getFieldErrors,
+} from "../../services/errorMessage";
 import styles from "./Signup.module.css";
 import AltLink from "../../components/AltLink";
 
@@ -38,6 +42,7 @@ function Signup() {
   const [values, setValues] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
+  const [submitError, setSubmitError] = useState(null);
 
   const isLoading = status === "loading";
 
@@ -45,6 +50,7 @@ function Signup() {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
+    setSubmitError(null);
   }
 
   async function handleSubmit(event) {
@@ -73,6 +79,30 @@ function Signup() {
         setStatus("idle");
         return;
       }
+
+      const fieldErrors = getFieldErrors(error);
+      const inlineErrors = {};
+
+      if (fieldErrors.username) inlineErrors.name = fieldErrors.username;
+      if (fieldErrors.name) inlineErrors.name = fieldErrors.name;
+      if (fieldErrors.email) inlineErrors.email = fieldErrors.email;
+      if (fieldErrors.password) inlineErrors.password = fieldErrors.password;
+
+      if (Object.keys(inlineErrors).length > 0) {
+        setErrors(inlineErrors);
+        setStatus("idle");
+        return;
+      }
+
+      const isNetworkError =
+        !error.status || error.message === "Network error";
+
+      setSubmitError({
+        title: isNetworkError
+          ? "We could not connect"
+          : "Account creation failed",
+        message: getErrorMessage(error),
+      });
       setStatus("error");
     }
   }
@@ -137,7 +167,7 @@ function Signup() {
           </>
         }
       >
-        {status === "error" && (
+        {status === "error" && submitError && (
           <div className={`${styles.banner} ${styles.error}`} role="alert">
             <svg
               className={styles.icon}
@@ -153,11 +183,8 @@ function Signup() {
               <path d="M12 8v5m0 3h.01" />
             </svg>
             <div className={styles.content}>
-              <p className={styles.title}>We could not connect</p>
-              <p className={styles.message}>
-                Account creation not confirmed. Your other entries are retained.
-                Try again.
-              </p>
+              <p className={styles.title}>{submitError.title}</p>
+              <p className={styles.message}>{submitError.message}</p>
             </div>
           </div>
         )}
@@ -193,7 +220,7 @@ function Signup() {
             label="Password"
             required
             autoComplete="new-password"
-            helperText="Use a password you do not use elsewhere."
+            helperText="At least 8 characters."
             value={values.password}
             onChange={handleChange}
             error={errors.password}

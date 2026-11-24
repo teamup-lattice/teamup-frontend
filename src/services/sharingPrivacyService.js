@@ -99,8 +99,8 @@ export function unshareProject(projectId) {
   return api.post(`/api/projects/${encodeURIComponent(projectId)}/unshare`);
 }
 
-// Profile display has no backend field yet. This stays non-persistent so the
-// private project page keeps its existing control until a real field exists.
+// GAP: profile display has no backend field yet. This stays non-persistent so
+// the private project page keeps its existing control until a real field exists.
 export const saveProfileDisplay = (displayOnProfile) =>
   new Promise((resolve) => {
     setTimeout(() => resolve({ displayOnProfile }), 800);

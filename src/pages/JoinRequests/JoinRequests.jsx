@@ -11,19 +11,21 @@ import {
   getJoinRequests,
 } from "../../services/joinRequestsService";
 import { getProjectById } from "../../services/projectService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./JoinRequests.module.css";
 
 function requestErrorMessage(error) {
-  if (error.status === 403) {
-    return "Only the project owner or a manager can review join requests";
-  }
-  if (error.status === 404) return "We couldn't find that request.";
-  if (error.status === 409) {
-    return error.message && error.message !== "Something went wrong"
-      ? error.message
-      : "This request has already been answered, or the role is full or closed.";
-  }
-  return "Something went wrong. Try again.";
+  return getErrorMessage(error, {
+    fallback: "Something went wrong. Try again.",
+    byStatus: {
+      403: "Only the project owner or a manager can review join requests",
+      404: "We couldn't find that request.",
+      409:
+        error.message && error.message !== "Something went wrong"
+          ? error.message
+          : "This request has already been answered, or the role is full or closed.",
+    },
+  });
 }
 
 function JoinRequestsContent({ projectId }) {

@@ -3,6 +3,7 @@ import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import { getErrorMessage } from "../../services/errorMessage";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./CommitmentStep.module.css";
 
@@ -25,6 +26,8 @@ function CommitmentStep() {
     roles,
     draftId,
     saveStatus,
+    saveError,
+    saveFieldErrors,
     saveDraft,
     goNext,
     goBack,
@@ -248,7 +251,10 @@ function CommitmentStep() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Draft did not save">
-          Save failed. Saved draft unchanged; local entries retained. Retry.
+          {getErrorMessage(saveError, {
+            fallback:
+              "Save failed. Saved draft unchanged; local entries retained. Retry.",
+          })}
         </Alert>
       )}
 
@@ -264,7 +270,7 @@ function CommitmentStep() {
             error={
               showValidation && !isDurationValid
                 ? "! Add duration."
-                : undefined
+                : saveFieldErrors?.duration
             }
             disabled={isSaving}
           />
@@ -286,7 +292,7 @@ function CommitmentStep() {
             error={
               showValidation && !isStartDateValid
                 ? "! Add planned start date."
-                : undefined
+                : saveFieldErrors?.startDate
             }
             disabled={isSaving}
           />
@@ -309,7 +315,7 @@ function CommitmentStep() {
             error={
               showValidation && !isEndDateValid
                 ? "! Add planned end date."
-                : undefined
+                : saveFieldErrors?.endDate
             }
             disabled={isSaving}
           />
@@ -338,7 +344,7 @@ function CommitmentStep() {
             const hoursError =
               showValidation && isHoursMissing
                 ? "! Enter weekly hours for this role."
-                : undefined;
+                : saveFieldErrors?.hoursByRole;
 
             return (
               <div key={role.id} className={styles.roleCard}>
@@ -384,7 +390,7 @@ function CommitmentStep() {
             error={
               showValidation && !isAvailabilityValid
                 ? "! Add availability expectations."
-                : undefined
+                : saveFieldErrors?.availability
             }
             disabled={isSaving}
           />
@@ -409,7 +415,7 @@ function CommitmentStep() {
             error={
               showValidation && !isResponseValid
                 ? "! Add availability and response expectation."
-                : undefined
+                : saveFieldErrors?.responseExpectation
             }
             disabled={isSaving}
           />

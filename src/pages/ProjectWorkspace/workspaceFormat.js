@@ -15,9 +15,20 @@ const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eig
 
 export const SEP = " \u00b7 ";
 
+function toUtcDate(value) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function isValidDate(value) {
+  return toUtcDate(value) !== null;
+}
+
 // "2026-11-02" -> "02 Nov 2026"
 export function formatDate(iso) {
-  return full.format(new Date(`${iso}T00:00:00Z`));
+  const date = toUtcDate(iso);
+  return date ? full.format(date) : "";
 }
 
 // "2026-11-16" -> "16 Nov"

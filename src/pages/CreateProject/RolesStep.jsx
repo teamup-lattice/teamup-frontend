@@ -4,6 +4,7 @@ import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Checkbox from "../../components/Checkbox";
 import Input from "../../components/Input";
+import { getErrorMessage } from "../../services/errorMessage";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./RolesStep.module.css";
 
@@ -22,6 +23,8 @@ function RolesStep() {
     retrySkills,
     draftId,
     saveStatus,
+    saveError,
+    saveFieldErrors,
     setSaveStatus,
     saveDraft,
     goNext,
@@ -329,7 +332,10 @@ function RolesStep() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Draft did not save">
-          Save failed. Saved draft unchanged; local entries retained. Retry.
+          {getErrorMessage(saveError, {
+            fallback:
+              "Save failed. Saved draft unchanged; local entries retained. Retry.",
+          })}
         </Alert>
       )}
 
@@ -349,7 +355,7 @@ function RolesStep() {
             error={
               showValidation && !isTeamSizeValid
                 ? "! Add a team size."
-                : undefined
+                : saveFieldErrors?.teamSize
             }
             disabled={isSaving}
           />

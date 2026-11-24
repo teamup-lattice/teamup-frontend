@@ -7,6 +7,7 @@ import {
   shareProject,
   unshareProject,
 } from "../../services/sharingPrivacyService";
+import { getErrorMessage } from "../../services/errorMessage";
 import shared from "../ProjectWorkspace/screens/shared.module.css";
 import styles from "./SharingPrivacy.module.css";
 
@@ -77,21 +78,12 @@ function Notice({ tone, title, children }) {
   );
 }
 
-function actionErrorMessage(error) {
-  if (error?.status === 403) {
-    return "Only the project owner can change sharing.";
-  }
-  if (error?.status === 404) {
-    return "This project no longer exists.";
-  }
-  return error?.message || "Something went wrong. Try again.";
-}
-
 function SharingPrivacy() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
   const [actionState, setActionState] = useState("idle"); // idle | sharing | unsharing | success | error
   const [actionError, setActionError] = useState("");
   const [confirmingUnshare, setConfirmingUnshare] = useState(false);
@@ -103,11 +95,15 @@ function SharingPrivacy() {
       .then((result) => {
         if (!isMounted) return;
         setData(result);
+        setLoadError(null);
         setStatus("ready");
       })
       .catch((error) => {
         console.error("Failed to load sharing and privacy:", error);
-        if (isMounted) setStatus("error");
+        if (isMounted) {
+          setLoadError(error);
+          setStatus("error");
+        }
       });
 
     return () => {
@@ -129,7 +125,15 @@ function SharingPrivacy() {
       setActionState("success");
     } catch (error) {
       console.error("Failed to share project:", error);
-      setActionError(actionErrorMessage(error));
+      setActionError(
+        getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+          byStatus: {
+            403: "Only the project owner can change sharing.",
+            404: "This project no longer exists.",
+          },
+        }),
+      );
       setActionState("error");
     }
   }
@@ -144,7 +148,15 @@ function SharingPrivacy() {
       setActionState("success");
     } catch (error) {
       console.error("Failed to unshare project:", error);
-      setActionError(actionErrorMessage(error));
+      setActionError(
+        getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+          byStatus: {
+            403: "Only the project owner can change sharing.",
+            404: "This project no longer exists.",
+          },
+        }),
+      );
       setActionState("error");
     }
   }
@@ -163,7 +175,9 @@ function SharingPrivacy() {
       <div className={styles.page}>
         <h2 className={shared.title}>Sharing and privacy</h2>
         <Alert variant="error" title="Sharing settings could not load">
-          We could not load your settings. Check your connection and try again.
+          {getErrorMessage(loadError, {
+            fallback: "We could not load your settings. Try again.",
+          })}
         </Alert>
         <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>

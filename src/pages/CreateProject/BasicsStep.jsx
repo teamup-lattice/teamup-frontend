@@ -5,6 +5,7 @@ import Button from "../../components/Button";
 import Checkbox from "../../components/Checkbox";
 import Input from "../../components/Input";
 import Select from "../../components/Select";
+import { getErrorMessage } from "../../services/errorMessage";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./BasicsStep.module.css";
 
@@ -41,6 +42,8 @@ function BasicsStep() {
     retrySkills,
     draftId,
     saveStatus,
+    saveError,
+    saveFieldErrors,
     saveDraft,
     goNext,
     markStepIncomplete,
@@ -95,10 +98,14 @@ function BasicsStep() {
     }
   };
 
-  const fieldError = (key) =>
-    showValidation && missingFields.some((field) => field.key === key)
-      ? fieldErrors[key]
-      : undefined;
+  const fieldError = (key) => {
+    const serverMessage = saveFieldErrors?.[key];
+    const localMessage =
+      showValidation && missingFields.some((field) => field.key === key)
+        ? fieldErrors[key]
+        : undefined;
+    return localMessage || serverMessage;
+  };
 
   const missingNames = missingFields.map((field) => field.label);
   const validationMessage = missingFields.some((field) => field.key === "name")
@@ -136,7 +143,9 @@ function BasicsStep() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Draft did not save">
-          Save failed. Local entries retained; no saved draft yet.
+          {getErrorMessage(saveError, {
+            fallback: "Save failed. Local entries retained; no saved draft yet.",
+          })}
         </Alert>
       )}
 

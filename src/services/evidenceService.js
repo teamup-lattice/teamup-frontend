@@ -59,7 +59,7 @@ function evidenceList(data) {
   return [];
 }
 
-function normalizeHttpUrl(value) {
+export function normalizeHttpUrl(value) {
   const trimmed = typeof value === "string" ? value.trim() : "";
   if (!trimmed) return "";
 
@@ -76,7 +76,7 @@ function normalizeHttpUrl(value) {
   }
 }
 
-function typeFromFile(file) {
+export function typeFromFile(file) {
   const mime = typeof file?.type === "string" ? file.type : "";
   if (mime.startsWith("image/")) return "IMAGE";
   if (mime.startsWith("video/")) return "VIDEO";
@@ -86,9 +86,20 @@ function typeFromFile(file) {
 function normalizeChecks(checks) {
   if (!Array.isArray(checks)) return [];
   return checks
-    .map((check) =>
-      typeof check === "string" ? check : typeof check?.message === "string" ? check.message : "",
-    )
+    .map((check) => {
+      if (typeof check === "string") {
+        return { message: check, contributions: [] };
+      }
+      if (check && typeof check === "object") {
+        const message =
+          typeof check.message === "string" ? check.message : "";
+        const contributions = Array.isArray(check.contributions)
+          ? check.contributions
+          : [];
+        return { message, contributions };
+      }
+      return null;
+    })
     .filter(Boolean);
 }
 
@@ -114,6 +125,9 @@ export function deleteProjectEvidence(projectId, evidenceId) {
   );
 }
 
+// GAP: uploads rely on the backend default context ("contribution"). The
+// project deliverable flow may need context "evidence"; left as-is until the
+// backend confirms the expected context.
 export async function uploadEvidenceFile(file) {
   const formData = new FormData();
   formData.append("file", file);

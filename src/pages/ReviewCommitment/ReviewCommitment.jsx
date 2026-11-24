@@ -16,6 +16,7 @@ import {
   getJoinRequestStatusLabel,
   withdrawJoinRequest,
 } from "../../services/joinRequestsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./ReviewCommitment.module.css";
 
 const NOT_PENDING_MESSAGE =
@@ -85,10 +86,12 @@ function InvitationCommitment() {
       if (error.status === 409 || error.status === 410) {
         setLoadState((current) => ({ ...current, status: "missing" }));
       } else {
-        const message =
-          error.status === 404
-            ? "We couldn't find this invitation."
-            : "Something went wrong. Try again.";
+        const message = getErrorMessage(error, {
+          fallback: "Something went wrong. Try again.",
+          byStatus: {
+            404: "We couldn't find this invitation.",
+          },
+        });
         setAction({
           status: "error",
           error: message,
@@ -114,7 +117,9 @@ function InvitationCommitment() {
       <main className={styles.page}>
         <h1 className={styles.heading}>Review your commitment</h1>
         <Alert variant="error" title="Invitation could not load">
-          Something went wrong. Try again.
+          {getErrorMessage(loadState.error, {
+            fallback: "Something went wrong. Try again.",
+          })}
         </Alert>
         <Button
           onClick={() => {
@@ -721,24 +726,21 @@ function JoinRequestCommitment() {
 }
 
 function requestErrorMessage(error, actionName) {
-  const serverMessage =
-    error?.message && error.message !== "Something went wrong"
-      ? error.message
-      : "";
-
-  if (error?.status === 404) {
-    return serverMessage || "We couldn't find this request or project.";
-  }
-  if (error?.status === 409) {
-    return (
-      serverMessage ||
-      (actionName === "confirm"
-        ? "This request is not approved yet, the role may be full, or you may already be a member."
-        : "This request can no longer be withdrawn in its current state.")
-    );
-  }
-
-  return serverMessage || "Something went wrong. Try again.";
+  return getErrorMessage(error, {
+    fallback: "Something went wrong. Try again.",
+    byStatus: {
+      404:
+        error?.message && error.message !== "Something went wrong"
+          ? error.message
+          : "We couldn't find this request or project.",
+      409:
+        error?.message && error.message !== "Something went wrong"
+          ? error.message
+          : actionName === "confirm"
+            ? "This request is not approved yet, the role may be full, or you may already be a member."
+            : "This request can no longer be withdrawn in its current state.",
+    },
+  });
 }
 
 function ReviewCommitment() {

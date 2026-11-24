@@ -7,6 +7,7 @@ import Select from "../../components/Select";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getMyProfile } from "../../services/dashboardService";
 import { getMyProjects } from "../../services/myProjectsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import DeleteProjectDialog from "./DeleteProjectDialog";
 import ProjectCard from "./ProjectCard";
 import TeamHealthSummary from "./TeamHealthSummary";
@@ -33,6 +34,7 @@ function MyProjects() {
   const [records, setRecords] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [isRetrying, setIsRetrying] = useState(false);
   const [wasRefreshed, setWasRefreshed] = useState(false);
@@ -47,12 +49,14 @@ function MyProjects() {
         if (!isMounted) return;
 
         setRecords(Array.isArray(data?.projects) ? data.projects : []);
+        setLoadError(null);
         setStatus("ready");
       })
       .catch((error) => {
         console.error("Failed to load project records:", error);
         if (!isMounted) return;
 
+        setLoadError(error);
         setStatus("error");
       });
 
@@ -78,11 +82,13 @@ function MyProjects() {
     getMyProjects()
       .then((data) => {
         setRecords(Array.isArray(data?.projects) ? data.projects : []);
+        setLoadError(null);
         setStatus("ready");
         setWasRefreshed(true);
       })
       .catch((error) => {
         console.error("Failed to refresh project records:", error);
+        setLoadError(error);
       })
       .finally(() => setIsRetrying(false));
   };
@@ -167,8 +173,13 @@ function MyProjects() {
         <div className={styles.fullWidth}>
           <Alert variant="error" title="Project records could not refresh">
             {hasRecords
-              ? "Load failed. Filter retained; showing your last saved records."
-              : "Load failed. Retry to load your project records."}
+              ? getErrorMessage(loadError, {
+                  fallback:
+                    "Load failed. Filter retained; showing your last saved records.",
+                })
+              : getErrorMessage(loadError, {
+                  fallback: "Load failed. Retry to load your project records.",
+                })}
           </Alert>
           <Button
             variant="secondary"

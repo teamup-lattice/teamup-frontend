@@ -23,8 +23,8 @@ function NotificationItem({ notification, onMarkAsRead }) {
   };
 
   const handleRowClick = () => {
-    handleOpen();
     if (to) {
+      handleOpen();
       navigate(to);
     }
   };
@@ -50,14 +50,16 @@ function NotificationItem({ notification, onMarkAsRead }) {
         </p>
         <p className={styles.meta}>{meta}</p>
       </div>
-      <Link
-        to={to}
-        className={styles.action}
-        aria-label={`${actionLabel}: ${message}`}
-        onClick={handleActionClick}
-      >
-        {actionLabel}
-      </Link>
+      {to && actionLabel && (
+        <Link
+          to={to}
+          className={styles.action}
+          aria-label={`${actionLabel}: ${message}`}
+          onClick={handleActionClick}
+        >
+          {actionLabel}
+        </Link>
+      )}
     </li>
   );
 }

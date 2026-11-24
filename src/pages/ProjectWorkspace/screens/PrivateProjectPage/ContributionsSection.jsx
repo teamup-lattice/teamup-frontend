@@ -4,8 +4,8 @@ import shared from "../shared.module.css";
 import EvidenceLink from "./EvidenceLink";
 import styles from "./PrivateProjectPage.module.css";
 
-// Individual summaries come from each member's saved Done tasks and are
-// separate from the team outcome above. Contact details, private task
+// Individual summaries come from each member's confirmed contribution wording
+// and are separate from the team outcome above. Contact details, private task
 // comments and drafts are never shown here.
 function ContributionsSection({ contributions, taskPath }) {
   return (
@@ -50,18 +50,23 @@ function ContributionsSection({ contributions, taskPath }) {
                       Owner: {task.owner}
                     </p>
                     <p className={styles.meta}>
-                      Due: {formatDate(task.dueDate)}
+                      Due: {task.dueDate ? formatDate(task.dueDate) : "No due date"}
                       {SEP}
                       {task.milestone}
                     </p>
-                    <p className={styles.meta}>
-                      Completed {formatDate(task.completedOn)}
-                      <br />
-                      Evidence: {task.evidence.name}
-                    </p>
-                    <EvidenceLink evidence={task.evidence} className={styles.centered}>
-                      Open {task.evidence.name}
-                    </EvidenceLink>
+                    {/* GAP: per-task completion date and evidence are not in the task list response. */}
+                    {(task.completedOn || task.evidence) && (
+                      <p className={styles.meta}>
+                        {task.completedOn && `Completed ${formatDate(task.completedOn)}`}
+                        {task.completedOn && task.evidence && <br />}
+                        {task.evidence && `Evidence: ${task.evidence.name}`}
+                      </p>
+                    )}
+                    {task.evidence && (
+                      <EvidenceLink evidence={task.evidence} className={styles.centered}>
+                        Open {task.evidence.name}
+                      </EvidenceLink>
+                    )}
                   </article>
                   <Link
                     to={taskPath(task.id)}

@@ -4,6 +4,7 @@ import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Skeleton from "../../../../components/Skeleton";
 import overviewImage from "../../../../assets/overview.png";
+import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   getPrivateProjectPage,
   saveOwnProfileChoice,
@@ -44,7 +45,9 @@ function PrivateProjectPage() {
           setLoaded({
             key: requestKey,
             data: null,
-            error: error.message || "Something went wrong. Try again.",
+            error: getErrorMessage(error, {
+              fallback: "Something went wrong. Try again.",
+            }),
           });
         }
       });
@@ -105,8 +108,20 @@ function PrivateProjectPage() {
     );
   }
 
-  const weeks = `${project.durationWeeks} ${project.durationWeeks === 1 ? "week" : "weeks"}`;
-  const range = `${shortDate(project.startDate)}–${shortDate(project.endDate)}`;
+  const weeks = project.durationWeeks
+    ? `${project.durationWeeks} ${project.durationWeeks === 1 ? "week" : "weeks"}`
+    : "";
+  const range =
+    project.startDate && project.endDate
+      ? `${shortDate(project.startDate)}–${shortDate(project.endDate)}`
+      : "";
+  const dateLine = [
+    project.endDate ? formatDate(project.endDate) : "",
+    range,
+    weeks,
+  ]
+    .filter(Boolean)
+    .join(SEP);
   const otherNames = team.members
     .map((member) => member.name)
     .filter((name) => name !== currentUser.name);
@@ -114,13 +129,7 @@ function PrivateProjectPage() {
   return (
     <div>
       <h2 className={shared.title}>Private project page</h2>
-      <p className={shared.small}>
-        {formatDate(project.endDate)}
-        {SEP}
-        {range}
-        {SEP}
-        {weeks}
-      </p>
+      {dateLine && <p className={shared.small}>{dateLine}</p>}
 
       <img className={styles.hero} src={overviewImage} alt={`${project.name} project`} />
       <p className={styles.badges}>
@@ -151,13 +160,19 @@ function PrivateProjectPage() {
               Collective outcome
             </h3>
             <p className={styles.cardBody}>{project.outcome}</p>
-            <p className={shared.small}>
-              Completed {formatDate(project.completedOn)}
-              {SEP}
-              {range}
-              {SEP}
-              {weeks}
-            </p>
+            {(project.completedOn || range || weeks) && (
+              <p className={shared.small}>
+                {[
+                  project.completedOn
+                    ? `Completed ${formatDate(project.completedOn)}`
+                    : "",
+                  range,
+                  weeks,
+                ]
+                  .filter(Boolean)
+                  .join(SEP)}
+              </p>
+            )}
           </section>
         </div>
 
@@ -177,6 +192,16 @@ function PrivateProjectPage() {
 
       <div className={`${styles.column} ${styles.below}`}>
         <DeliverablesCard deliverables={deliverables} />
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              navigate(`/projects/${projectId}/workspace/contributions`)
+            }
+          >
+            My contribution
+          </Button>
+        </div>
         <ContributionsSection
           contributions={contributions}
           taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}

@@ -18,6 +18,7 @@ const notificationTypeLabels = {
   MILESTONE_UPDATE: "Milestone update",
   TEAM_UPDATE: "Team update",
   CONTRIBUTION_REVIEW: "Contribution review",
+  EVIDENCE_ADDED: "Evidence added",
   PROJECT_COMPLETED: "Project completed",
 };
 
@@ -47,116 +48,170 @@ function formatNotificationTime(createdAt) {
 }
 
 function getNotificationAction(notification) {
-  const projectId = notification.project?.id;
+  const projectId =
+    notification.project?.id !== undefined && notification.project?.id !== null
+      ? String(notification.project.id)
+      : notification.projectId
+        ? String(notification.projectId)
+        : null;
   const entityId = notification.entityId;
   const data = notification.data;
 
   switch (notification.type) {
-    case "PROJECT_INVITATION":
-    case "INVITATION_RESPONDED":
-      if (notification.entityType === "invitation" && entityId) {
-        return {
-          actionLabel:
-            notification.type === "PROJECT_INVITATION"
-              ? "Review invitation"
-              : "View invitation",
-          to: `/invitations/${encodeURIComponent(entityId)}`,
-        };
-      }
-      break;
-    case "JOIN_REQUEST":
-      if (notification.entityType === "joinRequest" && projectId && entityId) {
-        return {
-          actionLabel: "Review request",
-          to: `/role-requests/${encodeURIComponent(entityId)}?project=${encodeURIComponent(projectId)}`,
-        };
-      }
-      break;
-    case "MEMBER_JOINED":
-    case "MEMBER_LEFT":
-      if (notification.entityType === "membership" && projectId) {
-        return {
-          actionLabel: "View team",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace/team`,
-        };
-      }
-      break;
-    case "TASK_ASSIGNED":
-    case "TASK_COMMENTED":
-    case "TASK_DEADLINE":
-    case "TASK_OVERDUE":
-      if (notification.entityType === "task" && projectId && entityId) {
-        return {
-          actionLabel: "Open task",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(entityId)}`,
-        };
-      }
-      break;
-    case "TASK_HANDOVER_REQUEST":
-      if (projectId && data?.taskId) {
-        return {
-          actionLabel: "Review request",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(data.taskId)}/reassign`,
-        };
-      }
-      if (projectId) {
-        return {
-          actionLabel: "Review request",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
-        };
-      }
-      break;
-    case "TASK_HANDOVER_DECIDED":
-      if (projectId && data?.taskId) {
-        return {
-          actionLabel: "View task",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(data.taskId)}`,
-        };
-      }
-      if (projectId) {
-        return {
-          actionLabel: "View task",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
-        };
-      }
-      break;
-    case "TEAM_UPDATE":
-      if (notification.entityType === "teamUpdate" && projectId) {
-        return {
-          actionLabel: "Open Updates",
-          to: `/projects/${encodeURIComponent(projectId)}/workspace/updates`,
-        };
-      }
-      break;
     case "CONTRIBUTION_REVIEW":
-      if (notification.entityType === "contribution" && projectId) {
+      if (projectId) {
         return {
           actionLabel: "View contribution",
           to: `/projects/${encodeURIComponent(projectId)}/workspace/contributions`,
         };
       }
       break;
-    case "DATE_EXTENSION_REQUEST":
-      if (projectId && data?.taskId) {
+
+    case "EVIDENCE_ADDED":
+      if (projectId) {
+        return {
+          actionLabel: "View completion",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/completion`,
+        };
+      }
+      break;
+
+    case "TASK_ASSIGNED":
+    case "TASK_COMMENTED":
+    case "TASK_DEADLINE":
+    case "TASK_OVERDUE": {
+      const taskId = entityId ?? data?.taskId;
+      if (projectId && taskId) {
+        return {
+          actionLabel: "Open task",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(taskId)}`,
+        };
+      }
+      break;
+    }
+
+    case "PROJECT_INVITATION":
+    case "INVITATION_RESPONDED": {
+      const invitationId = entityId ?? data?.invitationId;
+      if (invitationId) {
+        return {
+          actionLabel:
+            notification.type === "PROJECT_INVITATION"
+              ? "Review invitation"
+              : "View invitation",
+          to: `/invitations/${encodeURIComponent(invitationId)}`,
+        };
+      }
+      break;
+    }
+
+    case "JOIN_REQUEST": {
+      const requestId = entityId ?? data?.joinRequestId;
+      if (projectId && requestId) {
         return {
           actionLabel: "Review request",
-          to: `/projects/${projectId}/workspace/tasks/${data.taskId}`,
+          to: `/role-requests/${encodeURIComponent(requestId)}?project=${encodeURIComponent(projectId)}`,
         };
       }
       break;
-    case "DATE_EXTENSION_DECIDED":
-      if (projectId && data?.taskId) {
+    }
+
+    case "JOIN_REQUEST_DECIDED": {
+      const requestId = data?.joinRequestId ?? entityId;
+      if (projectId && requestId) {
+        return {
+          actionLabel:
+            data?.decision === "ACCEPTED"
+              ? "Review commitment"
+              : "View request",
+          to: `/invitations/${encodeURIComponent(requestId)}/commitment?variant=request&project=${encodeURIComponent(projectId)}`,
+        };
+      }
+      break;
+    }
+
+    case "MEMBER_JOINED":
+    case "MEMBER_LEFT":
+      if (projectId) {
+        return {
+          actionLabel: "View team",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/team`,
+        };
+      }
+      break;
+
+    case "TASK_HANDOVER_REQUEST": {
+      const taskId = data?.taskId ?? entityId;
+      if (projectId && taskId) {
+        return {
+          actionLabel: "Review request",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(taskId)}/reassign`,
+        };
+      }
+      if (projectId) {
+        return {
+          actionLabel: "Review request",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
+        };
+      }
+      break;
+    }
+
+    case "TASK_HANDOVER_DECIDED": {
+      const taskId = data?.taskId ?? entityId;
+      if (projectId && taskId) {
         return {
           actionLabel: "View task",
-          to: `/projects/${projectId}/workspace/tasks/${data.taskId}`,
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(taskId)}`,
+        };
+      }
+      if (projectId) {
+        return {
+          actionLabel: "View task",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace`,
         };
       }
       break;
+    }
+
+    case "TEAM_UPDATE":
+      if (projectId) {
+        return {
+          actionLabel: "Open Updates",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/updates`,
+        };
+      }
+      break;
+
+    case "DATE_EXTENSION_REQUEST":
+    case "DATE_EXTENSION_DECIDED": {
+      const taskId = data?.taskId ?? entityId;
+      if (projectId && taskId) {
+        return {
+          actionLabel:
+            notification.type === "DATE_EXTENSION_REQUEST"
+              ? "Review request"
+              : "View task",
+          to: `/projects/${encodeURIComponent(projectId)}/workspace/tasks/${encodeURIComponent(taskId)}`,
+        };
+      }
+      break;
+    }
+
+    case "PROJECT_COMPLETED":
+      if (projectId) {
+        return {
+          actionLabel: "View project page",
+          to: `/projects/${encodeURIComponent(projectId)}/page`,
+        };
+      }
+      break;
+
     default:
       break;
   }
 
-  return { actionLabel: "View", to: "/projects" };
+  return { actionLabel: null, to: null };
 }
 
 function mapNotification(notification) {

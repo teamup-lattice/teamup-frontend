@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { normalizeHttpUrl } from "./evidenceService";
 
 const API_TO_UI_STATUS = {
   TODO: "To do",
@@ -140,6 +141,7 @@ function mapTask(taskData, memberships = [], milestones = []) {
     API_TO_UI_STATUS[apiStatus] ??
     (typeof task.status === "string" ? task.status : "To do");
   const dueDate = toDateInput(task.dueDate);
+  const completedAt = toDateInput(task.completedAt);
 
   return {
     id:
@@ -152,6 +154,7 @@ function mapTask(taskData, memberships = [], milestones = []) {
     assigneeMemberId,
     assigneeUserId,
     dueDate,
+    completedAt,
     milestoneId,
     milestoneTitle,
     milestoneName: milestoneTitle,
@@ -167,6 +170,36 @@ function mapTask(taskData, memberships = [], milestones = []) {
       Number.isInteger(task.estimatedHours) ? task.estimatedHours : null,
     sortOrder: Number.isInteger(task.sortOrder) ? task.sortOrder : null,
     overdueDays: getOverdueDays(dueDate, status),
+  };
+}
+
+function fileNameFromUrl(url) {
+  if (!url) return "";
+  try {
+    const { pathname } = new URL(url);
+    const segment = pathname.split("/").filter(Boolean).pop() || "";
+    return decodeURIComponent(segment);
+  } catch {
+    return "";
+  }
+}
+
+function mapEvidenceItem(item) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+  const url = normalizeHttpUrl(item.url);
+  const title = typeof item.title === "string" ? item.title.trim() : "";
+  if (!title && !url) return null;
+
+  return {
+    id:
+      typeof item.id === "string" || typeof item.id === "number"
+        ? String(item.id)
+        : "",
+    title,
+    name: title || fileNameFromUrl(url) || url,
+    url,
+    type: typeof item.type === "string" ? item.type : "",
   };
 }
 
@@ -191,16 +224,12 @@ function mapContribution(contribution) {
       typeof contribution.completionNote === "string"
         ? contribution.completionNote
         : "",
-    artifactUrl:
-      typeof contribution.artifactUrl === "string"
-        ? contribution.artifactUrl
-        : "",
-    fileUrl:
-      typeof contribution.fileUrl === "string" ? contribution.fileUrl : "",
+    artifactUrl: normalizeHttpUrl(contribution.artifactUrl),
+    fileUrl: normalizeHttpUrl(contribution.fileUrl),
     fileType:
       typeof contribution.fileType === "string" ? contribution.fileType : "",
     evidence: Array.isArray(contribution.evidence)
-      ? contribution.evidence
+      ? contribution.evidence.map(mapEvidenceItem).filter(Boolean)
       : [],
   };
 }

@@ -3,6 +3,7 @@ import Alert from "../../components/Alert";
 import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import { getErrorMessage } from "../../services/errorMessage";
 import { WizardContext } from "./WizardContextValue";
 import styles from "./MilestonesStep.module.css";
 
@@ -17,6 +18,7 @@ function MilestonesStep() {
     setMilestones,
     draftId,
     saveStatus,
+    saveError,
     setSaveStatus,
     saveDraft,
     goNext,
@@ -197,7 +199,10 @@ function MilestonesStep() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Draft did not save">
-          Save failed. Saved draft unchanged; local entries retained. Retry.
+          {getErrorMessage(saveError, {
+            fallback:
+              "Save failed. Saved draft unchanged; local entries retained. Retry.",
+          })}
         </Alert>
       )}
 

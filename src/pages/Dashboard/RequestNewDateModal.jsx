@@ -4,6 +4,7 @@ import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Textarea from "../../components/Textarea";
 import { createDateExtensionRequest } from "../../services/dateExtensionsService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./RequestNewDateModal.module.css";
 
 const FOCUSABLE =
@@ -36,18 +37,15 @@ function formatDateInput(date) {
 }
 
 function getRequestErrorMessage(error) {
-  switch (Number(error?.status)) {
-    case 400:
-      return "That date is not valid. Choose a date after the current deadline.";
-    case 403:
-      return "You don't have permission to request a new date for this task.";
-    case 404:
-      return "This task could not be found. Refresh the dashboard and try again.";
-    case 409:
-      return "You already asked for a new date on this task.";
-    default:
-      return "We couldn't send your date request. Try again.";
-  }
+  return getErrorMessage(error, {
+    fallback: "We couldn't send your date request. Try again.",
+    byStatus: {
+      400: "That date is not valid. Choose a date after the current deadline.",
+      403: "You don't have permission to request a new date for this task.",
+      404: "This task could not be found. Refresh the dashboard and try again.",
+      409: "You already asked for a new date on this task.",
+    },
+  });
 }
 
 function RequestNewDateModal({

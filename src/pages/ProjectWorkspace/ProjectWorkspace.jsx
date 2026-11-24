@@ -11,6 +11,7 @@ import {
   getWorkspaceProject,
 } from "../../services/workspaceMembersService";
 import { getAllProjectTasks } from "../../services/tasksService";
+import { getErrorMessage } from "../../services/errorMessage";
 import StatusTag from "./shared/StatusTag";
 import styles from "./ProjectWorkspace.module.css";
 import "./shared/workspaceVisuals.css";
@@ -157,6 +158,15 @@ function ProjectWorkspace() {
   const updatesError = isUpdatesRequestCurrent ? updatesState.error : "";
 
   useEffect(() => {
+    if (!projectId) return;
+    try {
+      localStorage.setItem("teamup_dashboard_project_id", projectId);
+    } catch {
+      return;
+    }
+  }, [projectId]);
+
+  useEffect(() => {
     let isCurrent = true;
 
     Promise.all([
@@ -182,7 +192,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: workspaceRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           project: null,
           currentUser: null,
         });
@@ -215,7 +225,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: membersRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -247,7 +257,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: milestonesRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -279,7 +289,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: updatesRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           data: [],
         });
       });
@@ -317,7 +327,7 @@ function ProjectWorkspace() {
           projectId,
           retryCount: tasksRetryCount,
           loading: false,
-          error: error.message || "Something went wrong. Try again.",
+          error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
           tasks: [],
           summary: null,
         });
@@ -377,7 +387,7 @@ function ProjectWorkspace() {
         projectId,
         retryCount: tasksRetryCount,
         loading: false,
-        error: error.message || "Something went wrong. Try again.",
+        error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
       }));
       throw error;
     }
@@ -407,7 +417,7 @@ function ProjectWorkspace() {
         projectId,
         retryCount: membersRetryCount,
         loading: false,
-        error: error.message || "Something went wrong. Try again.",
+        error: getErrorMessage(error, { fallback: "Something went wrong. Try again." }),
       }));
       throw error;
     }
@@ -579,6 +589,14 @@ function ProjectWorkspace() {
           >
             Project completion
           </NavLink>
+          {isOwner && (
+            <NavLink
+              to={navigationTarget(`${workspacePath}/sharing-privacy`)}
+              className={navClassName}
+            >
+              Sharing settings
+            </NavLink>
+          )}
         </div>
       </nav>
 

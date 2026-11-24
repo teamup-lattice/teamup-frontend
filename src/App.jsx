@@ -11,6 +11,7 @@ import ProjectDetails from "./pages/ProjectDetails/ProjectDetails";
 import CreateProject from "./pages/CreateProject/CreateProject";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AppLayout from "./layouts/AppLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing/Landing";
 import DiscoverProjects from "./pages/DiscoverProjects/DiscoverProjects";
 import FindCollaborators from "./pages/FindCollaborators/FindCollaborators";
@@ -36,11 +37,9 @@ import SharingPrivacy from "./pages/SharingPrivacy/SharingPrivacy";
 import AccountDeletion from "./pages/Settings/AccountDeletion";
 import Notifications from "./pages/Notifications/Notifications";
 import ProjectCompletion from "./pages/ProjectWorkspace/screens/ProjectCompletion/ProjectCompletion";
+import ContributionSummary from "./pages/ProjectWorkspace/screens/ContributionSummary/ContributionSummary";
+import TeammateConfirmation from "./pages/ProjectWorkspace/screens/TeammateConfirmation/TeammateConfirmation";
 import PrivateProjectPage from "./pages/ProjectWorkspace/screens/PrivateProjectPage/PrivateProjectPage";
-
-function ContributionsPlaceholder() {
-  return <h2>Contributions</h2>;
-}
 
 function App() {
   return (
@@ -51,68 +50,76 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/profile/setup" element={<RequiredProfile />} />
-      <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/discover" element={<DiscoverProjects />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/projects" element={<MyProjects />} />
-        <Route path="/projects/new" element={<CreateProject />} />
-        <Route path="/projects/:id/edit" element={<CreateProject />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route
-          path="/sharing-privacy"
-          element={
-            <Navigate to="/projects/1/workspace/sharing-privacy" replace />
-          }
-        />
-        <Route path="/settings/account-deletion" element={<AccountDeletion />} />
-        <Route path="/projects/:id" element={<ProjectDetails />} />
-        <Route path="/collaborators" element={<FindCollaborators />} />
-        <Route
-          path="/projects/:projectId/request-role"
-          element={<RequestRole />}
-        />
-        <Route path="/role-requests/:requestId" element={<RoleRequest />} />
-        <Route
-          path="/projects/:projectId/join-requests"
-          element={<JoinRequests />}
-        />
-        <Route
-          path="/invitations/:invitationId"
-          element={<InvitationDetails />}
-        />
-        <Route
-          path="/invitations/:invitationId/commitment"
-          element={<ReviewCommitment />}
-        />
-        <Route
-          path="/projects/:projectId/workspace"
-          element={<ProjectWorkspace />}
-        >
-        <Route index element={<WorkspaceOverview />} />
-        <Route path="team-health" element={<TeamHealth />} />
-        <Route path="tasks" element={<Tasks />} />
-        <Route path="tasks/new" element={<CreateTask />} />
-        <Route path="tasks/:taskId" element={<TaskDetail />} />
-        <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
-        <Route path="team" element={<Team />} />
-        <Route path="team/release-role" element={<ReleaseRole />} />
-        <Route path="contributions" element={<ContributionsPlaceholder />} />
-        <Route path="completion" element={<ProjectCompletion />} />
-        <Route path="milestones" element={<Milestones />} />
-        <Route path="updates" element={<ProjectUpdates />} />
-        <Route path="reminders" element={<Reminders />} />
-        <Route path="sharing-privacy" element={<SharingPrivacy />} />
-      </Route>
 
-      <Route path="/projects/:projectId/page" element={<ProjectWorkspace />}>
-        <Route index element={<PrivateProjectPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/profile/setup" element={<RequiredProfile />} />
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/discover" element={<DiscoverProjects />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/projects" element={<MyProjects />} />
+          <Route path="/projects/new" element={<CreateProject />} />
+          <Route path="/projects/:id/edit" element={<CreateProject />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route
+            path="/sharing-privacy"
+            element={<Navigate to="/projects" replace />}
+          />
+          <Route
+            path="/settings/account-deletion"
+            element={<AccountDeletion />}
+          />
+          <Route path="/projects/:id" element={<ProjectDetails />} />
+          <Route path="/collaborators" element={<FindCollaborators />} />
+          <Route
+            path="/projects/:projectId/request-role"
+            element={<RequestRole />}
+          />
+          <Route path="/role-requests/:requestId" element={<RoleRequest />} />
+          <Route
+            path="/projects/:projectId/join-requests"
+            element={<JoinRequests />}
+          />
+          <Route
+            path="/invitations/:invitationId"
+            element={<InvitationDetails />}
+          />
+          <Route
+            path="/invitations/:invitationId/commitment"
+            element={<ReviewCommitment />}
+          />
+          <Route
+            path="/projects/:projectId/workspace"
+            element={<ProjectWorkspace />}
+          >
+            <Route index element={<WorkspaceOverview />} />
+            <Route path="team-health" element={<TeamHealth />} />
+            <Route path="tasks" element={<Tasks />} />
+            <Route path="tasks/new" element={<CreateTask />} />
+            <Route path="tasks/:taskId" element={<TaskDetail />} />
+            <Route path="tasks/:taskId/reassign" element={<ReassignTask />} />
+            <Route path="team" element={<Team />} />
+            <Route path="team/release-role" element={<ReleaseRole />} />
+            <Route path="contributions" element={<ContributionSummary />} />
+            <Route
+              path="contributions/review/:member"
+              element={<TeammateConfirmation />}
+            />
+            <Route path="completion" element={<ProjectCompletion />} />
+            <Route path="milestones" element={<Milestones />} />
+            <Route path="updates" element={<ProjectUpdates />} />
+            <Route path="reminders" element={<Reminders />} />
+            <Route path="sharing-privacy" element={<SharingPrivacy />} />
+          </Route>
+        </Route>
+
+        <Route path="/projects/:projectId/page" element={<ProjectWorkspace />}>
+          <Route index element={<PrivateProjectPage />} />
+        </Route>
+        <Route path="/projects/:id" element={<ProjectDetails />} />
       </Route>
-    </Route>
-    <Route path="/projects/:id" element={<ProjectDetails />} />
-  </Routes>
+    </Routes>
   );
 }
 

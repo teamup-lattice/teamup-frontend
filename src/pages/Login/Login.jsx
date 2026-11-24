@@ -6,6 +6,7 @@ import AltLink from "../../components/AltLink";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { signIn } from "../../services/authService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./Login.module.css";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,10 +34,13 @@ function Login() {
     location.state?.message === "Password changed, please sign in"
       ? location.state.message
       : "";
+  const redirectTo =
+    typeof location.state?.from === "string" ? location.state.from : "";
   const [values, setValues] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle");
   const [user, setUser] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   const isLoading = status === "loading";
 
@@ -44,6 +48,7 @@ function Login() {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
+    setSubmitError(null);
   }
 
   async function handleSubmit(event) {
@@ -66,12 +71,25 @@ function Login() {
       setUser(result);
       setStatus("success");
     } catch (error) {
-      setStatus(error.code === "INVALID_CREDENTIALS" ? "invalid" : "error");
+      if (error.code === "INVALID_CREDENTIALS") {
+        setStatus("invalid");
+        return;
+      }
+
+      const isNetworkError =
+        !error.status || error.message === "Network error";
+
+      setSubmitError({
+        title: isNetworkError ? "We could not connect" : "Sign-in failed",
+        message: getErrorMessage(error),
+      });
+      setStatus("error");
     }
   }
 
   if (status === "success") {
     const complete = user.profileComplete;
+    const nextPath = complete ? redirectTo || "/dashboard" : "/profile/setup";
 
     return (
       <AuthLayout
@@ -96,11 +114,12 @@ function Login() {
             ? "View your projects and tasks."
             : "Tell us what you bring so we can match you to projects."}
         </p>
-        <Button
-          fullWidth
-          onClick={() => navigate(complete ? "/dashboard" : "/profile/setup")}
-        >
-          {complete ? "Open dashboard" : "Continue required profile"}
+        <Button fullWidth onClick={() => navigate(nextPath)}>
+          {complete
+            ? redirectTo
+              ? "Continue"
+              : "Open dashboard"
+            : "Continue required profile"}
         </Button>
       </AuthLayout>
     );
@@ -128,9 +147,9 @@ function Login() {
           Check your details and try again. You have not been signed in.
         </Alert>
       )}
-      {status === "error" && (
-        <Alert variant="error" title="We could not connect">
-          Sign-in not confirmed. Your entries are retained. Try again.
+      {status === "error" && submitError && (
+        <Alert variant="error" title={submitError.title}>
+          {submitError.message}
         </Alert>
       )}
 

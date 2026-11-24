@@ -4,6 +4,7 @@ import Alert from "../../components/Alert";
 import Button from "../../components/Button";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getDashboard } from "../../services/dashboardService";
+import { getErrorMessage } from "../../services/errorMessage";
 import ActiveProjectCard from "./ActiveProjectCard";
 import activeProjectStyles from "./ActiveProjectCard.module.css";
 import NeedsAttentionCard from "./NeedsAttentionCard";
@@ -11,6 +12,22 @@ import needsAttentionStyles from "./NeedsAttentionCard.module.css";
 import PendingInvitationCard from "./PendingInvitationCard";
 import styles from "./Dashboard.module.css";
 import UpcomingTasks from "./UpcomingTasks";
+
+const DASHBOARD_PROJECT_STORAGE_KEY = "teamup_dashboard_project_id";
+
+function buildProjectList(dashboard) {
+  if (!dashboard) return [];
+
+  const seen = new Set();
+  return [
+    ...(dashboard.ownedProjects ?? []),
+    ...(dashboard.memberProjects ?? []),
+  ].filter((project) => {
+    if (seen.has(project.id)) return false;
+    seen.add(project.id);
+    return true;
+  });
+}
 
 function formatDate(iso, options) {
   if (!iso) return "";
@@ -41,10 +58,15 @@ function statusForView(view) {
   return "error";
 }
 
-function buildActiveProject(dashboard) {
+function buildActiveProject(dashboard, projects, selectedProjectId) {
   if (!dashboard) return null;
 
-  const project = dashboard.ownedProjects?.[0] ?? dashboard.memberProjects?.[0];
+  const project =
+    projects.find(
+      (item) => String(item.id) === String(selectedProjectId),
+    ) ??
+    dashboard.ownedProjects?.[0] ??
+    dashboard.memberProjects?.[0];
   if (!project) return null;
 
   const membership = project.memberships?.find(
@@ -173,6 +195,14 @@ function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(() => {
+    try {
+      return localStorage.getItem(DASHBOARD_PROJECT_STORAGE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
 
   const refreshDashboard = useCallback(async () => {
     try {
@@ -206,11 +236,15 @@ function Dashboard() {
 
         setDashboard(result);
         setProfile(result.user);
+        setLoadError(null);
         setStatus(statusForView(result.view));
       })
       .catch((error) => {
         console.error("Failed to load dashboard data:", error);
-        if (isMountedRef.current) setStatus("error");
+        if (isMountedRef.current) {
+          setLoadError(error);
+          setStatus("error");
+        }
       });
 
     return () => {
@@ -224,10 +258,41 @@ function Dashboard() {
     month: "long",
     year: "numeric",
   }).format(new Date());
-  const activeProject = buildActiveProject(dashboard);
+  const projects = buildProjectList(dashboard);
+  const activeProject = buildActiveProject(
+    dashboard,
+    projects,
+    selectedProjectId,
+  );
   const pendingInvitations = dashboard?.pendingInvitations ?? [];
   const attentionTasks = dashboard?.attentionTasks ?? [];
   const upcomingTasks = dashboard?.upcomingTasks ?? [];
+
+  const handleProjectSelect = (event) => {
+    const nextProjectId = event.target.value;
+    setSelectedProjectId(nextProjectId);
+    try {
+      localStorage.setItem(DASHBOARD_PROJECT_STORAGE_KEY, nextProjectId);
+    } catch {
+      return;
+    }
+  };
+
+  const projectSwitcher =
+    projects.length > 1 ? (
+      <select
+        className={activeProjectStyles.switcherSelect}
+        aria-label="Switch active project"
+        value={activeProject?.id ?? selectedProjectId}
+        onChange={handleProjectSelect}
+      >
+        {projects.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.title}
+          </option>
+        ))}
+      </select>
+    ) : null;
 
   return (
     <div className={styles.dashboard}>
@@ -279,8 +344,9 @@ function Dashboard() {
             <div className={styles.columns}>
               <div className={styles.column}>
                 <Alert variant="error" title="Dashboard could not refresh">
-                  We could not load your dashboard. Check your connection and
-                  try again.
+                  {getErrorMessage(loadError, {
+                    fallback: "We could not load your dashboard. Try again.",
+                  })}
                 </Alert>
                 <Button onClick={() => window.location.reload()}>
                   Retry refresh
@@ -307,7 +373,10 @@ function Dashboard() {
           <div className={styles.columns}>
             <div className={styles.column}>
               {activeProject && (
-                <ActiveProjectCard activeProject={activeProject} />
+                <ActiveProjectCard
+                  activeProject={activeProject}
+                  switcher={projectSwitcher}
+                />
               )}
               {pendingInvitations.length > 0 && (
                 <section className={styles.column}>

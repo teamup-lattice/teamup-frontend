@@ -7,9 +7,29 @@ import {
   updateProjectDraft,
 } from "../../services/projectService";
 import { getSkills } from "../../services/profileService";
+import { getFieldErrors } from "../../services/errorMessage";
 import { WizardContext } from "./WizardContextValue";
 
 const DRAFT_BACKUP_KEY = "teamup:createProject:draft";
+
+const SAVE_FIELD_ALIASES = {
+  title: "name",
+  targetEndDate: "endDate",
+  durationWeeks: "duration",
+  availabilityExpectation: "availability",
+  availabilityResponseExpectation: "responseExpectation",
+};
+
+function normalizeFieldErrors(error) {
+  const fieldErrors = getFieldErrors(error);
+
+  return Object.entries(fieldErrors).reduce((mapped, [field, message]) => {
+    mapped[field] = message;
+    const alias = SAVE_FIELD_ALIASES[field];
+    if (alias) mapped[alias] = message;
+    return mapped;
+  }, {});
+}
 
 function readDraftBackup(draftId) {
   try {
@@ -282,6 +302,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const [commitment, setCommitment] = useState(initialCommitment);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveError, setSaveError] = useState(null);
+  const [saveFieldErrors, setSaveFieldErrors] = useState({});
   const [publishStatus, setPublishStatus] = useState("idle");
   const [publishError, setPublishError] = useState(null);
   const [publishedProjectId, setPublishedProjectId] = useState(null);
@@ -474,6 +496,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
   const updateBasics = (updates) => {
     setBasics((current) => ({ ...current, ...updates }));
     setSaveStatus((current) => (current === "saving" ? current : "idle"));
+    setSaveError(null);
+    setSaveFieldErrors({});
   };
 
   const updateRoles = (updatesOrFn) => {
@@ -483,6 +507,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
         : { ...current, ...updatesOrFn },
     );
     setSaveStatus((current) => (current === "saving" ? current : "idle"));
+    setSaveError(null);
+    setSaveFieldErrors({});
   };
 
   const updateCommitment = (updatesOrFn) => {
@@ -492,6 +518,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
         : { ...current, ...updatesOrFn },
     );
     setSaveStatus((current) => (current === "saving" ? current : "idle"));
+    setSaveError(null);
+    setSaveFieldErrors({});
   };
 
   const updateMilestones = (updatesOrFn) => {
@@ -499,6 +527,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
       typeof updatesOrFn === "function" ? updatesOrFn(current) : updatesOrFn,
     );
     setSaveStatus((current) => (current === "saving" ? current : "idle"));
+    setSaveError(null);
+    setSaveFieldErrors({});
   };
 
   const handleSetCurrentStep = (stepOrFn) => {
@@ -533,6 +563,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
     }
 
     saveInFlightRef.current = true;
+    setSaveError(null);
+    setSaveFieldErrors({});
     setSaveStatus("saving");
     try {
       const snapshot = overrides?.nativeEvent ? {} : overrides;
@@ -558,7 +590,9 @@ export function WizardProvider({ children, initialDraftId = null }) {
       // TODO: Load skills with backend IDs before adding them to the payload.
 
       setSaveStatus("saved");
-    } catch {
+    } catch (error) {
+      setSaveError(error);
+      setSaveFieldErrors(normalizeFieldErrors(error));
       setSaveStatus("failed");
     } finally {
       saveInFlightRef.current = false;
@@ -572,6 +606,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
 
     publishInFlightRef.current = true;
     setPublishError(null);
+    setSaveError(null);
+    setSaveFieldErrors({});
     setPublishStatus("publishing");
     setSaveStatus("saving");
     let payloadSaved = false;
@@ -603,15 +639,11 @@ export function WizardProvider({ children, initialDraftId = null }) {
       clearDraftBackup();
     } catch (error) {
       if (!payloadSaved) {
+        setSaveError(error);
+        setSaveFieldErrors(normalizeFieldErrors(error));
         setSaveStatus("failed");
       }
-      setPublishError({
-        message:
-          error?.message && error.message !== "Something went wrong"
-            ? error.message
-            : "",
-        errors: error?.errors,
-      });
+      setPublishError(error);
       setPublishStatus("failed");
     } finally {
       publishInFlightRef.current = false;
@@ -635,6 +667,8 @@ export function WizardProvider({ children, initialDraftId = null }) {
     setMilestones: updateMilestones,
     saveStatus,
     setSaveStatus,
+    saveError,
+    saveFieldErrors,
     publishStatus,
     setPublishStatus,
     publishError,

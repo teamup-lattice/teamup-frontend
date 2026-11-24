@@ -12,6 +12,7 @@ import {
   getSkills,
   saveProfile,
 } from "../../services/profileService";
+import { getErrorMessage } from "../../services/errorMessage";
 import styles from "./RequiredProfile.module.css";
 
 const skillLevels = [
@@ -52,6 +53,7 @@ function RequiredProfile() {
   const [accountName, setAccountName] = useState("");
   const [categories, setCategories] = useState([]);
   const [categoriesStatus, setCategoriesStatus] = useState("loading");
+  const [categoriesError, setCategoriesError] = useState(null);
   const [categoriesAttempt, setCategoriesAttempt] = useState(0);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileAttempt, setProfileAttempt] = useState(0);
@@ -70,6 +72,7 @@ function RequiredProfile() {
   });
   const [errors, setErrors] = useState({});
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveError, setSaveError] = useState(null);
 
   const roleTouchedRef = useRef(false);
   const rolePrefilledRef = useRef(false);
@@ -155,13 +158,15 @@ function RequiredProfile() {
           : [];
         categoriesRef.current = nextCategories;
         setCategories(nextCategories);
+        setCategoriesError(null);
         setCategoriesStatus(nextCategories.length > 0 ? "ready" : "empty");
         applyRolePrefill();
       })
-      .catch(() => {
+      .catch((error) => {
         if (!isMounted) return;
         categoriesRef.current = [];
         setCategories([]);
+        setCategoriesError(error);
         setCategoriesStatus("error");
       });
 
@@ -431,8 +436,10 @@ function RequiredProfile() {
     setSaveStatus("saving");
     try {
       await saveProfile({ ...values, skills: skillIdsToSave });
+      setSaveError(null);
       setSaveStatus("saved");
-    } catch {
+    } catch (error) {
+      setSaveError(error);
       setSaveStatus("failed");
     }
   }
@@ -471,8 +478,9 @@ function RequiredProfile() {
       {categoriesStatus === "error" && (
         <>
           <Alert variant="error" title="Roles could not load">
-            We could not load the role categories. Check your connection and
-            try again.
+            {getErrorMessage(categoriesError, {
+              fallback: "We could not load the role categories. Try again.",
+            })}
           </Alert>
           <Button
             fullWidth
@@ -513,7 +521,8 @@ function RequiredProfile() {
       )}
       {saveStatus === "failed" && (
         <Alert variant="error" title="Your profile did not save">
-          Your entries are still here. Retry when you are connected.
+          Your entries are still here.{" "}
+          {getErrorMessage(saveError, { fallback: "Try again." })}
         </Alert>
       )}
       {isSaved && (
