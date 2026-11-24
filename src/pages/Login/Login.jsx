@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import Alert from "../../components/Alert";
@@ -30,12 +30,14 @@ function validate({ email, password }) {
 function Login() {
   const location = useLocation();
   const navigate = useNavigate();
-  const passwordChangedMessage =
+  const [passwordChangedMessage] = useState(() =>
     location.state?.message === "Password changed, please sign in"
       ? location.state.message
-      : "";
-  const stateNotice =
-    typeof location.state?.message === "string" && !passwordChangedMessage
+      : "",
+  );
+  const [stateNotice] = useState(() =>
+    typeof location.state?.message === "string" &&
+    location.state.message !== "Password changed, please sign in"
       ? {
           title:
             typeof location.state.title === "string" && location.state.title
@@ -46,7 +48,8 @@ function Login() {
           message: location.state.message,
           variant: location.state.variant === "error" ? "error" : "success",
         }
-      : null;
+      : null,
+  );
   const redirectTo =
     typeof location.state?.from === "string" ? location.state.from : "";
   const [values, setValues] = useState({ email: "", password: "" });
@@ -56,6 +59,22 @@ function Login() {
   const [submitError, setSubmitError] = useState(null);
 
   const isLoading = status === "loading";
+
+  useEffect(() => {
+    if (!passwordChangedMessage && !stateNotice) return;
+
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: location.state?.from ? { from: location.state.from } : null,
+    });
+  }, [
+    passwordChangedMessage,
+    stateNotice,
+    navigate,
+    location.pathname,
+    location.search,
+    location.state?.from,
+  ]);
 
   function handleChange(event) {
     const { name, value } = event.target;
