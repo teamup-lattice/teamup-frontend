@@ -36,10 +36,30 @@ function formatDates(startDate, endDate) {
   return start || end || "";
 }
 
-function mapProject(project) {
+function selectDisplayRole(roles, roleFilter) {
+  const filter =
+    typeof roleFilter === "string" ? roleFilter.trim().toLowerCase() : "";
+
+  if (filter) {
+    const matches = (role) =>
+      typeof role?.title === "string" &&
+      role.title.toLowerCase().includes(filter);
+
+    return (
+      roles.find((role) => role?.status === "OPEN" && matches(role)) ??
+      roles.find(matches) ??
+      roles.find((role) => role?.status === "OPEN") ??
+      roles[0] ??
+      null
+    );
+  }
+
+  return roles.find((role) => role?.status === "OPEN") ?? roles[0] ?? null;
+}
+
+function mapProject(project, roleFilter = "") {
   const roles = Array.isArray(project?.roles) ? project.roles : [];
-  const role =
-    roles.find((item) => item?.status === "OPEN") ?? roles[0] ?? null;
+  const role = selectDisplayRole(roles, roleFilter);
   const skills = (Array.isArray(project?.skills) ? project.skills : [])
     .map((entry) => entry?.skill?.name)
     .filter((name) => typeof name === "string" && name.trim());
@@ -49,6 +69,7 @@ function mapProject(project) {
     title: project?.title ?? "",
     description: project?.description ?? "",
     role: role?.title ?? "",
+    roleStatus: role?.status ?? "",
     skills,
     hoursPerWeek: role?.hoursPerWeek ?? null,
     weeks: project?.durationWeeks ?? null,
@@ -90,6 +111,7 @@ export async function getOpenProjects({
     params.set("page", String(pageNumber));
   }
 
+  addParam("roleTitle", filters.role);
   addParam("projectType", normalizeProjectTypeValue(filters.type));
   addParam("minDuration", filters.duration);
   addParam("maxDuration", filters.duration);
@@ -102,7 +124,7 @@ export async function getOpenProjects({
   const response = await api.get(path);
 
   const projects = Array.isArray(response?.projects)
-    ? response.projects.map(mapProject)
+    ? response.projects.map((project) => mapProject(project, filters.role))
     : [];
 
   return {

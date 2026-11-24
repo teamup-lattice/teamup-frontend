@@ -43,6 +43,18 @@ export function normalizeProjectTypeValue(value) {
   return LEGACY_PROJECT_TYPE_VALUES[trimmed.toLowerCase()] ?? "";
 }
 
+const roleOptions = [
+  { value: "Frontend", label: "Frontend" },
+  { value: "Backend", label: "Backend" },
+  { value: "Designer", label: "Designer" },
+  { value: "Product Manager", label: "Product Manager" },
+  { value: "QA", label: "QA" },
+  { value: "Data", label: "Data" },
+  { value: "Marketing", label: "Marketing" },
+];
+
+const ROLE_VALUES = new Set(roleOptions.map((option) => option.value));
+
 // The optional filters. "summaryLabel" is the short label used in the
 // mobile summary ("Type: Web application").
 export const filterFields = [
@@ -53,6 +65,13 @@ export const filterFields = [
     placeholder: "Any skill",
     options: [],
     dynamic: "skills",
+  },
+  {
+    key: "role",
+    label: "Role",
+    summaryLabel: "Role",
+    placeholder: "Any role",
+    options: roleOptions,
   },
   {
     key: "type",
@@ -109,6 +128,10 @@ export function normalizeFilters(filters = {}, { skillIds = null } = {}) {
       next.skill = skill;
     }
   }
+
+  const role =
+    typeof raw.role === "string" ? raw.role.trim() : "";
+  if (ROLE_VALUES.has(role)) next.role = role;
 
   next.type = normalizeProjectTypeValue(raw.type);
 
