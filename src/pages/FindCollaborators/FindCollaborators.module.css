@@ -42,18 +42,42 @@
   gap: var(--space-4);
 }
 
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+
 .filterCard,
-.card {
+.card,
+.reviewCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   min-width: 0;
   padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   background: var(--color-card);
+  box-shadow: 0 1px 4px rgb(17 35 69 / 6%), 0 0 1px rgb(17 35 69 / 8%);
+  transition: box-shadow 150ms ease, transform 150ms ease;
 }
 
+.card:hover,
+.reviewCard:hover {
+  box-shadow: 0 4px 12px rgb(17 35 69 / 10%), 0 0 1px rgb(17 35 69 / 8%);
+  transform: translateY(-1px);
+}
+
+/* ─── Card typography ─────────────────────────────────────────────────────── */
+
+/* "Public profile preview" — small label, not a shouting heading */
+.profileHeading {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  letter-spacing: 0.01em;
+}
+
+/* Full-size card title (filter card, review card) */
 .cardTitle,
 .sectionHeading {
   margin: 0;
@@ -63,11 +87,121 @@
   line-height: var(--line-height-heading);
 }
 
+.sectionHeading {
+  font-size: var(--font-size-title);
+}
+
+/* ─── Avatar block ────────────────────────────────────────────────────────── */
+
+.avatarBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.avatarImg,
+.avatarInitial {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color-purple-light);
+}
+
+.avatarImg {
+  object-fit: cover;
+  object-position: center 20%;
+  display: block;
+}
+
+.avatarInitial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.avatarMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.avatarName {
+  display: block;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: var(--line-height-heading);
+  word-break: break-word;
+}
+
+.avatarHeadline {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+  word-break: break-word;
+}
+
+/* ─── Field blocks ────────────────────────────────────────────────────────── */
+
+.fieldBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 700;
+  line-height: var(--line-height-text);
+}
+
+.emphasis {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: var(--line-height-text);
+}
+
+/* Privacy note */
+.privacyNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
+
+/* Legacy .helper kept for filter card / sheet */
+.helper {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+/* ─── Filter card fields ─────────────────────────────────────────────────── */
+
 .filterFields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 var(--space-4);
 }
+
+/* ─── Text link (Reset / Cancel) ─────────────────────────────────────────── */
 
 .textLink {
   align-self: center;
@@ -86,12 +220,7 @@
   outline-offset: 2px;
 }
 
-.helper {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
-  line-height: var(--line-height-text);
-}
+/* ─── Misc ───────────────────────────────────────────────────────────────── */
 
 .zeroMobileText {
   display: none;
@@ -126,26 +255,6 @@
   gap: var(--space-4);
 }
 
-.sectionHeading {
-  font-size: var(--font-size-title);
-}
-
-.label {
-  margin: 0 0 var(--space-1);
-  color: var(--color-navy);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-text);
-}
-
-.emphasis {
-  margin: 0;
-  color: var(--color-navy);
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  line-height: var(--line-height-text);
-}
-
 .cancelLink {
   color: var(--color-purple);
   text-decoration: underline;
@@ -178,6 +287,8 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
+/* ─── Filter sheet ───────────────────────────────────────────────────────── */
 
 .sheetOverlay {
   position: fixed;
@@ -214,9 +325,12 @@
   }
 }
 
+/* ─── Narrow overrides (≤ 834px) ─────────────────────────────────────────── */
+
 @media (max-width: 834px) {
   .card,
-  .filterCard {
+  .filterCard,
+  .reviewCard {
     padding: var(--space-5);
   }
 
@@ -224,6 +338,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ─── Mobile overrides (≤ 599px) ─────────────────────────────────────────── */
 
 @media (max-width: 599px) {
   .selectionFields,
@@ -248,5 +364,19 @@
 
   .zeroMobileText {
     display: inline;
+  }
+}
+
+/* ─── 360 px overflow guard ───────────────────────────────────────────────── */
+
+@media (max-width: 360px) {
+  .card,
+  .reviewCard,
+  .filterCard {
+    padding: var(--space-4);
+  }
+
+  .avatarBlock {
+    flex-wrap: wrap;
   }
 }

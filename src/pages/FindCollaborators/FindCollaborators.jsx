@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
-import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
 import Select from "../../components/Select";
@@ -124,6 +123,7 @@ function FindCollaborators() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [reviewedUserId, setReviewedUserId] = useState("");
   const reviewCardRef = useRef(null);
+  const reviewHeadingRef = useRef(null);
   const profileCardRef = useRef(null);
   const hasOpenedReview = useRef(false);
 
@@ -297,6 +297,11 @@ function FindCollaborators() {
         behavior: "smooth",
         block: "start",
       });
+      // Focus the review panel heading after scroll settles
+      const timer = setTimeout(() => {
+        reviewHeadingRef.current?.focus();
+      }, 350);
+      return () => clearTimeout(timer);
     } else if (hasOpenedReview.current) {
       profileCardRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -304,6 +309,7 @@ function FindCollaborators() {
       });
       hasOpenedReview.current = false;
     }
+    return undefined;
   }, [reviewedUserId]);
 
   const applyFilters = () => {
@@ -673,9 +679,6 @@ function FindCollaborators() {
                   : "people match"}
               </h2>
               {currentResults.users.map((user) => {
-                const userLabel = [user.name, user.headline]
-                  .filter(Boolean)
-                  .join(" · ");
                 const availability = [
                   user.availability,
                   user.preferredDuration,
@@ -692,24 +695,52 @@ function FindCollaborators() {
                         : undefined
                     }
                   >
-                    <h3 className={styles.cardTitle}>Public profile preview</h3>
-                    <AvatarRow
-                      initial={user.name.charAt(0) || "?"}
-                      text={userLabel}
-                    />
+                    <p className={styles.profileHeading}>Public profile preview</p>
+
+                    <div className={styles.avatarBlock}>
+                      {user.avatarUrl ? (
+                        <img
+                          className={styles.avatarImg}
+                          src={user.avatarUrl}
+                          alt=""
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className={styles.avatarInitial} aria-hidden="true">
+                          {user.name.charAt(0) || "?"}
+                        </span>
+                      )}
+                      <div className={styles.avatarMeta}>
+                        <span className={styles.avatarName}>{user.name}</span>
+                        {user.headline && (
+                          <span className={styles.avatarHeadline}>{user.headline}</span>
+                        )}
+                      </div>
+                    </div>
+
                     {user.skills.length > 0 && (
-                      <div>
+                      <div className={styles.fieldBlock}>
                         <p className={styles.label}>Self-reported skills</p>
                         <p className={styles.body}>{user.skills.join(" · ")}</p>
                       </div>
                     )}
+
                     {availability && (
                       <p className={styles.emphasis}>{availability}</p>
                     )}
-                    <p className={styles.helper}>
+
+                    {user.goal && (
+                      <div className={styles.fieldBlock}>
+                        <p className={styles.label}>Goal</p>
+                        <p className={styles.body}>{user.goal}</p>
+                      </div>
+                    )}
+
+                    <p className={styles.privacyNote}>
                       Public fields only. Contact details hidden, including from
                       the Owner.
                     </p>
+
                     <Button
                       fullWidth
                       disabled={inviteAction.status === "saving"}
@@ -744,8 +775,14 @@ function FindCollaborators() {
           )}
 
           {reviewedUser && (
-            <article className={styles.card} ref={reviewCardRef}>
-              <h3 className={styles.cardTitle}>Review invitation</h3>
+            <article className={styles.reviewCard} ref={reviewCardRef}>
+              <h3
+                className={styles.cardTitle}
+                ref={reviewHeadingRef}
+                tabIndex={-1}
+              >
+                Review invitation
+              </h3>
               <p className={styles.emphasis}>
                 Invite {reviewedUser.name} to {project.title}
               </p>
