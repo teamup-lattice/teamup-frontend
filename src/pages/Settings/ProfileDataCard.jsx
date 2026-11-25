@@ -106,33 +106,70 @@ function ProfileDataCard({ values, disabled, onChange }) {
               aria-label="Upload photo file input"
             />
             <div className={styles.avatarActions}>
-              <Button
-                type="button"
-                variant="secondary"
-                loading={isUploading}
-                loadingText="Uploading photo..."
-                disabled={disabled || isUploading || isRemoving}
-                onClick={() => {
-                  setRemoveError(null);
-                  setIsConfirmingRemove(false);
-                  fileInputRef.current?.click();
-                }}
-              >
-                Upload photo
-              </Button>
-              {Boolean(avatarUrl) && !isConfirmingRemove && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={disabled || isUploading || isRemoving}
-                  onClick={() => {
-                    setUploadError(null);
-                    setRemoveError(null);
-                    setIsConfirmingRemove(true);
-                  }}
-                >
-                  Remove photo
-                </Button>
+              {Boolean(avatarUrl) && isConfirmingRemove ? (
+                <div className={styles.removeConfirm}>
+                  <p className={styles.removePrompt}>Remove your photo?</p>
+                  <div className={styles.removeActions}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={isRemoving}
+                      onClick={() => {
+                        setIsConfirmingRemove(false);
+                        setRemoveError(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      loading={isRemoving}
+                      loadingText="Removing..."
+                      onClick={handleRemovePhoto}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                  {removeError && (
+                    <div className={styles.removeError}>
+                      <Alert variant="error" title="Remove failed">
+                        {removeError}
+                      </Alert>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    loading={isUploading}
+                    loadingText="Uploading photo..."
+                    disabled={disabled || isUploading || isRemoving}
+                    onClick={() => {
+                      setRemoveError(null);
+                      setIsConfirmingRemove(false);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Upload photo
+                  </Button>
+                  {Boolean(avatarUrl) && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={disabled || isUploading || isRemoving}
+                      onClick={() => {
+                        setUploadError(null);
+                        setRemoveError(null);
+                        setIsConfirmingRemove(true);
+                      }}
+                    >
+                      Remove photo
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
@@ -142,39 +179,6 @@ function ProfileDataCard({ values, disabled, onChange }) {
               <p className={styles.avatarError} role="alert">
                 {uploadError}
               </p>
-            )}
-
-            {Boolean(avatarUrl) && isConfirmingRemove && (
-              <div className={styles.removeConfirm}>
-                <p className={styles.removePrompt}>Remove your photo?</p>
-                <div className={styles.removeActions}>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={isRemoving}
-                    onClick={() => {
-                      setIsConfirmingRemove(false);
-                      setRemoveError(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    loading={isRemoving}
-                    loadingText="Removing..."
-                    onClick={handleRemovePhoto}
-                  >
-                    Remove
-                  </Button>
-                </div>
-                {removeError && (
-                  <Alert variant="error" title="Remove failed">
-                    {removeError}
-                  </Alert>
-                )}
-              </div>
             )}
           </div>
         </div>
