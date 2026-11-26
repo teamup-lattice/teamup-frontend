@@ -91,7 +91,14 @@ function ActiveProjectCard({ activeProject, switcher }) {
         variant="secondary"
         onClick={() => {
           if (activeProject.id) {
-            navigate(`/projects/${activeProject.id}/workspace`);
+            const isCompleted =
+              typeof activeProject.status === "string" &&
+              activeProject.status.toUpperCase() === "COMPLETED";
+            navigate(
+              isCompleted
+                ? `/projects/${activeProject.id}/page`
+                : `/projects/${activeProject.id}/workspace`,
+            );
           }
         }}
       >

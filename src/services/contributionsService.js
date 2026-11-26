@@ -238,8 +238,8 @@ export async function getContributionSummary(projectId) {
   return data.contributions.map(mapSummaryContribution).filter(Boolean);
 }
 
-function submittedTime(contribution) {
-  const value = contribution.submittedAt || contribution.createdAt;
+function contributionTime(contribution) {
+  const value = contribution.createdAt || contribution.submittedAt;
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
@@ -247,11 +247,11 @@ function submittedTime(contribution) {
 export function findLatestContribution(contributions, userId) {
   return (
     contributions
-      .filter(
-        (item) =>
-          item.task === null && String(item.member.userId) === String(userId),
-      )
-      .sort((a, b) => submittedTime(b) - submittedTime(a))[0] ?? null
+      .filter((item) => {
+        const memberUserId = item.member?.user?.id ?? item.member?.userId;
+        return String(memberUserId) === String(userId);
+      })
+      .sort((a, b) => contributionTime(b) - contributionTime(a))[0] ?? null
   );
 }
 
@@ -396,7 +396,7 @@ export async function reviewContribution(
   projectId,
   contributionId,
   { decision, note } = {},
-  { simulateFail = false, authorName = "" } = {},
+  { simulateFail = false } = {},
 ) {
   if (simulateFail) throw new Error("Request failed");
   if (!contributionId) throw new Error("Contribution is missing an id.");
@@ -414,38 +414,13 @@ export async function reviewContribution(
     return mapContribution(response?.contribution ?? response);
   } catch (error) {
     if (error?.status === 403) {
-      const friendlyError = new Error(
-        "Only the project owner or a manager can review contributions.",
-      );
+      const friendlyError = new Error("You can't review your own contribution");
       friendlyError.status = 403;
       throw friendlyError;
     }
     if (error?.status === 409) {
-      const msg = typeof error?.message === "string" ? error.message : "";
-      const text = `${error?.code || ""} ${msg}`.toLowerCase();
-      if (
-        text.includes("has not acknowledged") ||
-        text.includes("not acknowledged") ||
-        text.includes("not yet acknowledged") ||
-        error?.code === "NOT_ACKNOWLEDGED"
-      ) {
-        const match = msg.match(
-          /(?:Member|User)?\s*([A-Za-z0-9_-]+)\s+has not acknowledged/i,
-        );
-        const name =
-          authorName ||
-          error?.authorName ||
-          error?.data?.authorName ||
-          (match ? match[1] : null) ||
-          "the author";
-        const friendlyError = new Error(
-          `Waiting for ${name} to acknowledge this summary`,
-        );
-        friendlyError.status = 409;
-        throw friendlyError;
-      }
       const friendlyError = new Error(
-        "This contribution was already reviewed. Please refetch to see latest updates.",
+        "This contribution isn't waiting for review",
       );
       friendlyError.status = 409;
       throw friendlyError;

@@ -64,6 +64,7 @@ function buildConfirmations(members, contributions, tasks) {
       role: member.role,
       summary: shown?.title ?? "",
       doneTasks: doneTaskCount(tasks, member),
+      hasContribution: memberContributions.length > 0,
       confirmedBy: confirmed
         ? review?.reviewer?.name || "A teammate"
         : null,

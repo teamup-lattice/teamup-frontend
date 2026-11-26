@@ -206,6 +206,10 @@ function ProjectCompletion() {
         title: "Couldn't save deliverable",
         message: getErrorMessage(error, {
           fallback: "Failed to save deliverable. Try again.",
+          byStatus: {
+            413: "File is over 10MB",
+            415: "This file type isn't allowed",
+          },
         }),
       });
     }
@@ -231,43 +235,11 @@ function ProjectCompletion() {
 
         checks.forEach((check) => {
           if (!check) return;
-          const msg = typeof check === "string" ? check : check.message;
-          const code = (typeof check === "object" && check.code) || "";
-          const type = (typeof check === "object" && check.type) || "";
-          const text = `${code} ${type} ${msg || ""}`.toLowerCase();
-          const isTaskOrContribCheck =
-            text.includes("task") ||
-            text.includes("contribution") ||
-            text.includes("member");
-
-          if (isTaskOrContribCheck && msg && !titles.includes(msg)) {
-            titles.push(msg);
-          }
-
-          if (Array.isArray(check?.contributions)) {
-            check.contributions.forEach((c) => {
-              const title = typeof c === "string" ? c : c?.title;
-              if (title && !titles.includes(title)) {
-                titles.push(title);
-              }
-            });
+          const message = typeof check === "string" ? check : check.message;
+          if (message && !titles.includes(message)) {
+            titles.push(message);
           }
         });
-
-        const hasContributionTitle =
-          Array.isArray(readiness?.pendingContributions) &&
-          readiness.pendingContributions.some((c) => titles.includes(c.title));
-
-        if (
-          !hasContributionTitle &&
-          Array.isArray(readiness?.pendingContributions)
-        ) {
-          readiness.pendingContributions.forEach((c) => {
-            if (c.title && !titles.includes(c.title)) {
-              titles.push(c.title);
-            }
-          });
-        }
 
         setActionBanner({
           variant: "error",
@@ -326,8 +298,14 @@ function ProjectCompletion() {
   const project = workspaceProject ?? {};
   const currentTasks = (loadedTasks !== undefined ? loadedTasks : tasks) ?? [];
   const savedWork = { milestones: buildSavedWork(milestones, currentTasks) };
+  const isCompleted = project.status === "Completed" || Boolean(result);
+  const savedOutcome =
+    project.status === "Completed" &&
+    typeof project.completionOutcome === "string"
+      ? project.completionOutcome
+      : "";
   const evidence = {
-    outcome,
+    outcome: savedOutcome || outcome,
     deliverable: Array.isArray(deliverables) ? (deliverables[0] ?? null) : null,
   };
   const readiness = getReadiness(
@@ -336,7 +314,6 @@ function ProjectCompletion() {
     contributions,
     currentTasks,
   );
-  const isCompleted = project.status === "Completed" || Boolean(result);
   const ownerName = project.ownerName;
   const dates = projectDatesLine(project);
   const pageTo = `/projects/${projectId}/page${search}`;
