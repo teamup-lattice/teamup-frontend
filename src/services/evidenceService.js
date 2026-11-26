@@ -88,15 +88,13 @@ function normalizeChecks(checks) {
   return checks
     .map((check) => {
       if (typeof check === "string") {
-        return { message: check, contributions: [] };
+        return { message: check, code: "" };
       }
       if (check && typeof check === "object") {
         const message =
           typeof check.message === "string" ? check.message : "";
-        const contributions = Array.isArray(check.contributions)
-          ? check.contributions
-          : [];
-        return { message, contributions };
+        const code = typeof check.code === "string" ? check.code : "";
+        return { message, code };
       }
       return null;
     })
@@ -125,14 +123,15 @@ export function deleteProjectEvidence(projectId, evidenceId) {
   );
 }
 
-// GAP: uploads rely on the backend default context ("contribution"). The
-// project deliverable flow may need context "evidence"; left as-is until the
-// backend confirms the expected context.
-export async function uploadEvidenceFile(file) {
+export async function uploadEvidenceFile(file, context) {
   const formData = new FormData();
   formData.append("file", file);
+  if (context) formData.append("context", context);
 
-  const data = await api.post("/api/uploads", formData);
+  const path = context
+    ? `/api/uploads?context=${encodeURIComponent(context)}`
+    : "/api/uploads";
+  const data = await api.post(path, formData);
   const fileUrl = typeof data?.fileUrl === "string" ? data.fileUrl : "";
   if (!fileUrl) {
     throw new Error("Upload did not return a valid file URL.");
@@ -152,7 +151,7 @@ export async function saveEvidenceDeliverable(projectId, deliverable) {
     if (!deliverable.file) {
       throw new Error("Choose a file before saving.");
     }
-    url = await uploadEvidenceFile(deliverable.file);
+    url = await uploadEvidenceFile(deliverable.file, "evidence");
     type = type || typeFromFile(deliverable.file);
   } else {
     url = normalizeHttpUrl(deliverable.url || deliverable.name);
