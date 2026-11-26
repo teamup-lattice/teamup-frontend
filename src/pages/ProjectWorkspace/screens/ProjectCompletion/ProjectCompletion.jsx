@@ -298,8 +298,14 @@ function ProjectCompletion() {
   const project = workspaceProject ?? {};
   const currentTasks = (loadedTasks !== undefined ? loadedTasks : tasks) ?? [];
   const savedWork = { milestones: buildSavedWork(milestones, currentTasks) };
+  const isCompleted = project.status === "Completed" || Boolean(result);
+  const savedOutcome =
+    project.status === "Completed" &&
+    typeof project.completionOutcome === "string"
+      ? project.completionOutcome
+      : "";
   const evidence = {
-    outcome,
+    outcome: savedOutcome || outcome,
     deliverable: Array.isArray(deliverables) ? (deliverables[0] ?? null) : null,
   };
   const readiness = getReadiness(
@@ -308,7 +314,6 @@ function ProjectCompletion() {
     contributions,
     currentTasks,
   );
-  const isCompleted = project.status === "Completed" || Boolean(result);
   const ownerName = project.ownerName;
   const dates = projectDatesLine(project);
   const pageTo = `/projects/${projectId}/page${search}`;
