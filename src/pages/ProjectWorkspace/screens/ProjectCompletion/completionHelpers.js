@@ -118,12 +118,15 @@ export function getReadiness(
       });
   }
 
+  const confirmationList = (confirmations || []).filter(
+    (item) => item.hasContribution !== false,
+  );
   const hasOutcome = evidence?.outcome ? evidence.outcome.trim() !== "" : false;
   const hasDeliverable = Boolean(evidence?.deliverable);
-  const confirmed = (confirmations || []).filter((item) => item.confirmedBy);
-  const pending = (confirmations || []).filter((item) => !item.confirmedBy);
+  const confirmed = confirmationList.filter((item) => item.confirmedBy);
+  const pending = confirmationList.filter((item) => !item.confirmedBy);
   const evidenceComplete = hasOutcome && hasDeliverable;
-  const allConfirmed = (confirmations || []).length > 0 && pending.length === 0;
+  const allConfirmed = confirmationList.length > 0 && pending.length === 0;
 
   const contributionList = Array.isArray(contributions) ? contributions : [];
   const pendingContributions = contributionList.filter(
@@ -143,7 +146,7 @@ export function getReadiness(
     hasDeliverable,
     confirmed,
     pending,
-    total: (confirmations || []).length,
+    total: confirmationList.length,
     evidenceComplete,
     allConfirmed,
     pendingContributions,
@@ -164,10 +167,13 @@ export function deliverableKindLabel(kind) {
 
 // "Ada confirmed by John · John confirmed by Ada · David confirmed by John, 30 Nov 2026."
 export function confirmationsLine(confirmations) {
-  const parts = confirmations.map(
+  const confirmed = confirmations.filter(
+    (item) => item.hasContribution !== false && item.confirmedBy,
+  );
+  const parts = confirmed.map(
     (item) => `${item.member} confirmed by ${item.confirmedBy}`,
   );
-  const dates = confirmations
+  const dates = confirmed
     .map((item) => item.confirmedOn)
     .filter(Boolean)
     .sort();

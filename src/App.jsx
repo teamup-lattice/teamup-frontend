@@ -112,10 +112,10 @@ function App() {
             <Route path="reminders" element={<Reminders />} />
             <Route path="sharing-privacy" element={<SharingPrivacy />} />
           </Route>
-        </Route>
 
-        <Route path="/projects/:projectId/page" element={<ProjectWorkspace />}>
-          <Route index element={<PrivateProjectPage />} />
+          <Route path="/projects/:projectId/page" element={<ProjectWorkspace />}>
+            <Route index element={<PrivateProjectPage />} />
+          </Route>
         </Route>
         <Route path="/projects/:id" element={<ProjectDetails />} />
       </Route>
