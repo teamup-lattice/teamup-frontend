@@ -387,13 +387,19 @@ function TaskDetail() {
       if (savingToDone && evidenceFile && !fileUrl) {
         setFileUploading(true);
         try {
-          fileUrl = await uploadEvidenceFile(evidenceFile);
+          fileUrl = await uploadEvidenceFile(evidenceFile, "contribution");
           fileType = typeFromFile(evidenceFile);
           setUploadedFileUrl(fileUrl);
           setUploadedFileType(fileType);
         } catch (error) {
           setFileError(
-            getErrorMessage(error, { fallback: "File could not be uploaded." }),
+            getErrorMessage(error, {
+              fallback: "File could not be uploaded.",
+              byStatus: {
+                413: "File is over 10MB",
+                415: "This file type isn't allowed",
+              },
+            }),
           );
           return;
         } finally {

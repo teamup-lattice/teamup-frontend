@@ -90,6 +90,10 @@ export async function getWorkspaceProject(projectId) {
     id: project.id,
     name: typeof project.title === "string" ? project.title : "",
     status: readableStatus(project.status),
+    completionOutcome:
+      typeof project.completionOutcome === "string"
+        ? project.completionOutcome
+        : "",
     ownerId: project.ownerId ?? null,
     ownerName: typeof project.owner?.name === "string" ? project.owner.name : "",
     startDate: typeof project.startDate === "string" ? project.startDate : "",

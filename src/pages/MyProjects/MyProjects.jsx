@@ -11,7 +11,7 @@ import { getErrorMessage } from "../../services/errorMessage";
 import DeleteProjectDialog from "./DeleteProjectDialog";
 import ProjectCard from "./ProjectCard";
 import TeamHealthSummary from "./TeamHealthSummary";
-import { STATUS_OPTIONS } from "./statusConfig";
+import { normalizeStatus, STATUS_OPTIONS } from "./statusConfig";
 import styles from "./MyProjects.module.css";
 
 const NUMBER_WORDS = [
@@ -137,7 +137,10 @@ function MyProjects() {
   const allRecords = records;
   const hasRecords = allRecords.length > 0;
   const visibleRecords = statusFilter
-    ? allRecords.filter((project) => project.status === statusFilter)
+    ? allRecords.filter(
+        (project) =>
+          normalizeStatus(project.status) === normalizeStatus(statusFilter),
+      )
     : allRecords;
   const isFilteredEmpty =
     !isLoading && hasRecords && visibleRecords.length === 0;
