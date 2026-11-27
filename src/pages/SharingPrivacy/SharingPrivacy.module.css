@@ -6,8 +6,13 @@
   color: var(--color-navy);
 }
 
+.page button {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
 .notice {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5);
   margin-bottom: var(--space-5);
   border: 1px solid transparent;
   border-left: 4px solid;
@@ -123,8 +128,82 @@
   outline-offset: 2px;
 }
 
+.cardTitle {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+}
+
+.subTitle {
+  margin: 0 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
+}
+
 .strongText {
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
+}
+
+.bodyList {
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.savedProjectTitle {
+  margin: 0 0 var(--space-3);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-heading);
+}
+
+.savedStatusLine {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.savedOutcome {
+  margin: 0 0 var(--space-4);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.savedMemberList {
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-text);
+}
+
+.savedDescription {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-text);
+}
+
+.smallNote {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+.smallNote:last-child {
+  margin-bottom: 0;
 }
 
 .checkboxRow {
