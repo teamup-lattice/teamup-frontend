@@ -65,14 +65,74 @@ function PrivateProjectPage() {
         <span className={styles.srOnly} role="status">
           Loading private project page…
         </span>
+
+        {/* Header: title + meta */}
         <div className={styles.skeletonHeader}>
           <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
           <span className={`${styles.skeletonBar} ${styles.skeletonMeta}`} />
         </div>
+
+        {/* Hero image */}
         <span className={`${styles.skeletonBar} ${styles.skeletonHero}`} />
+
+        {/* Status row: pill + text */}
+        <div className={styles.skeletonStatusRow}>
+          <span className={`${styles.skeletonBar} ${styles.skeletonPill}`} />
+          <span className={`${styles.skeletonBar} ${styles.skeletonStatusText}`} />
+        </div>
+
+        {/* Description bar */}
+        <span className={`${styles.skeletonBar} ${styles.skeletonDesc}`} />
+
+        {/* Two-column layout */}
         <div className={styles.skeletonLayout}>
-          <span className={styles.skeletonCard} />
-          <span className={styles.skeletonCard} />
+          {/* Left column */}
+          <div className={styles.skeletonColumn}>
+            {/* Overview card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+              {/* Nested: Collective outcome card */}
+              <div className={styles.skeletonNestedCard}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className={styles.skeletonColumn}>
+            {/* Team card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              {/* Member row 1 */}
+              <div className={styles.skeletonPersonRow}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                <div className={styles.skeletonPersonMeta}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                </div>
+              </div>
+              {/* Member row 2 */}
+              <div className={styles.skeletonPersonRow}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                <div className={styles.skeletonPersonMeta}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                </div>
+              </div>
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+            </div>
+            {/* Privacy/profile card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonButton}`} />
+            </div>
+          </div>
         </div>
       </div>
     );

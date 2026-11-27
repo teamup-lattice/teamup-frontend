@@ -14,6 +14,13 @@
   border: 0;
 }
 
+/* ── Skeleton ─────────────────────────────────────────────── */
+@keyframes skeletonPulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .skeletonHeader {
   display: flex;
   flex-direction: column;
@@ -25,38 +32,151 @@
   display: block;
   border-radius: var(--radius-control);
   background: var(--color-action-disabled);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBar {
+    animation: none;
+  }
+}
+
+/* header bars */
 .skeletonTitle {
-  width: min(60%, 320px);
+  width: min(55%, 300px);
   height: var(--space-6);
 }
 
 .skeletonMeta {
-  width: min(40%, 220px);
+  width: min(38%, 200px);
   height: var(--space-4);
 }
 
+/* hero image block */
 .skeletonHero {
   width: 100%;
   max-width: 220px;
   aspect-ratio: 4 / 3;
-  margin-bottom: var(--space-5);
+  height: auto;
+  margin-bottom: var(--space-4);
   border-radius: var(--radius-card);
 }
 
+/* status row: pill + text */
+.skeletonStatusRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.skeletonPill {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+.skeletonStatusText {
+  width: 140px;
+  height: var(--space-4);
+}
+
+/* one description bar */
+.skeletonDesc {
+  width: min(70%, 380px);
+  height: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+/* two-column grid */
 .skeletonLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
+  align-items: start;
 }
 
-.skeletonCard {
-  display: block;
-  min-height: 240px;
+.skeletonColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* card shell: same border/radius/padding as shared.card */
+.skeletonCardInner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   background: var(--color-card);
+}
+
+/* nested card inside a card (Collective outcome) */
+.skeletonNestedCard {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-canvas);
+}
+
+/* avatar + name/role rows */
+.skeletonPersonRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.skeletonAvatar {
+  flex: 0 0 auto;
+  width: calc(var(--space-6) + var(--space-1));
+  height: calc(var(--space-6) + var(--space-1));
+  border-radius: 50%;
+}
+
+.skeletonPersonMeta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* text bar widths */
+.skeletonCardTitle {
+  width: 50%;
+  height: var(--space-4);
+}
+
+.skeletonRowFull {
+  width: 100%;
+  height: var(--space-4);
+}
+
+.skeletonRowMedium {
+  width: 70%;
+  height: var(--space-4);
+}
+
+.skeletonRowShort {
+  width: 45%;
+  height: var(--space-4);
+}
+
+/* button-height bar */
+.skeletonButton {
+  width: 100%;
+  height: var(--button-height);
+  border-radius: var(--radius-control);
 }
 
 .pageHeader {
