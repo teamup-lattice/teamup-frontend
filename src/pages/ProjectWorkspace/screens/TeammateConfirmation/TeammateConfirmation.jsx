@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import { ArrowUpRightIcon, PaperclipIcon } from "../../../../components/Icons";
 import Skeleton from "../../../../components/Skeleton";
 import Textarea from "../../../../components/Textarea";
-import StatusTag, { getContributionStatusLabel } from "../../shared/StatusTag";
 import {
   getProjectContributions,
   reviewContribution,
@@ -19,10 +19,60 @@ import styles from "./TeammateConfirmation.module.css";
 
 const LOAD_VARIANTS = ["loadfail", "empty"];
 
+function getStatusNote({
+  isConfirmed,
+  isAcknowledged,
+  latestReview,
+  authorName,
+  reviewerName,
+}) {
+  if (isConfirmed) {
+    const confirmedBy = latestReview?.reviewer?.name;
+    const confirmedOn = latestReview?.createdAt
+      ? formatDate(latestReview.createdAt)
+      : "";
+    return {
+      title: "Confirmed",
+      detail: confirmedBy
+        ? `Confirmed by ${confirmedBy}${confirmedOn ? `${SEP}${confirmedOn}` : ""}`
+        : "This contribution wording is confirmed.",
+    };
+  }
+
+  if (latestReview?.decision === "CHANGES_REQUESTED") {
+    return {
+      title: "Changes requested",
+      detail:
+        latestReview.note ||
+        "A teammate requested changes to this contribution wording.",
+    };
+  }
+
+  if (!isAcknowledged) {
+    return {
+      title: "Awaiting acknowledgement",
+      detail: `Waiting for ${authorName} to acknowledge this summary`,
+    };
+  }
+
+  return {
+    title: `Reviewed${SEP}Awaiting ${reviewerName}`,
+    detail: "The wording is saved and ready for confirmation.",
+  };
+}
+
 // "Review Teammate's contribution": lists all of a teammate's contributions,
 // each as its own card with details, reviews, and Confirm / Request changes actions.
 function TeammateConfirmation() {
-  const { loading, members, me, doneTasksOf, isOwner, canManageMembers } = useContributionContext();
+  const {
+    loading,
+    members,
+    me,
+    doneTasksOf,
+    isOwner,
+    canManageMembers,
+    ownerName,
+  } = useContributionContext();
   const { projectId, member: memberParam } = useParams();
   const { search } = useLocation();
   const navigate = useNavigate();
@@ -272,193 +322,287 @@ function TeammateConfirmation() {
               });
 
               const isRequestFormOpen = openRequestId === contribution.id;
+              const authorRole =
+                contribution.member?.role || member?.role || "";
+              const latestReview = sortedReviews[0] ?? null;
+              const reviewerName = canReview
+                ? me?.name || "you"
+                : ownerName || "the project owner";
+              const statusNote = getStatusNote({
+                isConfirmed,
+                isAcknowledged,
+                latestReview,
+                authorName,
+                reviewerName,
+              });
 
               return (
-                <article key={contribution.id} className={shared.card}>
-                  <div className={styles.statusRow}>
-                    <h3 className={shared.cardTitle}>
+                <div key={contribution.id} className={styles.contributionGroup}>
+                  <article className={`${shared.card} ${styles.personCard}`}>
+                    <header className={styles.personHeader}>
+                      <span className={shared.avatar} aria-hidden="true">
+                        {authorName.charAt(0)}
+                      </span>
+                      <span className={styles.personMeta}>
+                        <span className={styles.personName}>{authorName}</span>
+                        {authorRole && (
+                          <span className={styles.personRole}>
+                            {SEP}
+                            {authorRole}
+                          </span>
+                        )}
+                      </span>
+                    </header>
+
+                    <h3 className={styles.summaryTitle}>
                       {contribution.title || "Untitled contribution"}
                     </h3>
-                    <StatusTag
-                      status={getContributionStatusLabel(contribution)}
-                    />
-                  </div>
 
-                  {contribution.description && (
-                    <p className={shared.text}>{contribution.description}</p>
-                  )}
-
-                  {contribution.task && (
-                    <p className={shared.small}>
-                      <strong>Task: </strong>
-                      {contribution.task.title ||
-                        contribution.task.name ||
-                        (typeof contribution.task === "string"
-                          ? contribution.task
-                          : "Assigned task")}
-                    </p>
-                  )}
-
-                  {Array.isArray(contribution.evidence) &&
-                    contribution.evidence.length > 0 && (
-                      <div className={styles.evidenceBlock}>
-                        <p className={shared.small}>
-                          <strong>Evidence:</strong>
-                        </p>
-                        <ul className={styles.evidenceList}>
-                          {contribution.evidence.map((item, idx) => (
-                            <li key={item.id || idx}>
-                              {item.url ? (
-                                <a
-                                  href={item.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {item.title ||
-                                    item.label ||
-                                    item.name ||
-                                    item.url}
-                                </a>
-                              ) : (
-                                <span>
-                                  {item.title ||
-                                    item.label ||
-                                    item.name ||
-                                    "Evidence"}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    {contribution.description && (
+                      <p className={styles.summaryBody}>
+                        {contribution.description}
+                      </p>
                     )}
 
-                  {sortedReviews.length > 0 && (
-                    <div className={styles.reviewsList}>
-                      <h4 className={styles.reviewsHeading}>Reviews</h4>
-                      {sortedReviews.map((rev, revIdx) => (
-                        <div
-                          key={rev.id || `${revIdx}-${rev.createdAt}`}
-                          className={styles.reviewItem}
-                        >
-                          <div className={styles.reviewMeta}>
-                            <strong>
-                              {rev.reviewer?.name || "A teammate"}
-                            </strong>
-                            <span className={styles.reviewDecision}>
-                              {rev.decision === "CONFIRMED"
+                    {Array.isArray(contribution.evidence) &&
+                      contribution.evidence.length > 0 && (
+                        <div className={styles.evidenceBlock}>
+                          <p className={styles.evidenceLabel}>Evidence</p>
+                          <ul className={styles.evidenceList}>
+                            {contribution.evidence.map((item, idx) => {
+                              const label =
+                                item.title ||
+                                item.label ||
+                                item.name ||
+                                item.url ||
+                                "Evidence";
+                              const content = (
+                                <>
+                                  <span
+                                    className={styles.evidenceIcon}
+                                    aria-hidden="true"
+                                  >
+                                    <PaperclipIcon />
+                                  </span>
+                                  <span className={styles.evidenceName}>
+                                    {label}
+                                  </span>
+                                  <span
+                                    className={styles.evidenceArrow}
+                                    aria-hidden="true"
+                                  >
+                                    <ArrowUpRightIcon />
+                                  </span>
+                                </>
+                              );
+                              return (
+                                <li key={item.id || idx}>
+                                  {item.url ? (
+                                    <a
+                                      className={styles.evidenceLink}
+                                      href={item.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {content}
+                                    </a>
+                                  ) : (
+                                    <span className={styles.evidenceLink}>
+                                      {content}
+                                    </span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+
+                    <div className={styles.statusNote}>
+                      <p className={styles.statusNoteTitle}>
+                        {statusNote.title}
+                      </p>
+                      <p className={styles.statusNoteText}>
+                        {statusNote.detail}
+                      </p>
+                    </div>
+
+                    {sortedReviews.length > 0 && (
+                      <section className={styles.reviewsList}>
+                        <h4 className={styles.reviewsHeading}>
+                          Review history
+                        </h4>
+                        <ul className={styles.reviewsItems}>
+                          {sortedReviews.map((rev, revIdx) => {
+                            const decisionLabel =
+                              rev.decision === "CONFIRMED"
                                 ? "Confirmed"
                                 : rev.decision === "CHANGES_REQUESTED"
                                   ? "Changes requested"
-                                  : rev.decision}
-                            </span>
-                            {rev.createdAt && (
-                              <span>{formatDate(rev.createdAt)}</span>
-                            )}
-                          </div>
-                          {rev.note && (
-                            <p className={styles.noteText}>{rev.note}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                                  : rev.decision;
+                            const decisionTone =
+                              rev.decision === "CONFIRMED"
+                                ? styles.reviewPillConfirmed
+                                : rev.decision === "CHANGES_REQUESTED"
+                                  ? styles.reviewPillChanges
+                                  : styles.reviewPillNeutral;
+                            return (
+                              <li
+                                key={rev.id || `${revIdx}-${rev.createdAt}`}
+                                className={styles.reviewItem}
+                              >
+                                <div className={styles.reviewMeta}>
+                                  <span className={styles.reviewerName}>
+                                    {rev.reviewer?.name || "A teammate"}
+                                  </span>
+                                  <span
+                                    className={`${styles.reviewPill} ${decisionTone}`}
+                                  >
+                                    {decisionLabel}
+                                  </span>
+                                  {rev.createdAt && (
+                                    <span className={styles.reviewDate}>
+                                      {formatDate(rev.createdAt)}
+                                    </span>
+                                  )}
+                                </div>
+                                {rev.note && (
+                                  <p className={styles.reviewNote}>
+                                    {rev.note}
+                                  </p>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    )}
+                  </article>
 
-                  {actionError[contribution.id] && (
-                    <div
-                      className={styles.errorSpace}
-                      style={{ marginTop: "0.75rem" }}
+                  {!isConfirmed && (
+                    <section
+                      className={`${shared.card} ${styles.confirmationCard}`}
+                      aria-label={`${authorName}${APOS}s confirmation`}
                     >
-                      <Alert variant="error" title="Review failed">
-                        {actionError[contribution.id]}
-                      </Alert>
-                    </div>
-                  )}
-
-                  {!isAcknowledged ? (
-                    <p className={shared.small}>
-                      Waiting for {authorName} to acknowledge this summary
+                    <h3 className={styles.confirmationTitle}>
+                      {authorName}
+                      {APOS}s confirmation
+                    </h3>
+                    <p className={styles.confirmationHelper}>
+                      Confirm the contribution wording or request changes.
                     </p>
-                  ) : canReview ? (
-                    <div className={styles.actions}>
-                      <Button
-                        disabled={buttonsDisabled}
-                        loading={actionStatus[contribution.id] === "confirming"}
-                        loadingText="Confirming…"
-                        onClick={() => handleConfirm(contribution.id, authorName)}
-                      >
-                        Confirm
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={buttonsDisabled}
-                        onClick={() =>
-                          setOpenRequestId((curr) =>
-                            curr === contribution.id ? null : contribution.id,
-                          )
-                        }
-                      >
-                        Request changes
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className={shared.small}>
-                      Only the project owner or a manager can review contributions.
-                    </p>
-                  )}
 
-                  {canReview && isAcknowledged && isRequestFormOpen && (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleRequestChangesSubmit(contribution.id, authorName);
-                      }}
-                      className={styles.formStack}
-                      style={{ marginTop: "1rem" }}
-                    >
-                      <Textarea
-                        id={`request-changes-note-${contribution.id}`}
-                        label="Reason for requested changes"
-                        required
-                        rows={3}
-                        maxLength={1000}
-                        value={requestNotes[contribution.id] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setRequestNotes((prev) => ({
-                            ...prev,
-                            [contribution.id]: val,
-                          }));
-                          setRequestNoteErrors((prev) => ({
-                            ...prev,
-                            [contribution.id]: undefined,
-                          }));
-                        }}
-                        error={requestNoteErrors[contribution.id]}
-                        helperText={`${(requestNotes[contribution.id] || "").length}/1000 characters`}
-                        disabled={actionStatus[contribution.id] === "requesting"}
-                      />
+                    {actionError[contribution.id] && (
+                      <div className={styles.errorSpace}>
+                        <Alert variant="error" title="Review failed">
+                          {actionError[contribution.id]}
+                        </Alert>
+                      </div>
+                    )}
+
+                    {!isAcknowledged ? (
+                      <p className={styles.confirmationNote}>
+                        Waiting for {authorName} to acknowledge this summary
+                      </p>
+                    ) : canReview ? (
                       <div className={styles.actions}>
                         <Button
-                          type="submit"
-                          loading={actionStatus[contribution.id] === "requesting"}
-                          loadingText="Submitting…"
-                          disabled={actionStatus[contribution.id] === "requesting"}
+                          disabled={buttonsDisabled}
+                          loading={
+                            actionStatus[contribution.id] === "confirming"
+                          }
+                          loadingText="Confirming…"
+                          onClick={() =>
+                            handleConfirm(contribution.id, authorName)
+                          }
                         >
-                          Submit request
+                          Confirm
                         </Button>
                         <Button
-                          type="button"
                           variant="secondary"
-                          disabled={actionStatus[contribution.id] === "requesting"}
-                          onClick={() => setOpenRequestId(null)}
+                          disabled={buttonsDisabled}
+                          onClick={() =>
+                            setOpenRequestId((curr) =>
+                              curr === contribution.id
+                                ? null
+                                : contribution.id,
+                            )
+                          }
                         >
-                          Cancel
+                          Request changes
                         </Button>
                       </div>
-                    </form>
+                    ) : (
+                      <p className={styles.confirmationNote}>
+                        Only the project owner or a manager can review
+                        contributions.
+                      </p>
+                    )}
+
+                    {canReview && isAcknowledged && isRequestFormOpen && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleRequestChangesSubmit(
+                            contribution.id,
+                            authorName,
+                          );
+                        }}
+                        className={styles.formStack}
+                      >
+                        <Textarea
+                          id={`request-changes-note-${contribution.id}`}
+                          label="Reason for requested changes"
+                          required
+                          rows={3}
+                          maxLength={1000}
+                          value={requestNotes[contribution.id] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRequestNotes((prev) => ({
+                              ...prev,
+                              [contribution.id]: val,
+                            }));
+                            setRequestNoteErrors((prev) => ({
+                              ...prev,
+                              [contribution.id]: undefined,
+                            }));
+                          }}
+                          error={requestNoteErrors[contribution.id]}
+                          helperText={`${(requestNotes[contribution.id] || "").length}/1000 characters`}
+                          disabled={
+                            actionStatus[contribution.id] === "requesting"
+                          }
+                        />
+                        <div className={styles.actions}>
+                          <Button
+                            type="submit"
+                            loading={
+                              actionStatus[contribution.id] === "requesting"
+                            }
+                            loadingText="Submitting…"
+                            disabled={
+                              actionStatus[contribution.id] === "requesting"
+                            }
+                          >
+                            Submit request
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={
+                              actionStatus[contribution.id] === "requesting"
+                            }
+                            onClick={() => setOpenRequestId(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                    </section>
                   )}
-                </article>
+                </div>
               );
             })
           )}
@@ -474,18 +618,20 @@ function TeammateConfirmation() {
         </div>
 
         <section className={styles.column} aria-labelledby="review-tasks-title">
-          <h3 id="review-tasks-title" className={shared.cardTitle}>
+          <h3 id="review-tasks-title" className={styles.savedTasksTitle}>
             Saved Done tasks{SEP}
             {taskCount}
           </h3>
           {taskCount === 0 ? (
-            <p className={shared.text}>No saved Done tasks.</p>
+            <p className={styles.savedTasksEmpty}>No saved Done tasks.</p>
           ) : (
-            <DoneTaskList
-              tasks={tasks}
-              projectId={projectId}
-              taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}
-            />
+            <div className={styles.savedTasks}>
+              <DoneTaskList
+                tasks={tasks}
+                projectId={projectId}
+                taskPath={(taskId) => `${workspacePath}/tasks/${taskId}${search}`}
+              />
+            </div>
           )}
         </section>
       </div>
