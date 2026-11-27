@@ -7,14 +7,15 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   background: var(--color-card);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-navy) 6%, transparent);
 }
 
 .label {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: calc(var(--font-size-helper) - 1px);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
   line-height: var(--line-height-text);
 }
 
@@ -34,7 +35,8 @@
 .switcherSelect {
   max-width: 200px;
   min-width: 0;
-  padding: var(--space-1) var(--space-2);
+  height: var(--space-6);
+  padding: 0 var(--space-2);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-control);
   background: var(--color-card);
@@ -49,7 +51,7 @@
 }
 
 .switcherSelect:focus-visible {
-  outline: 3px solid var(--color-focus);
+  outline: 3px solid var(--color-purple);
   outline-offset: 2px;
 }
 
@@ -61,26 +63,27 @@
 
 .status {
   flex: 0 0 auto;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-chip);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
   background: var(--color-purple-light);
   color: var(--color-purple);
   font-size: var(--font-size-helper);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-text);
 }
 
 .title {
   margin: 0;
   color: var(--color-navy);
-  font-size: var(--font-size-title);
-  font-weight: 600;
+  font-size: calc(var(--font-size-title) + 2px);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
 }
 
 .meta {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   color: var(--color-text-secondary);
 }
 
@@ -118,15 +121,21 @@
   gap: var(--space-3);
   color: var(--color-navy);
   font-size: var(--font-size-label);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-text);
+}
+
+.progressSummary span:last-child {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
 }
 
 .progressTrack {
   width: 100%;
   height: var(--space-2);
+  overflow: hidden;
   appearance: none;
-  border-radius: var(--radius-chip);
+  border-radius: 999px;
   background: var(--color-action-disabled);
 }
 
@@ -136,12 +145,12 @@
 }
 
 .progressTrack::-webkit-progress-value {
-  border-radius: var(--radius-chip);
+  border-radius: 999px;
   background: var(--color-green);
 }
 
 .progressTrack::-moz-progress-bar {
-  border-radius: var(--radius-chip);
+  border-radius: 999px;
   background: var(--color-green);
 }
 
@@ -167,19 +176,43 @@
 .milestone {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
 }
 
 .milestoneName {
   color: var(--color-navy);
-  font-size: var(--font-size-label);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-text);
+}
+
+.milestoneDue {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
 }
 
 .milestoneProgress {
   color: var(--color-text-secondary);
   font-size: var(--font-size-helper);
   line-height: var(--line-height-text);
+}
+
+.card > button {
+  min-height: auto;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  transition: opacity 150ms ease;
+}
+
+.card > button:hover:not(:disabled) {
+  filter: none;
+  opacity: 0.8;
+}
+
+.card > button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1023px) {
