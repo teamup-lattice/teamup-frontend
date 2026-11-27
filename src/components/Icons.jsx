@@ -156,3 +156,37 @@ export function CloseIcon() {
     </Icon>
   );
 }
+
+export function CheckCircleIcon() {
+  return (
+    <Icon>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 2.5 2.5L16 9" />
+    </Icon>
+  );
+}
+
+export function CheckIcon() {
+  return (
+    <Icon>
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </Icon>
+  );
+}
+
+export function CircleIcon() {
+  return (
+    <Icon>
+      <circle cx="12" cy="12" r="9" />
+    </Icon>
+  );
+}
+
+export function ClockIcon() {
+  return (
+    <Icon>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Icon>
+  );
+}

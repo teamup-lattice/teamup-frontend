@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import { CheckIcon, CircleIcon } from "../../../../components/Icons";
+import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import { APOS, VISIBILITY, confirmationsLine, listText } from "./completionHelpers";
 import styles from "./ProjectCompletion.module.css";
@@ -49,10 +51,21 @@ function CompleteCard({
           Before you complete
         </h3>
         {errorBlock}
-        <p className={shared.text}>
-          {"✓"} Outcome saved {"·"} {"✓"} 1 deliverable saved
-        </p>
-        <p className={shared.text}>{confirmationsLine(confirmations)}</p>
+        <ul className={styles.checks}>
+          <li className={styles.checkDone}>
+            <span className={styles.checkIcon} aria-hidden="true">
+              <CheckIcon />
+            </span>
+            Outcome saved
+          </li>
+          <li className={styles.checkDone}>
+            <span className={styles.checkIcon} aria-hidden="true">
+              <CheckIcon />
+            </span>
+            1 deliverable saved
+          </li>
+        </ul>
+        <p className={shared.small}>{confirmationsLine(confirmations)}</p>
         {dirty && (
           <p className={shared.helper} role="status">
             Save or cancel your unsaved changes before completing.
@@ -69,7 +82,7 @@ function CompleteCard({
             {hasError ? "Retry completion" : "Complete project"}
           </Button>
         </div>
-        <p className={shared.helper}>
+        <p className={styles.completeHelper}>
           Still In Progress until completion succeeds. The resulting page stays {VISIBILITY}.
         </p>
       </section>
@@ -82,16 +95,22 @@ function CompleteCard({
         Before you complete
       </h3>
       <ul className={styles.checks}>
-        <li className={readiness.hasOutcome ? "" : styles.checkPending}>
-          {readiness.hasOutcome ? "✓" : "○"} Saved final outcome
+        <li className={readiness.hasOutcome ? styles.checkDone : styles.checkPending}>
+          <span className={styles.checkIcon} aria-hidden="true">
+            {readiness.hasOutcome ? <CheckIcon /> : <CircleIcon />}
+          </span>
+          Saved final outcome
         </li>
-        <li className={readiness.hasDeliverable ? "" : styles.checkPending}>
-          {readiness.hasDeliverable ? "✓" : "○"} At least one saved project deliverable
+        <li className={readiness.hasDeliverable ? styles.checkDone : styles.checkPending}>
+          <span className={styles.checkIcon} aria-hidden="true">
+            {readiness.hasDeliverable ? <CheckIcon /> : <CircleIcon />}
+          </span>
+          At least one saved project deliverable
         </li>
       </ul>
       {pendingText && (
         <p className={shared.text}>
-          Pending {"·"} {pendingText}.
+          Pending {SEP} {pendingText}.
         </p>
       )}
       <div className={shared.stack}>
@@ -106,7 +125,7 @@ function CompleteCard({
           Complete project
         </Button>
       </div>
-      <p className={shared.helper}>
+      <p className={styles.completeHelper}>
         Only Owner {ownerName} can complete after all members are peer-confirmed. Page remains{" "}
         {VISIBILITY.toLowerCase()}; profiles unchanged.
       </p>
