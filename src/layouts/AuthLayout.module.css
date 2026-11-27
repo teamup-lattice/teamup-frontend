@@ -37,6 +37,11 @@
   font-size: var(--font-size-label);
   font-weight: 600;
   color: var(--color-purple);
+  text-decoration: none;
+}
+
+.back:hover,
+.back:focus-visible {
   text-decoration: underline;
 }
 

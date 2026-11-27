@@ -40,8 +40,13 @@
   background: transparent;
   color: var(--color-purple);
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.cancelLink:hover,
+.cancelLink:focus-visible {
+  text-decoration: underline;
 }
 
 .skeletonGroup {

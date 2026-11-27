@@ -65,6 +65,11 @@
   color: var(--color-purple);
   font-size: var(--font-size-label);
   font-weight: 600;
+  text-decoration: none;
+}
+
+.tabs > a:hover,
+.tabs > a:focus-visible {
   text-decoration: underline;
 }
 
@@ -83,8 +88,13 @@
 
 .tabLink {
   color: var(--color-purple);
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.tabLink:hover,
+.tabLink:focus-visible {
+  text-decoration: underline;
 }
 
 .tabLink:focus-visible {

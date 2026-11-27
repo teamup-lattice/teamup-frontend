@@ -209,8 +209,13 @@
   color: var(--color-purple);
   font: inherit;
   font-size: var(--font-size-label);
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  text-decoration: underline;
 }
 
 .textLink:disabled {
@@ -260,6 +265,11 @@
 
 .cancelLink {
   color: var(--color-purple);
+  text-decoration: none;
+}
+
+.cancelLink:hover,
+.cancelLink:focus-visible {
   text-decoration: underline;
 }
 
