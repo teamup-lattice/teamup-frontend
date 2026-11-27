@@ -10,18 +10,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-chip);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
   font-size: var(--font-size-helper);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
 }
 
 .reasons {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-helper);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }
 

@@ -161,7 +161,7 @@ function MyProjects() {
         </Button>
       </div>
 
-      <div className={styles.fullWidth}>
+      <div className={`${styles.fullWidth} ${styles.filter}`}>
         <Select
           ref={filterRef}
           label="Filter by project status"
