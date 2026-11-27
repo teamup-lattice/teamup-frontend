@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
-import Skeleton from "../../../../components/Skeleton";
-import overviewImage from "../../../../assets/overview.png";
+import privateProjectImage from "../../../../assets/private-project.png";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   getPrivateProjectPage,
@@ -62,11 +61,19 @@ function PrivateProjectPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <h2 className={shared.title}>Private project page</h2>
-        <p role="status">Loading private project page…</p>
-        <Skeleton />
-        <Skeleton />
+      <div className={styles.page} aria-busy="true">
+        <span className={styles.srOnly} role="status">
+          Loading private project page…
+        </span>
+        <div className={styles.skeletonHeader}>
+          <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+          <span className={`${styles.skeletonBar} ${styles.skeletonMeta}`} />
+        </div>
+        <span className={`${styles.skeletonBar} ${styles.skeletonHero}`} />
+        <div className={styles.skeletonLayout}>
+          <span className={styles.skeletonCard} />
+          <span className={styles.skeletonCard} />
+        </div>
       </div>
     );
   }
@@ -127,22 +134,29 @@ function PrivateProjectPage() {
     .filter((name) => name !== currentUser.name);
 
   return (
-    <div>
-      <h2 className={shared.title}>Private project page</h2>
-      {dateLine && <p className={shared.small}>{dateLine}</p>}
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h2 className={styles.pageTitle}>Private project page</h2>
+        {dateLine && <p className={styles.metaLine}>{dateLine}</p>}
+      </header>
 
-      <img className={styles.hero} src={overviewImage} alt={`${project.name} project`} />
+      <img
+        className={styles.hero}
+        src={privateProjectImage}
+        alt={`${project.name} project`}
+      />
+
       <p className={styles.badges}>
         <span className={styles.completedTag}>
           <span aria-hidden="true">{"✓"}</span> Completed
         </span>
-        <span>
+        <span className={styles.visibility}>
           {project.visibility}
           {SEP}
           {project.audience}
         </span>
       </p>
-      <p className={shared.text}>Project outcome and individual contributions.</p>
+      <p className={styles.intro}>Project outcome and individual contributions.</p>
 
       <div className={styles.layout}>
         <div className={styles.column}>
@@ -192,7 +206,7 @@ function PrivateProjectPage() {
 
       <div className={`${styles.column} ${styles.below}`}>
         <DeliverablesCard deliverables={deliverables} />
-        <div>
+        <div className={styles.actionRow}>
           <Button
             variant="secondary"
             onClick={() =>
