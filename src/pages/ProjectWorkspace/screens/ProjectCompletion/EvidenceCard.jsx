@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
+import { ArrowUpRightIcon, PaperclipIcon, TrashIcon } from "../../../../components/Icons";
 import Input from "../../../../components/Input";
 import Textarea from "../../../../components/Textarea";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import { deleteProjectEvidence } from "../../../../services/evidenceService";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
-import { deliverableKindLabel } from "./completionHelpers";
 import ReadOnlyBox from "./ReadOnlyBox";
 import styles from "./ProjectCompletion.module.css";
 
@@ -47,6 +47,7 @@ function EvidenceCard({
   const [pickedFile, setPickedFile] = useState(null);
   const [link, setLink] = useState("");
   const [errors, setErrors] = useState({});
+  const [outcomeTouched, setOutcomeTouched] = useState(false);
   const fileInputRef = useRef(null);
   const errorRef = useRef(null);
 
@@ -112,6 +113,7 @@ function EvidenceCard({
     setPickedFile(null);
     setLink("");
     setErrors({});
+    setOutcomeTouched(false);
     onCancel();
   }
 
@@ -207,10 +209,16 @@ function EvidenceCard({
       <h3 id="evidence-title" className={shared.cardTitle}>
         Final outcome and deliverables
       </h3>
-      <p className={shared.small}>
-        Required evidence{SEP}
-        {evidenceSaved ? "Saved" : "Incomplete"}
-      </p>
+      <div className={styles.evidenceStatusRow}>
+        <span className={styles.evidenceStatusLabel}>Required evidence</span>
+        <span
+          className={`${styles.statusPill} ${
+            evidenceSaved ? styles.statusPillOn : styles.statusPillIncomplete
+          }`}
+        >
+          {evidenceSaved ? "Complete" : "Incomplete"}
+        </span>
+      </div>
     </>
   );
 
@@ -257,6 +265,9 @@ function EvidenceCard({
 
   const errorTitle = "Deliverable did not save";
   const deliverableState = isLocalDeliverable ? "Not attached" : "Saved";
+  const outcomeError =
+    errors.outcome ??
+    (outcomeTouched && outcome.trim() === "" ? OUTCOME_ERROR : undefined);
 
   return (
     <form
@@ -275,18 +286,21 @@ function EvidenceCard({
         </div>
       )}
 
-      <Textarea
-        id="completion-outcome"
-        label="Final outcome"
-        required
-        rows={4}
-        maxLength={5000}
-        placeholder="Not entered"
-        value={outcome}
-        onChange={handleOutcomeChange}
-        helperText={`${outcome.length}/5000 characters`}
-        error={errors.outcome ?? (outcome.trim() ? undefined : OUTCOME_ERROR)}
-      />
+      <div className={styles.outcomeField}>
+        <Textarea
+          id="completion-outcome"
+          label="Final outcome"
+          required
+          rows={4}
+          maxLength={5000}
+          placeholder="Not entered"
+          value={outcome}
+          onChange={handleOutcomeChange}
+          onBlur={() => setOutcomeTouched(true)}
+          helperText={`${outcome.length}/5000 characters`}
+          error={outcomeError}
+        />
+      </div>
 
       {showLabelInput && (
         <Input
@@ -330,21 +344,27 @@ function EvidenceCard({
 
       {!isLocalDeliverable && savedDeliverable && (
         <>
-          <div className={styles.deliverableRow}>
-            <p className={`${shared.text} ${styles.deliverableStatus}`}>
-              {savedDeliverable.name}
-              {SEP}
-              {deliverableKindLabel(savedDeliverable.kind)}
-              {SEP}Saved
-            </p>
+          <div className={styles.savedRow}>
+            <span className={styles.savedRowIcon} aria-hidden="true">
+              {savedDeliverable.kind === "link" ? (
+                <ArrowUpRightIcon />
+              ) : (
+                <PaperclipIcon />
+              )}
+            </span>
+            <span className={styles.savedRowName}>{savedDeliverable.name}</span>
+            <span className={`${styles.statusPill} ${styles.statusPillOn}`}>
+              Saved
+            </span>
             {!isConfirmingRemove && (
               <button
                 type="button"
-                className={`${styles.textButton} ${styles.removeButton}`}
+                className={styles.removeRowButton}
                 disabled={isSaving || locked || isRemoving}
                 onClick={startRemove}
               >
-                Remove
+                <TrashIcon />
+                <span>Remove</span>
               </button>
             )}
           </div>
@@ -379,7 +399,7 @@ function EvidenceCard({
               </Alert>
             </div>
           )}
-          <p className={shared.helper}>
+          <p className={styles.smallHelper}>
             At least one project deliverable is required: a link OR a file.
           </p>
         </>
@@ -414,14 +434,16 @@ function EvidenceCard({
         )}
 
         {(mode === "choose" || (mode === "saved" && savedDeliverable)) && (
-          <>
-            <Button variant="secondary" fullWidth onClick={openFilePicker}>
+          <div className={styles.addRow}>
+            <Button variant="secondary" onClick={openFilePicker}>
+              <PaperclipIcon />
               Add file
             </Button>
-            <Button variant="secondary" fullWidth onClick={startLink}>
+            <Button variant="secondary" onClick={startLink}>
+              <ArrowUpRightIcon />
               Add link
             </Button>
-          </>
+          </div>
         )}
 
         {hasError && isLocalDeliverable && (
@@ -436,7 +458,11 @@ function EvidenceCard({
           </Button>
         )}
 
-        <button type="button" className={shared.linkButton} onClick={handleCancel}>
+        <button
+          type="button"
+          className={styles.cancelChanges}
+          onClick={handleCancel}
+        >
           Cancel local changes
         </button>
       </div>

@@ -8,7 +8,7 @@
 .date {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
+  font-size: var(--font-size-label);
   line-height: var(--line-height-text);
 }
 
@@ -22,6 +22,7 @@
 
 .dashboard > .heading {
   font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-bold);
 }
 
 .description {
@@ -30,6 +31,10 @@
   font-size: var(--font-size-body);
   font-weight: 400;
   line-height: var(--line-height-text);
+}
+
+.dashboard > .description {
+  margin-top: calc(-1 * var(--space-1));
 }
 
 .actions {
@@ -41,6 +46,29 @@
 
 .action {
   flex: 1;
+}
+
+.actions button {
+  min-height: auto;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  transition: opacity 150ms ease;
+}
+
+.action:first-child button:hover:not(:disabled) {
+  filter: none;
+  opacity: 0.9;
+}
+
+.action:last-child button:hover:not(:disabled) {
+  filter: none;
+  opacity: 0.8;
+}
+
+.actions button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .columns {

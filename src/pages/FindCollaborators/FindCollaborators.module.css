@@ -42,18 +42,40 @@
   gap: var(--space-4);
 }
 
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+
 .filterCard,
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   min-width: 0;
   padding: var(--space-5);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   background: var(--color-card);
+  box-shadow: 0 1px 4px rgb(17 35 69 / 6%), 0 0 1px rgb(17 35 69 / 8%);
+  transition: box-shadow 150ms ease, transform 150ms ease;
 }
 
+.card:hover {
+  box-shadow: 0 4px 12px rgb(17 35 69 / 10%), 0 0 1px rgb(17 35 69 / 8%);
+  transform: translateY(-1px);
+}
+
+/* ─── Card typography ─────────────────────────────────────────────────────── */
+
+/* "Public profile preview" — small label, not a shouting heading */
+.profileHeading {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  letter-spacing: 0.01em;
+}
+
+/* Full-size card title (filter card) */
 .cardTitle,
 .sectionHeading {
   margin: 0;
@@ -63,11 +85,121 @@
   line-height: var(--line-height-heading);
 }
 
+.sectionHeading {
+  font-size: var(--font-size-title);
+}
+
+/* ─── Avatar block ────────────────────────────────────────────────────────── */
+
+.avatarBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.avatarImg,
+.avatarInitial {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color-purple-light);
+}
+
+.avatarImg {
+  object-fit: cover;
+  object-position: center 20%;
+  display: block;
+}
+
+.avatarInitial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+.avatarMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.avatarName {
+  display: block;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: var(--line-height-heading);
+  word-break: break-word;
+}
+
+.avatarHeadline {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+  word-break: break-word;
+}
+
+/* ─── Field blocks ────────────────────────────────────────────────────────── */
+
+.fieldBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-label);
+  font-weight: 700;
+  line-height: var(--line-height-text);
+}
+
+.emphasis {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: var(--line-height-text);
+}
+
+/* Privacy note */
+.privacyNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  line-height: var(--line-height-text);
+}
+
+/* Legacy .helper kept for filter card / sheet */
+.helper {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-text);
+}
+
+/* ─── Filter card fields ─────────────────────────────────────────────────── */
+
 .filterFields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 var(--space-4);
 }
+
+/* ─── Text link (Reset / Cancel) ─────────────────────────────────────────── */
 
 .textLink {
   align-self: center;
@@ -77,8 +209,18 @@
   color: var(--color-purple);
   font: inherit;
   font-size: var(--font-size-label);
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  text-decoration: underline;
+}
+
+.textLink:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .textLink:focus-visible {
@@ -86,12 +228,7 @@
   outline-offset: 2px;
 }
 
-.helper {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-helper);
-  line-height: var(--line-height-text);
-}
+/* ─── Misc ───────────────────────────────────────────────────────────────── */
 
 .zeroMobileText {
   display: none;
@@ -126,28 +263,13 @@
   gap: var(--space-4);
 }
 
-.sectionHeading {
-  font-size: var(--font-size-title);
-}
-
-.label {
-  margin: 0 0 var(--space-1);
-  color: var(--color-navy);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-text);
-}
-
-.emphasis {
-  margin: 0;
-  color: var(--color-navy);
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  line-height: var(--line-height-text);
-}
-
 .cancelLink {
   color: var(--color-purple);
+  text-decoration: none;
+}
+
+.cancelLink:hover,
+.cancelLink:focus-visible {
   text-decoration: underline;
 }
 
@@ -179,6 +301,8 @@
   animation: spin 0.8s linear infinite;
 }
 
+/* ─── Filter sheet ───────────────────────────────────────────────────────── */
+
 .sheetOverlay {
   position: fixed;
   z-index: 20;
@@ -208,11 +332,75 @@
   gap: var(--space-3);
 }
 
+/* ─── Invitation dialog ──────────────────────────────────────────────────── */
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--color-navy) 40%, transparent);
+  animation: dialogFadeIn 150ms ease both;
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - var(--space-6));
+  max-height: calc(100dvh - var(--space-6));
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.dialogTitle {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.dialogTitle:focus {
+  outline: none;
+}
+
+.dialogActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────────────── */
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+
+/* ─── Narrow overrides (≤ 834px) ─────────────────────────────────────────── */
 
 @media (max-width: 834px) {
   .card,
@@ -224,6 +412,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ─── Mobile overrides (≤ 599px) ─────────────────────────────────────────── */
 
 @media (max-width: 599px) {
   .selectionFields,
@@ -248,5 +438,45 @@
 
   .zeroMobileText {
     display: inline;
+  }
+
+  /* Dialog fills width with side margins, bottom-sheet style */
+  .dialogOverlay {
+    align-items: flex-end;
+    padding: 0 var(--space-2) 0;
+  }
+
+  .dialog {
+    max-width: none;
+    width: calc(100% - var(--space-4));
+    max-height: 90vh;
+    max-height: 90dvh;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .dialogActions {
+    gap: var(--space-3);
+  }
+}
+
+/* ─── 360 px overflow guard ───────────────────────────────────────────────── */
+
+@media (max-width: 360px) {
+  .card,
+  .filterCard {
+    padding: var(--space-4);
+  }
+
+  .avatarBlock {
+    flex-wrap: wrap;
+  }
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogOverlay {
+    animation: none;
   }
 }

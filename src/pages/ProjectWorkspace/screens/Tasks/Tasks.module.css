@@ -220,6 +220,11 @@
   color: var(--color-purple);
   font-size: var(--font-size-label);
   font-weight: 600;
+  text-decoration: none;
+}
+
+.openLink:hover,
+.openLink:focus-visible {
   text-decoration: underline;
 }
 

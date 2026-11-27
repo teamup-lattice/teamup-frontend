@@ -86,9 +86,13 @@
   font-family: inherit;
   font-size: var(--font-size-helper);
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: var(--space-1);
+  text-decoration: none;
   cursor: pointer;
+}
+
+.taskLink:hover,
+.taskLink:focus-visible {
+  text-decoration: underline;
 }
 
 .taskLink:focus-visible {

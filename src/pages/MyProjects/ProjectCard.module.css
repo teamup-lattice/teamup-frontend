@@ -9,13 +9,23 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-card);
   background: var(--color-card);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-navy) 6%, transparent);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--color-purple) 35%, var(--color-border-subtle));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-navy) 10%, transparent);
 }
 
 .badge {
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-chip);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
   font-size: var(--font-size-helper);
-  line-height: var(--line-height-text);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
 }
 
 .neutral {
@@ -42,7 +52,7 @@
   margin: 0;
   color: var(--color-navy);
   font-size: var(--font-size-title);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
   overflow-wrap: anywhere;
 }
@@ -51,16 +61,16 @@
   margin: 0;
   color: var(--color-navy);
   font-size: var(--font-size-body);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: var(--line-height-text);
 }
 
 .meta {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-label);
-  font-weight: 400;
-  line-height: var(--line-height-text);
+  font-size: var(--font-size-helper);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.6;
 }
 
 .note {
@@ -77,6 +87,16 @@
   gap: var(--space-2);
   align-items: center;
   width: 100%;
+  margin-top: auto;
+  padding-top: var(--space-1);
+}
+
+.actions button:not(.deleteButton) {
+  padding: calc(var(--space-2) + 2px) var(--space-5);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  transition: filter 150ms ease;
 }
 
 .deleteButton {
@@ -85,8 +105,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--button-height);
-  height: var(--button-height);
+  width: 36px;
+  height: 36px;
   margin-left: auto;
   padding: 0;
   border: none;
@@ -94,6 +114,9 @@
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .deleteButton:hover:not(:disabled),

@@ -30,8 +30,13 @@
   font-family: inherit;
   font-size: var(--font-size-label);
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.linkButton:hover,
+.linkButton:focus-visible {
+  text-decoration: underline;
 }
 
 .linkButton:focus-visible {

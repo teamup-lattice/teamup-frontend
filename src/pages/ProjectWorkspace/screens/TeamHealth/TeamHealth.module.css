@@ -291,9 +291,13 @@
   color: var(--color-purple);
   font-size: var(--font-size-label);
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: var(--space-1);
+  text-decoration: none;
   cursor: pointer;
+}
+
+.textLink:hover,
+.textLink:focus-visible {
+  text-decoration: underline;
 }
 
 .textLink:focus-visible,

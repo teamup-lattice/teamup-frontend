@@ -78,7 +78,8 @@ function ActiveProjectCard({ activeProject, switcher }) {
         {activeProject.milestones.map((milestone) => (
           <li className={styles.milestone} key={milestone.name}>
             <strong className={styles.milestoneName}>
-              {milestone.name} · {milestone.due}
+              {milestone.name} ·{" "}
+              <span className={styles.milestoneDue}>{milestone.due}</span>
             </strong>
             <span className={styles.milestoneProgress}>
               {milestone.done} of {milestone.total} Done

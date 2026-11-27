@@ -1,4 +1,5 @@
 import Button from "../../../../components/Button";
+import { ClockIcon } from "../../../../components/Icons";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import { APOS } from "./completionHelpers";
@@ -26,13 +27,18 @@ function MemberConfirmations({ confirmations, onViewContribution }) {
               </span>
               <span>
                 {item.member}
-                {SEP}
-                {item.role}
+                {item.role && (
+                  <>
+                    {SEP}
+                    {item.role}
+                  </>
+                )}
               </span>
             </p>
             <p className={styles.summary}>{item.summary}</p>
             <p className={shared.text}>
-              {item.doneTasks} Done tasks{SEP}saved task ownership and history unchanged.
+              {item.doneTasks} Done {item.doneTasks === 1 ? "task" : "tasks"}
+              {SEP}saved task ownership and history unchanged.
             </p>
 
             {isConfirmed ? (
@@ -49,14 +55,19 @@ function MemberConfirmations({ confirmations, onViewContribution }) {
               </div>
             ) : (
               <div className={styles.noteBox}>
-                <p className={styles.noteTitle}>Awaiting {item.awaiting}</p>
+                <p className={styles.noteTitle}>
+                  <span className={styles.noteIcon} aria-hidden="true">
+                    <ClockIcon />
+                  </span>
+                  Awaiting {item.awaiting}
+                </p>
                 <p className={styles.noteText}>
                   Own review and teammate confirmation are separate.
                 </p>
               </div>
             )}
 
-            <div className={styles.actions}>
+            <div className={styles.memberActions}>
               <Button
                 variant="secondary"
                 onClick={() => onViewContribution(item.user?.id || item.userId || item.member)}

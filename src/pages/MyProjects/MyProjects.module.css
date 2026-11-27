@@ -29,6 +29,34 @@
   margin-top: var(--space-3);
 }
 
+.create button {
+  transition: filter 150ms ease;
+}
+
+.create button:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.create button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.filter label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.filter select {
+  height: 40px;
+  border-color: var(--color-border-subtle);
+}
+
+.filter select:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

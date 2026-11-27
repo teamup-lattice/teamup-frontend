@@ -1,4 +1,4 @@
-import { SEP, formatDate } from "../../workspaceFormat";
+import { formatDate } from "../../workspaceFormat";
 import shared from "../shared.module.css";
 import styles from "./ProjectCompletion.module.css";
 
@@ -30,14 +30,16 @@ function SavedWorkCard({ milestones }) {
       >
         <span className={styles.fill} style={{ width: `${percent}%` }} />
       </div>
-      <ul className={shared.list}>
+      <ul className={styles.milestoneList}>
         {milestones.map((milestone) => (
-          <li key={milestone.id} className={shared.small}>
-            {milestone.name}
-            {SEP}
-            {formatDate(milestone.targetDate)}
-            {SEP}
-            {milestone.done}/{milestone.total} Done
+          <li key={milestone.id} className={styles.milestoneRow}>
+            <span className={styles.milestoneName}>{milestone.name}</span>
+            <span className={styles.milestoneDate}>
+              {formatDate(milestone.targetDate)}
+            </span>
+            <span className={styles.countPill}>
+              {milestone.done}/{milestone.total} Done
+            </span>
           </li>
         ))}
       </ul>
