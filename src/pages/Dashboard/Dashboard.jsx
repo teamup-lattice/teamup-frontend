@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../components/Alert";
 import Button from "../../components/Button";
+import Skeleton from "../../components/Skeleton";
 import listFilterIcon from "../../assets/list-filter.svg";
 import { getDashboard } from "../../services/dashboardService";
 import { getErrorMessage } from "../../services/errorMessage";
@@ -303,16 +304,140 @@ function Dashboard() {
       </p>
 
       {status === "loading" && (
-        <div className={styles.columns} aria-busy="true">
-          {Array.from({ length: 3 }, (_, index) => (
-            <article
-              className={activeProjectStyles.card}
-              aria-hidden="true"
-              key={index}
-            >
-              <div className={needsAttentionStyles.blocker} />
-            </article>
-          ))}
+        <div className={styles.loadingSkeleton} aria-busy="true">
+          <p className={styles.srOnly} role="status">
+            Loading your dashboard…
+          </p>
+          <div className={styles.actions} aria-hidden="true">
+            <div className={styles.action}>
+              <Skeleton variant="button" />
+            </div>
+            <div className={styles.action}>
+              <Skeleton variant="button" />
+            </div>
+          </div>
+          <div className={styles.columns} aria-hidden="true">
+            <div className={styles.column}>
+              <article className={activeProjectStyles.card}>
+                <Skeleton variant="row" width="42%" height="var(--space-3)" />
+                <div className={styles.skeletonHeading}>
+                  <Skeleton variant="bar" width="84px" height="var(--space-5)" />
+                  <Skeleton
+                    variant="title"
+                    width="62%"
+                    height="var(--space-6)"
+                  />
+                </div>
+                <div className={styles.skeletonMeta}>
+                  <Skeleton variant="row" width="68%" height="var(--space-3)" />
+                  <Skeleton variant="row" width="52%" height="var(--space-3)" />
+                </div>
+                <div className={styles.skeletonPeople}>
+                  <Skeleton variant="avatar" />
+                  <Skeleton variant="row" width="58%" height="var(--space-3)" />
+                </div>
+                <div className={styles.skeletonProgress}>
+                  <Skeleton variant="row" width="100%" height="var(--space-3)" />
+                  <Skeleton variant="progress" />
+                </div>
+                <div className={styles.skeletonList}>
+                  <Skeleton variant="row" width="76%" />
+                  <Skeleton variant="row" width="64%" />
+                  <Skeleton variant="row" width="70%" />
+                </div>
+                <Skeleton variant="button" />
+              </article>
+
+              <article className={activeProjectStyles.card}>
+                <Skeleton variant="bar" width="128px" height="var(--space-5)" />
+                <Skeleton
+                  variant="title"
+                  width="72%"
+                  height="var(--space-5)"
+                />
+                <div className={styles.skeletonMeta}>
+                  <Skeleton variant="row" width="100%" />
+                  <Skeleton variant="row" width="82%" />
+                </div>
+                <Skeleton variant="row" width="56%" height="var(--space-3)" />
+                <Skeleton variant="button" />
+                <Skeleton variant="row" width="80%" height="var(--space-3)" />
+              </article>
+            </div>
+
+            <div className={styles.column}>
+              <section className={styles.column}>
+                <Skeleton variant="title" width="38%" height="var(--space-5)" />
+                <article className={needsAttentionStyles.card}>
+                  <div className={styles.skeletonPills}>
+                    <Skeleton
+                      variant="bar"
+                      width="80px"
+                      height="var(--space-5)"
+                    />
+                    <Skeleton
+                      variant="bar"
+                      width="104px"
+                      height="var(--space-5)"
+                    />
+                  </div>
+                  <Skeleton
+                    variant="title"
+                    width="68%"
+                    height="var(--space-5)"
+                  />
+                  <div className={styles.skeletonPeople}>
+                    <Skeleton variant="avatar" />
+                    <Skeleton
+                      variant="row"
+                      width="48%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                  <Skeleton
+                    variant="row"
+                    width="60%"
+                    height="var(--space-3)"
+                  />
+                  <Skeleton variant="button" />
+                </article>
+              </section>
+
+              <article className={activeProjectStyles.card}>
+                <Skeleton
+                  variant="title"
+                  width="46%"
+                  height="var(--space-5)"
+                />
+                <div className={styles.skeletonList}>
+                  <div className={styles.skeletonTaskRow}>
+                    <Skeleton variant="row" width="70%" />
+                    <Skeleton
+                      variant="row"
+                      width="44%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                  <div className={styles.skeletonTaskRow}>
+                    <Skeleton variant="row" width="62%" />
+                    <Skeleton
+                      variant="row"
+                      width="40%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                  <div className={styles.skeletonTaskRow}>
+                    <Skeleton variant="row" width="74%" />
+                    <Skeleton
+                      variant="row"
+                      width="46%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
         </div>
       )}
 

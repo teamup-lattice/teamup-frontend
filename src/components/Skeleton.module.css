@@ -9,9 +9,11 @@
 }
 
 .titleBar,
-.bodyBar {
+.bodyBar,
+.base {
   border-radius: var(--radius-control);
   background: var(--color-action-disabled);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 
 .titleBar {
@@ -22,4 +24,55 @@
 .bodyBar {
   width: 100%;
   height: var(--space-5);
+}
+
+.base {
+  display: block;
+}
+
+.bar {
+  width: 100%;
+  height: var(--space-4);
+}
+
+.row {
+  width: 100%;
+  height: var(--space-3);
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: calc(var(--space-6) + var(--space-1));
+  height: calc(var(--space-6) + var(--space-1));
+  border-radius: 50%;
+}
+
+.title {
+  width: 60%;
+  height: var(--space-4);
+}
+
+.progress {
+  width: 100%;
+  height: var(--space-2);
+  border-radius: 999px;
+}
+
+.button {
+  width: 100%;
+  height: var(--button-height);
+}
+
+@keyframes skeletonPulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titleBar,
+  .bodyBar,
+  .base {
+    animation: none;
+  }
 }

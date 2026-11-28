@@ -88,11 +88,105 @@ function ContributionSummary() {
 
   if (isLoading) {
     return (
-      <div>
+      <div aria-busy="true">
         <h2 className={shared.title}>My contribution summary</h2>
-        <p role="status">Loading your contribution summary…</p>
-        <Skeleton />
-        <Skeleton />
+        <p className={styles.srOnly} role="status">
+          Loading your contribution summary…
+        </p>
+
+        <div aria-hidden="true">
+          <div className={shared.small}>
+            <Skeleton variant="row" width="42%" height="var(--space-3)" />
+          </div>
+          <div className={styles.statusRow}>
+            <Skeleton variant="bar" width="128px" height="28px" />
+          </div>
+
+          <div className={styles.layout}>
+            <div className={styles.column}>
+              <article className={shared.card}>
+                <div className={styles.person}>
+                  <Skeleton variant="avatar" />
+                  <Skeleton
+                    variant="row"
+                    width="40%"
+                    height="var(--space-3)"
+                  />
+                </div>
+
+                <div className={styles.formStack}>
+                  <div className={styles.skeletonStack}>
+                    <Skeleton
+                      variant="title"
+                      width="38%"
+                      height="var(--space-4)"
+                    />
+                    <Skeleton variant="bar" width="100%" height="96px" />
+                  </div>
+                  <div className={styles.skeletonStack}>
+                    <Skeleton
+                      variant="title"
+                      width="30%"
+                      height="var(--space-4)"
+                    />
+                    <Skeleton variant="bar" width="100%" height="64px" />
+                  </div>
+                </div>
+
+                <div className={styles.noteBox}>
+                  <div className={styles.skeletonStack}>
+                    <Skeleton
+                      variant="row"
+                      width="82%"
+                      height="var(--space-3)"
+                    />
+                    <Skeleton
+                      variant="row"
+                      width="64%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.actions}>
+                  <Skeleton variant="button" width="140px" />
+                  <Skeleton variant="button" width="120px" />
+                </div>
+              </article>
+            </div>
+
+            <section className={styles.column}>
+              <div className={shared.cardTitle}>
+                <Skeleton
+                  variant="title"
+                  width="52%"
+                  height="var(--space-5)"
+                />
+              </div>
+              <article className={shared.card}>
+                {[0, 1, 2].map((index) => (
+                  <div className={styles.skeletonTaskRow} key={index}>
+                    <Skeleton
+                      variant="title"
+                      width="68%"
+                      height="var(--space-4)"
+                    />
+                    <Skeleton
+                      variant="row"
+                      width="46%"
+                      height="var(--space-3)"
+                    />
+                    <Skeleton
+                      variant="row"
+                      width="32%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                ))}
+              </article>
+            </section>
+          </div>
+        </div>
       </div>
     );
   }
