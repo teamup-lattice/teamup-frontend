@@ -34,6 +34,168 @@ function getDaysOverdue(task) {
   return Math.max(0, Math.floor((currentDate - dueDate) / 86400000));
 }
 
+function OverviewSkeleton({ statusMessage }) {
+  return (
+    <section className={styles.overview} aria-busy="true">
+      <p className={styles.srOnly} role="status">
+        {statusMessage}
+      </p>
+
+      <header
+        className={`${styles.pageHeader} ${styles.skeletonHeader}`}
+        aria-hidden="true"
+      >
+        <Skeleton variant="title" width="180px" height="var(--space-6)" />
+        <Skeleton variant="row" width="46%" height="var(--space-3)" />
+      </header>
+
+      <div className={styles.overviewColumns} aria-hidden="true">
+        <div className={styles.leftStack}>
+          <article className={`${styles.card} ${styles.summaryCard}`}>
+            <Skeleton variant="bar" width="100%" height="200px" />
+            <div className={styles.summaryContent}>
+              <Skeleton variant="title" width="58%" height="var(--space-5)" />
+              <div className={styles.progressHeading}>
+                <Skeleton variant="row" width="30%" height="var(--space-3)" />
+                <Skeleton variant="row" width="24%" height="var(--space-3)" />
+              </div>
+              <Skeleton variant="progress" />
+              <Skeleton variant="row" width="64%" height="var(--space-3)" />
+              <div className={activeProjectStyles.teammates}>
+                <Skeleton variant="avatar" />
+                <Skeleton variant="avatar" />
+                <Skeleton variant="avatar" />
+                <Skeleton variant="row" width="52%" height="var(--space-3)" />
+              </div>
+              <div className={styles.buttonRow}>
+                <Skeleton variant="button" />
+                <Skeleton variant="button" />
+              </div>
+            </div>
+          </article>
+
+          <article className={`${styles.card} ${styles.milestonesCard}`}>
+            <div className={`${styles.cardTitle} ${styles.dividedTitle}`}>
+              <Skeleton variant="title" width="40%" height="var(--space-5)" />
+            </div>
+            <ul className={styles.milestoneList}>
+              {[0, 1, 2].map((index) => (
+                <li className={styles.milestone} key={index}>
+                  <div className={styles.taskItem}>
+                    <Skeleton
+                      variant="title"
+                      width="52%"
+                      height="var(--space-4)"
+                    />
+                    <Skeleton
+                      variant="row"
+                      width="44%"
+                      height="var(--space-3)"
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className={styles.textLink}>
+              <Skeleton variant="row" width="42%" height="var(--space-3)" />
+            </div>
+          </article>
+        </div>
+
+        <div className={styles.rightStack}>
+          <section className={styles.attentionSection}>
+            <Skeleton variant="title" width="38%" height="var(--space-5)" />
+            <div className={styles.attentionTaskGroup}>
+              <article className={`${styles.card} ${styles.attentionTask}`}>
+                <div className={styles.tags}>
+                  <Skeleton
+                    variant="bar"
+                    width="72px"
+                    height="var(--space-5)"
+                  />
+                  <Skeleton
+                    variant="bar"
+                    width="96px"
+                    height="var(--space-5)"
+                  />
+                </div>
+                <Skeleton variant="title" width="66%" height="var(--space-5)" />
+                <div className={styles.ownerLine}>
+                  <Skeleton variant="avatar" />
+                  <Skeleton
+                    variant="row"
+                    width="42%"
+                    height="var(--space-3)"
+                  />
+                </div>
+                <Skeleton variant="row" width="60%" height="var(--space-3)" />
+              </article>
+              <Skeleton variant="button" />
+            </div>
+          </section>
+
+          <article className={`${styles.card} ${styles.upcomingCard}`}>
+            <div className={styles.cardTitle}>
+              <Skeleton variant="title" width="46%" height="var(--space-5)" />
+            </div>
+            <div className={styles.taskList}>
+              {[0, 1, 2].map((index) => (
+                <div className={styles.taskItem} key={index}>
+                  <Skeleton
+                    variant="title"
+                    width="68%"
+                    height="var(--space-4)"
+                  />
+                  <Skeleton
+                    variant="row"
+                    width="52%"
+                    height="var(--space-3)"
+                  />
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className={`${styles.card} ${styles.updatesCard}`}>
+            <div className={styles.cardTitle}>
+              <Skeleton variant="title" width="52%" height="var(--space-5)" />
+            </div>
+            <div className={styles.updateList}>
+              {[0, 1].map((index) => (
+                <div className={styles.taskItem} key={index}>
+                  <Skeleton
+                    variant="row"
+                    width="34%"
+                    height="var(--space-3)"
+                  />
+                  <Skeleton
+                    variant="row"
+                    width="100%"
+                    height="var(--space-3)"
+                  />
+                  <Skeleton
+                    variant="row"
+                    width="86%"
+                    height="var(--space-3)"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className={styles.checkIn}>
+              <Skeleton variant="row" width="22%" height="var(--space-3)" />
+              <Skeleton variant="title" width="44%" height="var(--space-4)" />
+              <Skeleton variant="row" width="88%" height="var(--space-3)" />
+            </div>
+            <div className={styles.textLink}>
+              <Skeleton variant="row" width="42%" height="var(--space-3)" />
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function WorkspaceOverview() {
   const { projectId } = useParams();
   const location = useLocation();
@@ -106,16 +268,7 @@ function WorkspaceOverview() {
   const navigateTo = (path) => navigate(workspaceHref(path));
 
   if (workspaceLoading) {
-    return (
-      <section className={styles.statePanel} aria-live="polite">
-        <h1 className={styles.pageTitle}>Overview</h1>
-        <p role="status">Loading project details…</p>
-        <div className={styles.skeletons}>
-          <Skeleton />
-          <Skeleton />
-        </div>
-      </section>
-    );
+    return <OverviewSkeleton statusMessage="Loading project details…" />;
   }
 
   if (workspaceError) {
@@ -132,18 +285,7 @@ function WorkspaceOverview() {
 
   if (previewState === "loading") {
     return (
-      <section className={styles.statePanel} aria-live="polite">
-        <h1 className={styles.pageTitle}>Overview</h1>
-        <p className={styles.stateMessage}>
-          Loading your workspace… Checking accepted membership and loading saved
-          counts.
-        </p>
-        <div className={styles.skeletons}>
-          <Skeleton />
-          <Skeleton />
-          <Skeleton />
-        </div>
-      </section>
+      <OverviewSkeleton statusMessage="Loading your workspace… Checking accepted membership and loading saved counts." />
     );
   }
 

@@ -164,6 +164,7 @@
   display: block;
   border-radius: var(--radius-chip);
   background: var(--color-action-disabled);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 
 .barLong {
@@ -208,6 +209,12 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes skeletonPulse {
+  50% {
+    opacity: 0.5;
   }
 }
 
@@ -256,7 +263,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
+  .spinner,
+  .barLong,
+  .barShort,
+  .barBlock {
     animation: none;
   }
 }
