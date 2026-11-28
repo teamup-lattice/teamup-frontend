@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../../components/Alert";
-import AvatarRow from "../../components/AvatarRow";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
 import Select from "../../components/Select";
@@ -32,12 +31,174 @@ const EMPTY_FILTERS = {
   hours: "",
 };
 
+const FOCUSABLE =
+  'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+
 function labelFor(value) {
   return value
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
+
+// ─── Invitation dialog ────────────────────────────────────────────────────────
+
+function InviteDialog({
+  reviewedUser,
+  project,
+  role,
+  actionStatus,
+  inviteAction,
+  onSubmit,
+  onClose,
+}) {
+  const dialogRef = useRef(null);
+  const headingRef = useRef(null);
+
+  const isSaving = actionStatus === "saving";
+  const isInvitationDone = actionStatus === "done";
+  const isInvitationFailed = actionStatus === "failed";
+
+  // Lock scroll, capture previous focus (the trigger button), focus heading on open
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    headingRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus();
+      }
+    };
+  }, []);  
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      if (!isSaving) onClose();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    const items = Array.from(
+      dialogRef.current?.querySelectorAll(FOCUSABLE) ?? [],
+    );
+    if (items.length === 0) return;
+
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+
+    if (
+      event.shiftKey &&
+      (active === first || active === headingRef.current)
+    ) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  const handleOverlayClick = (event) => {
+    if (event.target === event.currentTarget && !isSaving) {
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      className={styles.dialogOverlay}
+      onClick={handleOverlayClick}
+    >
+      <div
+        className={styles.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invite-dialog-title"
+        ref={dialogRef}
+        onKeyDown={handleKeyDown}
+      >
+        <h2
+          className={styles.dialogTitle}
+          id="invite-dialog-title"
+          tabIndex={-1}
+          ref={headingRef}
+        >
+          Review invitation
+        </h2>
+
+        <p className={styles.emphasis}>
+          Invite {reviewedUser.name} to {project.title}
+        </p>
+
+        <p className={styles.body}>
+          {role.title}
+          {role.hoursPerWeek != null
+            ? ` · ${role.hoursPerWeek} h / week`
+            : ""}
+          {project.durationWeeks != null
+            ? ` · ${project.durationWeeks} weeks`
+            : ""}
+        </p>
+
+        {role.description && (
+          <p className={styles.body}>{role.description}</p>
+        )}
+
+        {isInvitationFailed && (
+          <Alert variant="error" title="Invitation could not send">
+            {inviteAction.error}
+          </Alert>
+        )}
+
+        {isInvitationDone && (
+          <Alert
+            variant="success"
+            title={`Invitation sent to ${reviewedUser.name}`}
+          >
+            Pending response and saved commitment acceptance. The collaborator
+            has not joined.
+          </Alert>
+        )}
+
+        <div className={styles.dialogActions}>
+          {isInvitationDone ? (
+            <Button fullWidth onClick={onClose}>
+              Done
+            </Button>
+          ) : (
+            <>
+              <Button
+                fullWidth
+                disabled={isSaving}
+                onClick={onSubmit}
+              >
+                {isInvitationFailed
+                  ? "Recheck invitation status"
+                  : `Send invitation to ${reviewedUser.name}`}
+              </Button>
+              <button
+                className={styles.textLink}
+                type="button"
+                disabled={isSaving}
+                onClick={onClose}
+              >
+                Cancel invitation review
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Optional filters ─────────────────────────────────────────────────────────
 
 function OptionalFilters({
   values,
@@ -95,6 +256,8 @@ function OptionalFilters({
   );
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 function FindCollaborators() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedProjectId = searchParams.get("project");
@@ -123,9 +286,6 @@ function FindCollaborators() {
   const [requestAttempt, setRequestAttempt] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [reviewedUserId, setReviewedUserId] = useState("");
-  const reviewCardRef = useRef(null);
-  const profileCardRef = useRef(null);
-  const hasOpenedReview = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -290,22 +450,6 @@ function FindCollaborators() {
     };
   }, [queryKey, project, role, filters]);
 
-  useEffect(() => {
-    if (reviewedUserId) {
-      hasOpenedReview.current = true;
-      reviewCardRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    } else if (hasOpenedReview.current) {
-      profileCardRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      hasOpenedReview.current = false;
-    }
-  }, [reviewedUserId]);
-
   const applyFilters = () => {
     setFilters(draftFilters);
     setIsFilterSheetOpen(false);
@@ -452,13 +596,12 @@ function FindCollaborators() {
   const actionStatus =
     inviteAction.userId === reviewedUserId ? inviteAction.status : "idle";
   const isInvitationFailed = actionStatus === "failed";
-  const isInvitationDone = actionStatus === "done";
   const clearFailureFlag = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("fail");
     setSearchParams(nextParams, { replace: true });
   };
-  const cancelReview = () => {
+  const closeDialog = () => {
     if (isInvitationFailed) clearFailureFlag();
     setReviewedUserId("");
   };
@@ -673,54 +816,75 @@ function FindCollaborators() {
                   : "people match"}
               </h2>
               {currentResults.users.map((user) => {
-                const userLabel = [user.name, user.headline]
-                  .filter(Boolean)
-                  .join(" · ");
                 const availability = [
                   user.availability,
                   user.preferredDuration,
                 ]
                   .filter(Boolean)
                   .join(" · ");
+                const userId = String(user.id);
                 return (
                   <article
                     className={styles.card}
                     key={user.id}
-                    ref={
-                      String(user.id) === reviewedUserId
-                        ? profileCardRef
-                        : undefined
-                    }
                   >
-                    <h3 className={styles.cardTitle}>Public profile preview</h3>
-                    <AvatarRow
-                      initial={user.name.charAt(0) || "?"}
-                      text={userLabel}
-                    />
+                    <p className={styles.profileHeading}>Public profile preview</p>
+
+                    <div className={styles.avatarBlock}>
+                      {user.avatarUrl ? (
+                        <img
+                          className={styles.avatarImg}
+                          src={user.avatarUrl}
+                          alt=""
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className={styles.avatarInitial} aria-hidden="true">
+                          {user.name.charAt(0) || "?"}
+                        </span>
+                      )}
+                      <div className={styles.avatarMeta}>
+                        <span className={styles.avatarName}>{user.name}</span>
+                        {user.headline && (
+                          <span className={styles.avatarHeadline}>{user.headline}</span>
+                        )}
+                      </div>
+                    </div>
+
                     {user.skills.length > 0 && (
-                      <div>
+                      <div className={styles.fieldBlock}>
                         <p className={styles.label}>Self-reported skills</p>
                         <p className={styles.body}>{user.skills.join(" · ")}</p>
                       </div>
                     )}
+
                     {availability && (
                       <p className={styles.emphasis}>{availability}</p>
                     )}
-                    <p className={styles.helper}>
+
+                    {user.goal && (
+                      <div className={styles.fieldBlock}>
+                        <p className={styles.label}>Goal</p>
+                        <p className={styles.body}>{user.goal}</p>
+                      </div>
+                    )}
+
+                    <p className={styles.privacyNote}>
                       Public fields only. Contact details hidden, including from
                       the Owner.
                     </p>
+
                     <Button
                       fullWidth
                       disabled={inviteAction.status === "saving"}
                       onClick={() => {
                         setInviteAction({
                           status: "idle",
-                          userId: String(user.id),
+                          userId,
                           user,
                           error: "",
                         });
-                        setReviewedUserId(String(user.id));
+                        setReviewedUserId(userId);
                       }}
                     >
                       Review invitation to {user.name}
@@ -742,59 +906,20 @@ function FindCollaborators() {
               )}
             </>
           )}
-
-          {reviewedUser && (
-            <article className={styles.card} ref={reviewCardRef}>
-              <h3 className={styles.cardTitle}>Review invitation</h3>
-              <p className={styles.emphasis}>
-                Invite {reviewedUser.name} to {project.title}
-              </p>
-              <p className={styles.body}>
-                {role.title}
-                {role.hoursPerWeek != null
-                  ? ` · ${role.hoursPerWeek} h / week`
-                  : ""}
-                {project.durationWeeks != null
-                  ? ` · ${project.durationWeeks} weeks`
-                  : ""}
-              </p>
-              {role.description && (
-                <p className={styles.body}>{role.description}</p>
-              )}
-              {isInvitationFailed && (
-                <Alert variant="error" title="Invitation could not send">
-                  {inviteAction.error}
-                </Alert>
-              )}
-              {isInvitationDone && (
-                <Alert
-                  variant="success"
-                  title={`Invitation sent to ${reviewedUser.name}`}
-                >
-                  Pending response and saved commitment acceptance. The
-                  collaborator has not joined.
-                </Alert>
-              )}
-              <Button
-                fullWidth
-                disabled={actionStatus === "saving"}
-                onClick={submitInvitation}
-              >
-                {isInvitationFailed
-                  ? "Recheck invitation status"
-                  : `Send invitation to ${reviewedUser.name}`}
-              </Button>
-              <button
-                className={styles.textLink}
-                type="button"
-                onClick={cancelReview}
-              >
-                Cancel invitation review
-              </button>
-            </article>
-          )}
         </section>
       </main>
+
+      {reviewedUser && (
+        <InviteDialog
+          reviewedUser={reviewedUser}
+          project={project}
+          role={role}
+          actionStatus={actionStatus}
+          inviteAction={inviteAction}
+          onSubmit={submitInvitation}
+          onClose={closeDialog}
+        />
+      )}
     </div>
   );
 }

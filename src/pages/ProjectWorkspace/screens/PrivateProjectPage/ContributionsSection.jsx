@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
+import AvatarGroup from "../../../../components/AvatarGroup";
+import { ArrowUpRightIcon, PaperclipIcon } from "../../../../components/Icons";
 import { SEP, formatDate } from "../../workspaceFormat";
+import StatusTag from "../../shared/StatusTag";
 import shared from "../shared.module.css";
 import EvidenceLink from "./EvidenceLink";
 import styles from "./PrivateProjectPage.module.css";
@@ -13,42 +16,55 @@ function ContributionsSection({ contributions, taskPath }) {
       <h3 id="page-contributions-title" className={shared.sectionTitle}>
         Individual contributions
       </h3>
-      <p className={shared.small}>
-        Individual summaries reflect saved Done tasks, separate from the team outcome.
+      <p className={styles.sectionHelper}>
+        Individual summaries reflect saved Done tasks, separate from the team
+        outcome.
       </p>
 
       <ul className={styles.contributions}>
         {contributions.map((item) => (
-          <li key={item.member} className={shared.card}>
-            <div className={styles.summaryBox}>
-              <p className={shared.person}>
-                <span className={shared.avatar} aria-hidden="true">
-                  {item.member.charAt(0)}
+          <li key={item.member} className={`${shared.card} ${styles.personCard}`}>
+            <div className={styles.personSummary}>
+              <header className={styles.personHeader}>
+                <AvatarGroup
+                  hidden
+                  items={[{ initial: item.member.charAt(0), label: item.member }]}
+                />
+                <span className={styles.personMeta}>
+                  <span className={styles.personName}>{item.member}</span>
+                  {item.role && (
+                    <span className={styles.personRole}>
+                      {SEP}
+                      {item.role}
+                    </span>
+                  )}
                 </span>
-                <span className={shared.small}>
-                  {item.member}
-                  {SEP}
-                  {item.role}
-                </span>
-              </p>
+              </header>
+
               <p className={styles.summaryTitle}>{item.summary}</p>
-              <p className={shared.text}>{item.note}</p>
+              <p className={styles.personNote}>{item.note}</p>
             </div>
 
             <ul className={styles.tasks}>
               {item.tasks.map((task) => (
                 <li key={task.id} className={styles.taskCell}>
                   <article className={styles.taskCard}>
-                    <span className={styles.completedTag}>
-                      <span aria-hidden="true">{"✓"}</span> Done
-                    </span>
+                    <StatusTag status="Done" />
                     <h4 className={styles.taskName}>{task.title}</h4>
-                    <p className={styles.owner}>
-                      <span className={shared.avatar} aria-hidden="true">
-                        {task.owner.charAt(0)}
+                    <div className={styles.owner}>
+                      <AvatarGroup
+                        hidden
+                        items={[
+                          {
+                            initial: (task.owner || "").charAt(0),
+                            label: task.owner,
+                          },
+                        ]}
+                      />
+                      <span className={styles.ownerText}>
+                        Owner: {task.owner}
                       </span>
-                      Owner: {task.owner}
-                    </p>
+                    </div>
                     <p className={styles.meta}>
                       Due: {task.dueDate ? formatDate(task.dueDate) : "No due date"}
                       {SEP}
@@ -63,18 +79,33 @@ function ContributionsSection({ contributions, taskPath }) {
                       </p>
                     )}
                     {task.evidence && (
-                      <EvidenceLink evidence={task.evidence} className={styles.centered}>
-                        Open {task.evidence.name}
+                      <EvidenceLink
+                        evidence={task.evidence}
+                        className={styles.evidenceInline}
+                      >
+                        <span className={styles.evidenceIcon} aria-hidden="true">
+                          {task.evidence.kind === "link" ? (
+                            <ArrowUpRightIcon />
+                          ) : (
+                            <PaperclipIcon />
+                          )}
+                        </span>
+                        <span className={styles.evidenceName}>
+                          Open {task.evidence.name}
+                        </span>
                       </EvidenceLink>
                     )}
+                    <div className={styles.taskFooter}>
+                      <Link
+                        to={taskPath(task.id)}
+                        className={styles.taskFooterLink}
+                        aria-label={`View task evidence for ${task.title}`}
+                      >
+                        <span>View task evidence</span>
+                        <ArrowUpRightIcon />
+                      </Link>
+                    </div>
                   </article>
-                  <Link
-                    to={taskPath(task.id)}
-                    className={styles.centered}
-                    aria-label={`View task evidence for ${task.title}`}
-                  >
-                    View task evidence
-                  </Link>
                 </li>
               ))}
             </ul>
@@ -82,7 +113,9 @@ function ContributionsSection({ contributions, taskPath }) {
         ))}
       </ul>
 
-      <p className={styles.footnote}>Contact details, private task comments and drafts are excluded.</p>
+      <p className={styles.footnote}>
+        Contact details, private task comments and drafts are excluded.
+      </p>
     </section>
   );
 }

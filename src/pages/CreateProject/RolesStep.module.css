@@ -87,8 +87,13 @@
   font: inherit;
   font-size: var(--font-size-label);
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.removeLink:hover:not(:disabled),
+.removeLink:focus-visible:not(:disabled) {
+  text-decoration: underline;
 }
 
 .removeLink:hover:not(:disabled) {
@@ -314,8 +319,13 @@
   font-size: var(--font-size-label);
   font-weight: 600;
   color: var(--color-purple);
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.backLink:hover:not(:disabled),
+.backLink:focus-visible:not(:disabled) {
+  text-decoration: underline;
 }
 
 .backLink:hover:not(:disabled) {

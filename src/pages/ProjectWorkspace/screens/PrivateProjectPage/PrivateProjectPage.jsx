@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
-import Skeleton from "../../../../components/Skeleton";
-import overviewImage from "../../../../assets/overview.png";
+import privateProjectImage from "../../../../assets/private-project.png";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import {
   getPrivateProjectPage,
@@ -62,11 +61,79 @@ function PrivateProjectPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <h2 className={shared.title}>Private project page</h2>
-        <p role="status">Loading private project page…</p>
-        <Skeleton />
-        <Skeleton />
+      <div className={styles.page} aria-busy="true">
+        <span className={styles.srOnly} role="status">
+          Loading private project page…
+        </span>
+
+        {/* Header: title + meta */}
+        <div className={styles.skeletonHeader}>
+          <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+          <span className={`${styles.skeletonBar} ${styles.skeletonMeta}`} />
+        </div>
+
+        {/* Hero image */}
+        <span className={`${styles.skeletonBar} ${styles.skeletonHero}`} />
+
+        {/* Status row: pill + text */}
+        <div className={styles.skeletonStatusRow}>
+          <span className={`${styles.skeletonBar} ${styles.skeletonPill}`} />
+          <span className={`${styles.skeletonBar} ${styles.skeletonStatusText}`} />
+        </div>
+
+        {/* Description bar */}
+        <span className={`${styles.skeletonBar} ${styles.skeletonDesc}`} />
+
+        {/* Two-column layout */}
+        <div className={styles.skeletonLayout}>
+          {/* Left column */}
+          <div className={styles.skeletonColumn}>
+            {/* Overview card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+              {/* Nested: Collective outcome card */}
+              <div className={styles.skeletonNestedCard}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className={styles.skeletonColumn}>
+            {/* Team card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              {/* Member row 1 */}
+              <div className={styles.skeletonPersonRow}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                <div className={styles.skeletonPersonMeta}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                </div>
+              </div>
+              {/* Member row 2 */}
+              <div className={styles.skeletonPersonRow}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                <div className={styles.skeletonPersonMeta}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                </div>
+              </div>
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+            </div>
+            {/* Privacy/profile card */}
+            <div className={styles.skeletonCardInner}>
+              <span className={`${styles.skeletonBar} ${styles.skeletonCardTitle}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+              <span className={`${styles.skeletonBar} ${styles.skeletonButton}`} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -127,22 +194,29 @@ function PrivateProjectPage() {
     .filter((name) => name !== currentUser.name);
 
   return (
-    <div>
-      <h2 className={shared.title}>Private project page</h2>
-      {dateLine && <p className={shared.small}>{dateLine}</p>}
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h2 className={styles.pageTitle}>Private project page</h2>
+        {dateLine && <p className={styles.metaLine}>{dateLine}</p>}
+      </header>
 
-      <img className={styles.hero} src={overviewImage} alt={`${project.name} project`} />
+      <img
+        className={styles.hero}
+        src={privateProjectImage}
+        alt={`${project.name} project`}
+      />
+
       <p className={styles.badges}>
         <span className={styles.completedTag}>
           <span aria-hidden="true">{"✓"}</span> Completed
         </span>
-        <span>
+        <span className={styles.visibility}>
           {project.visibility}
           {SEP}
           {project.audience}
         </span>
       </p>
-      <p className={shared.text}>Project outcome and individual contributions.</p>
+      <p className={styles.intro}>Project outcome and individual contributions.</p>
 
       <div className={styles.layout}>
         <div className={styles.column}>
@@ -192,7 +266,7 @@ function PrivateProjectPage() {
 
       <div className={`${styles.column} ${styles.below}`}>
         <DeliverablesCard deliverables={deliverables} />
-        <div>
+        <div className={styles.actionRow}>
           <Button
             variant="secondary"
             onClick={() =>

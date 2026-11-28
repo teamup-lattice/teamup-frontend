@@ -49,8 +49,13 @@
   background: transparent;
   color: var(--color-purple);
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.cancelLink:hover,
+.cancelLink:focus-visible {
+  text-decoration: underline;
 }
 
 .sectionTitle {
@@ -101,8 +106,13 @@
   color: #c92a2a;
   font-family: inherit;
   font-weight: 600;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.removeFile:hover,
+.removeFile:focus-visible {
+  text-decoration: underline;
 }
 
 .removeFile:disabled {
@@ -153,6 +163,11 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+  text-decoration: none;
+}
+
+.commentActionBtn:hover:not(:disabled),
+.commentActionBtn:focus-visible:not(:disabled) {
   text-decoration: underline;
 }
 

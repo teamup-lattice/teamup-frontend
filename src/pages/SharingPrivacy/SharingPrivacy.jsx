@@ -227,7 +227,9 @@ function SharingPrivacy() {
         <div className={styles.column}>
           {/* Team page sharing */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>Team page sharing</h2>
+            <h2 className={`${shared.cardTitle} ${styles.cardTitle}`}>
+              Team page sharing
+            </h2>
 
             <p className={`${shared.text} ${styles.strongText}`}>
               {sharing.savedVisibility} (saved) ·{" "}
@@ -339,7 +341,7 @@ function SharingPrivacy() {
                     ? "This page is shared with every signed-in user and appears in Discover and recommendations."
                     : "Only accepted teammates can view this page."}
                 </p>
-                <p className={shared.helper}>
+                <p className={styles.smallNote}>
                   Only the project owner can change sharing.
                 </p>
               </>
@@ -348,29 +350,29 @@ function SharingPrivacy() {
 
           {/* Saved page view */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>
+            <h2 className={`${shared.cardTitle} ${styles.cardTitle}`}>
               {isShared ? "Saved shared view" : "Saved team-only view"}
             </h2>
-            <p className={`${shared.text} ${styles.strongText}`}>
+            <p className={styles.savedProjectTitle}>
               {project.title}
             </p>
-            <p className={shared.text}>
+            <p className={styles.savedStatusLine}>
               {[project.status, isShared ? "SHARED" : "PRIVATE", project.completedOn]
                 .filter(Boolean)
                 .join(" · ")}
             </p>
-            <p className={shared.text}>{project.summary}</p>
-            <ul className={shared.list}>
+            <p className={styles.savedOutcome}>{project.summary}</p>
+            <ul className={`${shared.list} ${styles.savedMemberList}`}>
               {team.map((member) => (
                 <li key={member.name}>
                   {member.name} · {member.role}
                 </li>
               ))}
             </ul>
-            <p className={shared.text}>
+            <p className={styles.savedDescription}>
               Outcome, individual task evidence and project deliverable.
             </p>
-            <p className={shared.helper}>
+            <p className={styles.smallNote}>
               Contacts, private task comments and drafts are excluded.
             </p>
           </section>
@@ -379,12 +381,12 @@ function SharingPrivacy() {
         <div className={styles.column}>
           {/* Independent choice / your profile */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>
+            <h2 className={`${shared.cardTitle} ${styles.cardTitle}`}>
               Independent choice / your profile
             </h2>
 
             <div className={styles.innerCard}>
-              <h3 className={shared.cardTitle}>
+              <h3 className={styles.subTitle}>
                 Your profile · {user.name}
               </h3>
 
@@ -393,14 +395,14 @@ function SharingPrivacy() {
                 <span>Display on my profile</span>
               </label>
 
-              <p className={shared.helper}>Not available yet.</p>
+              <p className={styles.smallNote}>Not available yet.</p>
 
               <Button fullWidth disabled>
                 Save own profile choice
               </Button>
             </div>
 
-            <p className={shared.text}>
+            <p className={styles.smallNote}>
               Completion does not display projects automatically. Profile
               display does not change team-page sharing.
             </p>
@@ -408,7 +410,9 @@ function SharingPrivacy() {
 
           {/* Current audience */}
           <section className={shared.card}>
-            <h2 className={shared.cardTitle}>Current audience</h2>
+            <h2 className={`${shared.cardTitle} ${styles.cardTitle}`}>
+              Current audience
+            </h2>
             <p className={`${shared.text} ${styles.strongText}`}>
               {sharing.savedVisibility} · saved audience
             </p>
@@ -417,7 +421,7 @@ function SharingPrivacy() {
                 ? "Every signed-in user can view this page. It is listed in Discover and recommendations."
                 : "Accepted team access only. The page is not listed in Discover."}
             </p>
-            <p className={shared.helper}>
+            <p className={styles.smallNote}>
               {isShared
                 ? "Unsharing hides the page from Discover and recommendations. Members who already joined keep full access."
                 : "Only the project owner can change sharing."}

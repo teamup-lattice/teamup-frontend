@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
-import Skeleton from "../../../../components/Skeleton";
 import { getCompletion } from "../../../../services/completionService";
 import { getErrorMessage } from "../../../../services/errorMessage";
 import {
@@ -268,9 +267,53 @@ function ProjectCompletion() {
     return (
       <div>
         <h2 className={shared.title}>Project completion</h2>
-        <p role="status">Loading project completion…</p>
-        <Skeleton />
-        <Skeleton />
+        <p role="status" className={styles.srOnly}>
+          Loading project completion…
+        </p>
+        <div aria-hidden="true">
+          <div className={`${styles.skeletonBar} ${styles.skeletonBanner}`} />
+          <div className={styles.layout}>
+            <div className={styles.column}>
+              <div className={`${shared.card} ${styles.skeletonCard}`}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonTextarea}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              </div>
+              <div className={`${shared.card} ${styles.skeletonCard}`}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonProgress}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+              </div>
+            </div>
+            <div className={styles.column}>
+              <div className={`${shared.card} ${styles.skeletonCard}`}>
+                <div className={styles.skeletonPersonRow}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+                </div>
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              </div>
+              <div className={`${shared.card} ${styles.skeletonCard}`}>
+                <div className={styles.skeletonPersonRow}>
+                  <span className={`${styles.skeletonBar} ${styles.skeletonAvatar}`} />
+                  <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+                </div>
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowFull}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+              </div>
+              <div className={`${shared.card} ${styles.skeletonCard}`}>
+                <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowShort}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonRowMedium}`} />
+                <span className={`${styles.skeletonBar} ${styles.skeletonButton}`} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -476,7 +519,7 @@ function ProjectCompletion() {
         </div>
       ) : (
         !(isCompleted && result) && (
-          <div className={styles.banner}>{banner}</div>
+          <div className={`${styles.banner} ${styles.bannerCompact}`}>{banner}</div>
         )
       )}
 

@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
-import Checkbox from "../../../../components/Checkbox";
 import { useWorkspace } from "../../useWorkspace";
 import { SEP } from "../../workspaceFormat";
 import shared from "../shared.module.css";
@@ -22,6 +21,7 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
   const [value, setValue] = useState(sharing.displayOnProfile);
   const [status, setStatus] = useState("idle"); // idle | saving | error | success
   const errorRef = useRef(null);
+  const helperId = useId();
 
   useEffect(() => {
     if (status === "error" && errorRef.current) errorRef.current.focus();
@@ -52,10 +52,12 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
       <h3 id="privacy-profile-title" className={shared.cardTitle}>
         Privacy and profile
       </h3>
-      <p className={shared.small}>
-        Team page sharing{SEP}
-        {sharing.savedVisibility} (saved)
-      </p>
+
+      <div className={styles.privacyRow}>
+        <span className={styles.privacyLabel}>Team page sharing</span>
+        <span className={styles.privacyValue}>{sharing.savedVisibility}</span>
+      </div>
+
       {isOwner && (
         <Button variant="secondary" fullWidth onClick={onOpenSharing}>
           Sharing settings
@@ -63,7 +65,19 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
       )}
 
       <div className={styles.profileBox}>
-        <h4 className={styles.memberName}>Your profile{SEP}{viewerName}</h4>
+        <div className={styles.profileHeader}>
+          <h4 className={styles.memberName}>
+            Your profile{SEP}
+            {viewerName}
+          </h4>
+          <span
+            className={`${styles.statusPill} ${
+              savedValue ? styles.statusOn : styles.statusOff
+            }`}
+          >
+            {savedLabel} (saved)
+          </span>
+        </div>
 
         {status === "error" && (
           <div ref={errorRef} tabIndex={-1} className={shared.errorWrap}>
@@ -78,16 +92,26 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
           </Alert>
         )}
 
-        <Checkbox
-          label="Display on my profile"
-          checked={value}
-          onChange={handleChange}
-          disabled={status === "saving"}
-        />
-        <p className={shared.small}>
-          {savedLabel} (saved){SEP}
-          {savedValue ? "Displayed on your profile." : "Not displayed on your profile."}
-        </p>
+        <label className={styles.switchRow}>
+          <input
+            className={styles.switch}
+            type="checkbox"
+            role="switch"
+            checked={value}
+            onChange={handleChange}
+            disabled={status === "saving"}
+            aria-describedby={helperId}
+          />
+          <span className={styles.switchText}>
+            <span className={styles.switchLabel}>Display on my profile</span>
+            <span id={helperId} className={styles.switchHelper}>
+              {savedValue
+                ? "Displayed on your profile."
+                : "Not displayed on your profile."}
+            </span>
+          </span>
+        </label>
+
         <Button
           fullWidth
           onClick={handleSave}
@@ -97,7 +121,8 @@ function PrivacyProfileCard({ sharing, viewerName, otherNames, onSave, onOpenSha
         >
           Save own profile choice
         </Button>
-        <p className={shared.helper}>
+
+        <p className={styles.profileFootnote}>
           Changes your profile only.{" "}
           {otherNames.length > 0 ? `${listText(otherNames)} and team-page` : "Team-page"} sharing{" "}
           {otherNames.length > 0 ? "are" : "is"} unaffected.

@@ -18,8 +18,12 @@
 
 .workspace main a {
   font-size: var(--font-size-label);
+  text-decoration: none;
+}
+
+.workspace main a:hover,
+.workspace main a:focus-visible {
   text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .workspace main a[class*="taskLink"],
@@ -56,6 +60,16 @@
   color: var(--color-purple);
   font-size: var(--font-size-label);
   font-weight: 600;
+  text-decoration: none;
+}
+
+.workspace main button[class*="cancelLink"]:hover,
+.workspace main button[class*="cancelLink"]:focus-visible {
+  text-decoration: underline;
+}
+
+/* Keep intentional underlines that use module classes inside the workspace */
+.workspace main a[class*="contribLink"] {
   text-decoration: underline;
 }
 
