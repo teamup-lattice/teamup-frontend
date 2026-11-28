@@ -142,6 +142,7 @@
   display: block;
   border-radius: var(--radius-chip);
   background: var(--color-action-disabled);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 
 .barBadge {
@@ -168,6 +169,22 @@
   width: 160px;
   height: var(--button-height);
   border-radius: var(--radius-control);
+}
+
+@keyframes skeletonPulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barBadge,
+  .barTitle,
+  .bar,
+  .barShort,
+  .barButton {
+    animation: none;
+  }
 }
 
 .emptyState {
