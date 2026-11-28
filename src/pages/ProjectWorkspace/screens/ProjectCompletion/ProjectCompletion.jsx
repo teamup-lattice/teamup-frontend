@@ -163,18 +163,41 @@ function ProjectCompletion() {
         memberTarget?.user?.id ??
         memberTarget?.userId ??
         (typeof memberTarget === "object" ? memberTarget.id : memberTarget);
+      if (!targetUserId) {
+        navigate(`${base}${search}`);
+        return;
+      }
       const isCurrent =
-        !targetUserId ||
         String(targetUserId) === String(currentUser.id) ||
         String(targetUserId) === String(currentUser.userId) ||
         memberTarget === currentUser.name;
       if (isCurrent) {
+        const contributions = loaded.data?.contributions ?? [];
+        const contribution = contributions.find((item) =>
+          [
+            item.member?.user?.id,
+            item.member?.userId,
+            item.member?.id,
+          ].some(
+            (memberId) =>
+              memberId !== undefined &&
+              memberId !== null &&
+              String(memberId) === String(targetUserId),
+          ),
+        );
+        const isPending = contribution
+          ? contribution.status !== "CONFIRMED"
+          : false;
+        if (isOwner && isPending) {
+          navigate(`${base}/review/${targetUserId}${search}`);
+          return;
+        }
         navigate(`${base}${search}`);
-      } else {
-        navigate(`${base}/review/${targetUserId}${search}`);
+        return;
       }
+      navigate(`${base}/review/${targetUserId}${search}`);
     },
-    [navigate, projectId, search, currentUser],
+    [navigate, projectId, search, currentUser, isOwner, loaded.data],
   );
 
   async function handleSave({ deliverable }) {

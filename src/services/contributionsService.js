@@ -295,6 +295,7 @@ export async function getContribution(projectId, input, { variant = null } = {})
   const current = findLatestContribution(contributions, member.userId);
 
   const isConfirmed = current?.status === "CONFIRMED";
+  const isOwnerContribution = current?.member?.accessRole === "OWNER";
   const confirmedReview = isConfirmed ? latestReview(current, "CONFIRMED") : null;
   const confirmedUserIds = new Set(
     contributions
@@ -320,11 +321,12 @@ export async function getContribution(projectId, input, { variant = null } = {})
       current?.status === "ACKNOWLEDGED",
     reviewedOn: toDateOnly(current?.memberAcknowledgedAt),
     confirmedBy: isConfirmed
-      ? confirmedReview?.reviewer?.name || "A teammate"
+      ? confirmedReview?.reviewer?.name ||
+        (isOwnerContribution ? "You" : "A teammate")
       : "",
     confirmedById: isConfirmed ? confirmedReview?.reviewer?.id ?? null : null,
     confirmedOn: isConfirmed ? toDateOnly(current?.confirmedAt) : null,
-    reviewer: "a teammate",
+    reviewer: isOwnerContribution ? "you" : "a teammate",
     reviewerId: null,
     team: { confirmedOthers, total: members.length, ownerName },
     reviews: current?.reviews ?? [],
@@ -396,7 +398,7 @@ export async function reviewContribution(
   projectId,
   contributionId,
   { decision, note } = {},
-  { simulateFail = false } = {},
+  { simulateFail = false, isSelfReview = false } = {},
 ) {
   if (simulateFail) throw new Error("Request failed");
   if (!contributionId) throw new Error("Contribution is missing an id.");
@@ -414,7 +416,11 @@ export async function reviewContribution(
     return mapContribution(response?.contribution ?? response);
   } catch (error) {
     if (error?.status === 403) {
-      const friendlyError = new Error("You can't review your own contribution");
+      const friendlyError = new Error(
+        isSelfReview
+          ? "This isn't enabled on the server yet."
+          : "You can't review your own contribution",
+      );
       friendlyError.status = 403;
       throw friendlyError;
     }

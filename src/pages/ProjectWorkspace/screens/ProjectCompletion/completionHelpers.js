@@ -118,21 +118,62 @@ export function getReadiness(
       });
   }
 
+  const contributionList = Array.isArray(contributions) ? contributions : [];
+
+  // A CONFIRMED contribution counts as confirmed even when the completion
+  // confirmations list does not include that member's review (for example the
+  // owner confirming their own contribution).
+  const confirmedContributionKeys = new Set();
+  contributionList.forEach((item) => {
+    if (item.status !== "CONFIRMED") return;
+    const member = item.member;
+    [member?.user?.id, member?.userId, member?.id, member?.name].forEach(
+      (value) => {
+        if (value !== undefined && value !== null && value !== "") {
+          confirmedContributionKeys.add(String(value));
+        }
+      },
+    );
+  });
+
+  const confirmationMemberKeys = (item) => {
+    const member = item.member;
+    const keys = [item.memberId, item.userId, item.memberUserId];
+    if (member && typeof member === "object") {
+      keys.push(member.id, member.userId, member.name);
+    } else {
+      keys.push(member);
+    }
+    return keys
+      .filter((value) => value !== undefined && value !== null && value !== "")
+      .map(String);
+  };
+
+  const isConfirmationConfirmed = (item) =>
+    Boolean(item.confirmedBy) ||
+    confirmationMemberKeys(item).some((key) =>
+      confirmedContributionKeys.has(key),
+    );
+
   const confirmationList = (confirmations || []).filter(
     (item) => item.hasContribution !== false,
   );
   const hasOutcome = evidence?.outcome ? evidence.outcome.trim() !== "" : false;
   const hasDeliverable = Boolean(evidence?.deliverable);
-  const confirmed = confirmationList.filter((item) => item.confirmedBy);
-  const pending = confirmationList.filter((item) => !item.confirmedBy);
+  const confirmed = confirmationList.filter(isConfirmationConfirmed);
+  const pending = confirmationList.filter(
+    (item) => !isConfirmationConfirmed(item),
+  );
   const evidenceComplete = hasOutcome && hasDeliverable;
-  const allConfirmed = confirmationList.length > 0 && pending.length === 0;
 
-  const contributionList = Array.isArray(contributions) ? contributions : [];
   const pendingContributions = contributionList.filter(
     (item) => item.status !== "CONFIRMED",
   );
   const allContributionsConfirmed = pendingContributions.length === 0;
+
+  const allConfirmed =
+    (confirmationList.length > 0 && pending.length === 0) ||
+    (contributionList.length > 0 && allContributionsConfirmed);
 
   const taskList = Array.isArray(tasks) ? tasks : [];
   const openTasks = taskList.filter((task) => {

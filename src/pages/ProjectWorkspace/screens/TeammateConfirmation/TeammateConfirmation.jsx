@@ -25,6 +25,7 @@ function getStatusNote({
   latestReview,
   authorName,
   reviewerName,
+  isSelfReview,
 }) {
   if (isConfirmed) {
     const confirmedBy = latestReview?.reviewer?.name;
@@ -52,6 +53,13 @@ function getStatusNote({
     return {
       title: "Awaiting acknowledgement",
       detail: `Waiting for ${authorName} to acknowledge this summary`,
+    };
+  }
+
+  if (isSelfReview) {
+    return {
+      title: `Reviewed${SEP}Ready for your confirmation`,
+      detail: "You can confirm your own contribution wording.",
     };
   }
 
@@ -138,7 +146,7 @@ function TeammateConfirmation() {
   const completionPath = `${workspacePath}/completion${search}`;
   const title = `Review ${memberName}${APOS}s contributions`;
 
-  async function handleConfirm(contributionId, authorName) {
+  async function handleConfirm(contributionId, authorName, isSelfReview = false) {
     setActionStatus((prev) => ({ ...prev, [contributionId]: "confirming" }));
     setActionError((prev) => ({ ...prev, [contributionId]: "" }));
     try {
@@ -148,7 +156,7 @@ function TeammateConfirmation() {
         {
           decision: "CONFIRMED",
         },
-        { authorName },
+        { authorName, isSelfReview },
       );
       await fetchContributions();
       setActionStatus((prev) => ({ ...prev, [contributionId]: undefined }));
@@ -296,7 +304,9 @@ function TeammateConfirmation() {
               const isAuthor =
                 Boolean(currentUserId) &&
                 String(authorUserId) === String(currentUserId);
-              const canReview = isOwnerOrManager && !isAuthor;
+              const isSelfReview = Boolean(isOwner && isAuthor);
+              const canReview = isOwnerOrManager && (!isAuthor || isOwner);
+              const canRequestChanges = isOwnerOrManager && !isAuthor;
               const authorName =
                 contribution.member?.user?.name ||
                 contribution.member?.name ||
@@ -325,15 +335,18 @@ function TeammateConfirmation() {
               const authorRole =
                 contribution.member?.role || member?.role || "";
               const latestReview = sortedReviews[0] ?? null;
-              const reviewerName = canReview
-                ? me?.name || "you"
-                : ownerName || "the project owner";
+              const reviewerName = isSelfReview
+                ? "you"
+                : canReview
+                  ? me?.name || "you"
+                  : ownerName || "the project owner";
               const statusNote = getStatusNote({
                 isConfirmed,
                 isAcknowledged,
                 latestReview,
                 authorName,
                 reviewerName,
+                isSelfReview,
               });
 
               return (
@@ -489,7 +502,9 @@ function TeammateConfirmation() {
                       {APOS}s confirmation
                     </h3>
                     <p className={styles.confirmationHelper}>
-                      Confirm the contribution wording or request changes.
+                      {canReview && !canRequestChanges
+                        ? "Confirm your contribution wording."
+                        : "Confirm the contribution wording or request changes."}
                     </p>
 
                     {actionError[contribution.id] && (
@@ -513,24 +528,30 @@ function TeammateConfirmation() {
                           }
                           loadingText="Confirming…"
                           onClick={() =>
-                            handleConfirm(contribution.id, authorName)
+                            handleConfirm(
+                              contribution.id,
+                              authorName,
+                              isSelfReview,
+                            )
                           }
                         >
                           Confirm
                         </Button>
-                        <Button
-                          variant="secondary"
-                          disabled={buttonsDisabled}
-                          onClick={() =>
-                            setOpenRequestId((curr) =>
-                              curr === contribution.id
-                                ? null
-                                : contribution.id,
-                            )
-                          }
-                        >
-                          Request changes
-                        </Button>
+                        {canRequestChanges && (
+                          <Button
+                            variant="secondary"
+                            disabled={buttonsDisabled}
+                            onClick={() =>
+                              setOpenRequestId((curr) =>
+                                curr === contribution.id
+                                  ? null
+                                  : contribution.id,
+                              )
+                            }
+                          >
+                            Request changes
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <p className={styles.confirmationNote}>
@@ -539,7 +560,7 @@ function TeammateConfirmation() {
                       </p>
                     )}
 
-                    {canReview && isAcknowledged && isRequestFormOpen && (
+                    {canRequestChanges && isAcknowledged && isRequestFormOpen && (
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();

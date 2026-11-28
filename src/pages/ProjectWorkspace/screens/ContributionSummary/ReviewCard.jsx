@@ -35,6 +35,7 @@ function ReviewCard({
 
   const isSaving = status === "saving";
   const hasError = status === "error";
+  const isSelfReview = reviewer === "you";
 
   useEffect(() => {
     if (hasError && errorRef.current) errorRef.current.focus();
@@ -69,7 +70,9 @@ function ReviewCard({
         <p className={shared.small}>
           {lockedReason === "confirmed"
             ? "Confirmed wording is locked. Saved task ownership and history are unchanged."
-            : "Your wording is saved and waiting for a teammate."}
+            : isSelfReview
+              ? "Your wording is saved. You can confirm it yourself."
+              : "Your wording is saved and waiting for a teammate."}
         </p>
       </section>
     );
@@ -83,7 +86,9 @@ function ReviewCard({
       <p className={shared.small}>
         Based on your {taskCount} saved Done {taskCount === 1 ? "task" : "tasks"}
         {SEP}
-        {reviewer} confirms the wording only, not impact.
+        {isSelfReview
+          ? "You confirm the wording only, not impact."
+          : `${reviewer} confirms the wording only, not impact.`}
       </p>
 
       <div className={styles.formStack}>
@@ -104,7 +109,7 @@ function ReviewCard({
         />
         <Textarea
           id="contribution-note"
-          label="Note for your teammate (optional)"
+          label={isSelfReview ? "Note (optional)" : "Note for your teammate (optional)"}
           rows={3}
           value={note}
           maxLength={NOTE_MAX + 40}
